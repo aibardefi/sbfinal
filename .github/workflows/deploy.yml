@@ -32,12 +32,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # enablement: true turns Pages on for the repository on the first run, so
-      # a fresh repo needs nobody to visit Settings before the site exists.
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
+      # No actions/configure-pages step: its enablement option needs a token
+      # with repository-admin rights, which GITHUB_TOKEN is not, so it fails
+      # with "Create Pages site failed. Resource not accessible by integration".
+      # Pages is switched on once by hand, in Settings -> Pages -> Source:
+      # GitHub Actions.
       - uses: actions/setup-node@v4
         with:
           node-version: 22
