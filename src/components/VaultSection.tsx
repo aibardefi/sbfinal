@@ -191,7 +191,7 @@ export function VaultSection() {
         t.setAttribute("font-weight", "900");
         t.setAttribute("letter-spacing", "-0.4");
         t.setAttribute("fill", "#12110c");
-        t.textContent = "$SB";
+        t.textContent = "$CB";
         g.append(c, t);
 
         // Two tiers, tightened and dropped clear of the feet. Wider spacing put
@@ -395,13 +395,13 @@ export function VaultSection() {
 
       <div className="head" data-ent="up" data-ent-delay="90">
         <h1 className="sticker">
-          Lock them. Borrow <span className="hot">$SB</span>.
+          Lock them. Borrow <span className="hot">$CB</span>.
         </h1>
       </div>
 
       <div className={`middle ${s.middle}`} data-ent="up" data-ent-delay="240">
         <div className={s.readout}>
-          <div className={s.label}>$SB borrowed</div>
+          <div className={s.label}>$CB borrowed</div>
           <div className={s.value}>{borrowed.toLocaleString("en-US")}</div>
         </div>
 
@@ -414,7 +414,7 @@ export function VaultSection() {
             className={s.svg}
             viewBox="0 0 660 560"
             role="img"
-            aria-label="A machine that locks memecoins and pays out $SB"
+            aria-label="A machine that locks memecoins and pays out $CB"
           >
             <g ref={feedRef}>
               {/* Three layers, one job each: the outer group holds the coin's

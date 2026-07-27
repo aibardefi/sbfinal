@@ -91,11 +91,11 @@
 .link svg { width: 1.15em; height: 1.15em; display: block; flex: none; }
 
 .primary {
-  background: var(--sb);
+  background: var(--cb);
   padding: 0.8rem 1.5rem;
   font-size: clamp(0.72rem, 1.9vw, 0.88rem);
 }
-.primary:hover { background: var(--sb-lit); }
+.primary:hover { background: var(--cb-lit); }
 
 /* ---- contract address: coming soon, copyable when it lands ---- */
 .ca {

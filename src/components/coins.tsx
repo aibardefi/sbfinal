@@ -7,8 +7,8 @@ import type { ReactNode } from "react";
  * rendered 3D coin art elsewhere in the repo is a different style and reads as
  * a second website when placed next to him.
  *
- * Six distinct hues, none of them near the $SB lime — a coin that reads as
- * $SB defeats the whole lock-one-borrow-the-other point of the first two
+ * Six distinct hues, none of them near the $CB lime — a coin that reads as
+ * $CB defeats the whole lock-one-borrow-the-other point of the first two
  * screens. Eyes and details are punched out in the coin's own background
  * colour rather than drawn, so each glyph stays a single flat shape.
  */

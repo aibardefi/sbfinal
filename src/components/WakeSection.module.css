@@ -278,7 +278,7 @@
   text-align: center;
   /* The lamp's own colour. Same token the lampshade and its glow are painted
      with, so the line he wakes up saying is lit by the thing that woke him. */
-  color: var(--sb);
+  color: var(--cb);
   font-size: clamp(1.1rem, 4vw, 2.4rem);
   opacity: 0;
   transform: scale(0.8) rotate(-2deg);

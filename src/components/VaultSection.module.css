@@ -39,7 +39,7 @@
   font-size: clamp(1.5rem, 5vw, 2.8rem);
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  color: var(--sb);
+  color: var(--cb);
   -webkit-text-stroke: 0.055em var(--ink);
 }
 

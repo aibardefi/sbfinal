@@ -9,7 +9,7 @@ import { useAutoRearm } from "@/lib/useAutoRearm";
 import s from "./HeroSection.module.css";
 
 const MAX = 10;
-const PER = 4200; // $SB borrowed per coin
+const PER = 4200; // $CB borrowed per coin
 
 /** What he says, and when. Deadpan escalation. */
 const LINES: Record<number, string> = {
@@ -183,7 +183,7 @@ export function HeroSection() {
 
       <div className={`middle ${s.middle}`} data-ent="up" data-ent-delay="240">
         <div className={s.readout}>
-          <div className={s.label}>$SB borrowed</div>
+          <div className={s.label}>$CB borrowed</div>
           <div className={s.value}>{(fed * PER).toLocaleString("en-US")}</div>
         </div>
 
@@ -210,7 +210,7 @@ export function HeroSection() {
       <div className="bottom">
         <div className="hint" data-ent="up" data-ent-delay="430">
           {full
-            ? "Full. That is a lot of $SB."
+            ? "Full. That is a lot of $CB."
             : fed === 0
               ? "Feed him your bags — tap a coin"
               : `${fed} of ${MAX} bags locked`}

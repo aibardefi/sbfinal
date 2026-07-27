@@ -21,7 +21,7 @@ const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ??
   "https://sbmeme.xyz";
 
-const TITLE = "$SB — Capybara Blyatovich";
+const TITLE = "$CB — Capybara Blyatovich";
 const DESCRIPTION =
   "Lock memes. Borrow the meme. A lending protocol run by one tired capybara.";
 
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   openGraph: {
     type: "website",
-    siteName: "$SB",
+    siteName: "$CB",
     locale: "en_US",
     url: SITE_URL,
     title: TITLE,

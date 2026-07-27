@@ -203,7 +203,7 @@ export function RepaySection() {
 
       <div className="head" data-ent="up" data-ent-delay="90">
         <h1 className="sticker">
-          Repay <span className="hot">$SB</span>. Take them back.
+          Repay <span className="hot">$CB</span>. Take them back.
         </h1>
       </div>
 
@@ -405,7 +405,7 @@ export function RepaySection() {
           className={`${s.slider} ${freed ? s.done : ""}`}
           tabIndex={0}
           role="slider"
-          aria-label="Repay $SB"
+          aria-label="Repay $CB"
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.round(p * 100)}

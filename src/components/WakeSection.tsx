@@ -110,7 +110,7 @@ export function WakeSection() {
 
       <div className="head" data-ent="up" data-ent-delay="90">
         <h1 className="sticker">
-          Why <span className="hot">$SB</span> exists.
+          Why <span className="hot">$CB</span> exists.
         </h1>
       </div>
 
@@ -149,12 +149,12 @@ export function WakeSection() {
               <path d="M652 442 v-96" fill="none" />
               <path
                 d="M618 292 L686 292 L678 346 L626 346 Z"
-                fill="var(--sb)"
+                fill="var(--cb)"
               />
               <path
                 className={s.lampGlow}
                 d="M626 348 L678 348 L700 456 L446 456 Z"
-                fill="var(--sb)"
+                fill="var(--cb)"
                 opacity="0"
                 stroke="none"
               />

@@ -137,16 +137,16 @@ export function JoinSection() {
               aria-hidden="true"
             >
               <g className={s.spark} style={{ "--dx": "-52px", "--dy": "-46px" } as React.CSSProperties}>
-                <circle cx="100" cy="20" r="9" fill="var(--sb)" stroke="var(--ink)" strokeWidth="3" />
+                <circle cx="100" cy="20" r="9" fill="var(--cb)" stroke="var(--ink)" strokeWidth="3" />
               </g>
               <g className={s.spark} style={{ "--dx": "48px", "--dy": "-52px" } as React.CSSProperties}>
-                <circle cx="100" cy="20" r="7" fill="var(--sb)" stroke="var(--ink)" strokeWidth="3" />
+                <circle cx="100" cy="20" r="7" fill="var(--cb)" stroke="var(--ink)" strokeWidth="3" />
               </g>
               <g className={s.spark} style={{ "--dx": "-72px", "--dy": "-14px" } as React.CSSProperties}>
-                <circle cx="100" cy="20" r="6" fill="var(--sb)" stroke="var(--ink)" strokeWidth="3" />
+                <circle cx="100" cy="20" r="6" fill="var(--cb)" stroke="var(--ink)" strokeWidth="3" />
               </g>
               <g className={s.spark} style={{ "--dx": "70px", "--dy": "-8px" } as React.CSSProperties}>
-                <circle cx="100" cy="20" r="8" fill="var(--sb)" stroke="var(--ink)" strokeWidth="3" />
+                <circle cx="100" cy="20" r="8" fill="var(--cb)" stroke="var(--ink)" strokeWidth="3" />
               </g>
             </svg>
 

@@ -47,12 +47,12 @@
   --navy: #29cdec;
   --tangerine: #f37208;
 
-  /* --- value: $SB and nothing else. Counters, $SB coins, the launch button.
-         Gold is for things that are merely metal. --sb-lit exists because the
+  /* --- value: $CB and nothing else. Counters, $CB coins, the launch button.
+         Gold is for things that are merely metal. --cb-lit exists because the
          launch button's hover was a loose #8ddc0a with no token behind it. */
-  --sb: #7cc606;
-  --sb-lit: #8ddc0a;
-  --sb-deep: #5d9504;
+  --cb: #7cc606;
+  --cb-lit: #8ddc0a;
+  --cb-deep: #5d9504;
 
   /* --- metal: all hardware. Dial, throw bolts, barrel hinges, handle, chute,
          brass corners, the clock's alarm. */
