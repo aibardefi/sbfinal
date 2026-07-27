@@ -198,7 +198,6 @@ export function RepaySection() {
   return (
     <section className={`stage ${freed ? s.freed : ""}`} ref={ref}>
       <div className="top" data-ent="fade" data-ent-delay="0">
-        <div className="eyebrow">Capybara Blyatovich · Lending Co.</div>
         <div className="count">03 / 07</div>
       </div>
 

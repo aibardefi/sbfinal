@@ -105,7 +105,6 @@ export function WakeSection() {
       ref={ref}
     >
       <div className="top" data-ent="fade" data-ent-delay="0">
-        <div className="eyebrow">Capybara Blyatovich · Lending Co.</div>
         <div className="count">04 / 07</div>
       </div>
 
@@ -124,7 +123,7 @@ export function WakeSection() {
           <div
             className={`${s.verdict} sticker`}
           >
-            Suka blyat enough, I need a different life
+            Cykablyat enough, I need a different life
           </div>
 
           <svg

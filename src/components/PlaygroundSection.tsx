@@ -214,7 +214,6 @@ export function PlaygroundSection() {
   return (
     <section className={stageClasses} ref={ref}>
       <div className="top" data-ent="fade" data-ent-delay="0">
-        <div className="eyebrow">Capybara Blyatovich &middot; Lending Co.</div>
         <div className="count">06 / 07</div>
       </div>
 

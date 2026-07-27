@@ -171,7 +171,6 @@ export function HeroSection() {
   return (
     <section className="stage" ref={ref}>
       <div className="top" data-ent="fade" data-ent-delay="0">
-        <div className="eyebrow">Capybara Blyatovich · Lending Co.</div>
         <div className="count">01 / 07</div>
       </div>
 

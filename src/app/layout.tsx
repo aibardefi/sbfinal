@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   openGraph: {
     type: "website",
-    siteName: "Capybara Blyatovich · Lending Co.",
+    siteName: "$SB",
     locale: "en_US",
     url: SITE_URL,
     title: TITLE,
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "Capybara Blyatovich in his suka blyat ushanka, beside the words: lock memes, borrow the meme.",
+        alt: "Capybara Blyatovich in his cykablyat ushanka, beside the words: lock memes, borrow the meme.",
       },
     ],
   },

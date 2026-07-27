@@ -140,29 +140,24 @@ body {
 .top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 1rem;
 }
 
-.eyebrow,
 .count {
   font-size: clamp(0.72rem, 1.7vw, 0.82rem);
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--text-dim);
-}
-.count {
   font-variant-numeric: tabular-nums;
-  /* "01 / 07" is one token — squeezed by the eyebrow it was breaking after the
-     slash and pushing the page number onto its own line. */
   white-space: nowrap;
+  /* The counter used to be held on the right by space-between, against the
+     masthead line on the left. It is the only child now, so it needs its own
+     reason to stay there. */
+  margin-left: auto;
 }
 
-/* At 360px the masthead ran to two lines and took the counter with it. The
-   tracking is what costs the width here, not the letters. */
 @media (max-width: 400px) {
-  .eyebrow,
   .count {
     font-size: 0.68rem;
     letter-spacing: 0.08em;
@@ -171,7 +166,7 @@ body {
 
 .head {
   text-align: center;
-  /* The headline used to sit almost against the eyebrow row, which read as the
+  /* The headline used to sit almost against the top row, which read as the
      type having been pushed off the top of the screen. Viewport-relative so
      short phone screens do not spend their scarce height on it. */
   padding-top: clamp(0.5rem, 3vh, 2rem);

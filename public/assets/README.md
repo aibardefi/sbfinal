@@ -5,7 +5,7 @@ Save the Kapibara Blyatovich art into **this folder**
 
 | Filename | What it is |
 |---|---|
-| `kapibara.webp` | Kapibara Blyatovich — grumpy capybara in the "suka blyat" ushanka, full body, transparent or flat background |
+| `kapibara.webp` | Kapibara Blyatovich — grumpy capybara in the "cykablyat" ushanka, full body, transparent or flat background |
 
 The page already points at `/assets/kapibara.webp`. Once the file exists it
 renders with no code changes — the grow, gulp and squash animations are driven
