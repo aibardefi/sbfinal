@@ -1,0 +1,293 @@
+.mid {
+  place-items: end center;
+}
+
+.room {
+  position: relative;
+  width: min(94vw, calc(min(52dvh, 430px) * 700 / 292));
+  aspect-ratio: 700 / 292;
+}
+
+/* A 2.4:1 room is only ever as tall as a phone is wide, so bottom-aligning it
+   dumps the whole screen's slack above the scene. Centred, the room reads as
+   placed rather than as fallen to the floor. */
+@media (max-width: 640px) {
+  .mid {
+    place-items: center;
+  }
+}
+
+.roomSvg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* Clipped, not visible: he is posed below his resting spot while asleep and
+     would otherwise paint over the hint and the scroll cue underneath. */
+  overflow: hidden;
+}
+
+/* Over the bear, not over the clock. It used to sit top-left, which is where
+   the clock's "Hit the clock" label now lives — and he is the one talking, so
+   the line belongs on his side of the room. The band above his hat is the only
+   large piece of empty space in the scene. */
+.bub {
+  top: 0;
+  left: 46%;
+  background: var(--cream);
+  max-width: 15ch;
+}
+
+/* The room is only as tall as the phone is wide, so the band above his hat all
+   but disappears and top: 0 drops the bubble onto the ushanka. Above the room
+   entirely on a phone — the verdict already lives up there and the two never
+   show at the same stage. */
+@media (max-width: 640px) {
+  .bub {
+    top: -16%;
+    left: 42%;
+  }
+}
+
+/* ---------- clock ---------- */
+
+.clockHit {
+  cursor: pointer;
+}
+.clockHit:focus {
+  outline: none;
+}
+.clockHit:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+.dead .clockHit {
+  cursor: default;
+}
+
+.clockBody {
+  transform-box: view-box;
+  /* Its feet, not the middle of its face. Pivoting on the dial swung the feet
+     through a 26px arc five times a second — it skated instead of rocking. */
+  transform-origin: 128px 448px;
+}
+.ringing .clockBody {
+  animation: ring 180ms ease-in-out infinite;
+}
+@keyframes ring {
+  0%,
+  100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+.bell {
+  transform-box: view-box;
+  transform-origin: 128px 300px;
+}
+.ringing .bell {
+  animation: bellSwing 180ms ease-in-out infinite alternate;
+}
+@keyframes bellSwing {
+  from {
+    transform: translateX(-3px);
+  }
+  to {
+    transform: translateX(3px);
+  }
+}
+
+.wave {
+  opacity: 0;
+  transform-box: view-box;
+  transform-origin: 128px 296px;
+}
+.ringing .wave {
+  animation: waveOut 900ms ease-out infinite;
+}
+.ringing .wave:nth-of-type(2) {
+  animation-delay: 300ms;
+}
+.ringing .wave:nth-of-type(3) {
+  animation-delay: 600ms;
+}
+@keyframes waveOut {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+
+.dead .clockBody {
+  animation: none;
+  transform: rotate(14deg) translateY(10px);
+}
+.dead .bell {
+  animation: none;
+}
+.dead .wave {
+  animation: none;
+  opacity: 0;
+}
+
+/* ---------- him, waking up in stages ---------- */
+
+.him {
+  transform-box: view-box;
+  transform-origin: 430px 430px;
+  transition: transform 520ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+/* Lying down is carried by the tilt. His artwork is a sitting bear, so prone
+   means most of a quarter turn — at the 17deg it started on he read as leaning,
+   not sleeping. Head ends up over the pillow and body along the mattress, and
+   the four stages unwind the rotation so waking up is one continuous movement
+   from flat to upright. */
+.s0 .him {
+  transform: translate(40px, -16px) rotate(-76deg) scale(0.9);
+}
+.s1 .him {
+  transform: translate(30px, -8px) rotate(-54deg) scale(0.92);
+}
+.s2 .him {
+  transform: translate(12px, 2px) rotate(-27deg) scale(0.96);
+}
+.s3 .him {
+  transform: translateY(0) rotate(0deg) scale(1);
+}
+.s4 .him {
+  transform: translateY(-6px) rotate(0deg) scale(1.04);
+}
+
+.blanket {
+  transform-box: view-box;
+  transform-origin: 430px 470px;
+  transition: transform 620ms cubic-bezier(0.4, 0, 0.3, 1),
+    opacity 400ms ease;
+}
+.s3 .blanket,
+.s4 .blanket {
+  transform: translateY(120px) rotate(8deg);
+  opacity: 0;
+}
+
+.lids {
+  transition: opacity 300ms ease;
+}
+.s0 .lids,
+.s1 .lids {
+  opacity: 1;
+}
+.s2 .lids {
+  opacity: 0.5;
+}
+.s3 .lids,
+.s4 .lids {
+  opacity: 0;
+}
+
+.zzz {
+  opacity: 0;
+  transform-box: view-box;
+  transform-origin: 520px 380px;
+}
+.s0 .zzz,
+.s1 .zzz {
+  animation: zzzFloat 2.6s ease-out infinite;
+}
+.s0 .zzz:nth-of-type(2),
+.s1 .zzz:nth-of-type(2) {
+  animation-delay: 0.85s;
+}
+.s0 .zzz:nth-of-type(3),
+.s1 .zzz:nth-of-type(3) {
+  animation-delay: 1.7s;
+}
+@keyframes zzzFloat {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.7);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(46px, -76px) scale(1.25);
+  }
+}
+
+.lampGlow {
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+.s4 .lampGlow {
+  opacity: 0.3;
+}
+
+/* The call to action, sitting directly above the clock rather than in the
+   bottom status line — the instruction now points at the thing it is about.
+   It nudges downward on a loop, the same tell the machine screen's lever
+   label uses, so "this is the control" reads the same way on both screens. */
+.clockLabel {
+  transform-box: view-box;
+  transform-origin: 128px 218px;
+  animation: clockNudge 2.2s ease-in-out infinite;
+  transition: opacity 240ms ease;
+}
+@keyframes clockNudge {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+/* Once he is up there is nothing left to hit. */
+.dead .clockLabel {
+  opacity: 0;
+  animation: none;
+}
+
+/* ---------- bottom status ---------- */
+
+.hitline {
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: clamp(0.72rem, 1.8vw, 0.72rem);
+  color: var(--gold);
+  min-height: 1.2em;
+}
+
+/* ---------- verdict overlay ---------- */
+
+.verdict {
+  position: absolute;
+  /* Clear of the room entirely rather than laid over the top of it — at 2%
+     inside the box it landed across his hat. */
+  bottom: calc(100% + 0.6rem);
+  left: 0;
+  right: 0;
+  text-align: center;
+  /* The lamp's own colour. Same token the lampshade and its glow are painted
+     with, so the line he wakes up saying is lit by the thing that woke him. */
+  color: var(--sb);
+  font-size: clamp(1.1rem, 4vw, 2.4rem);
+  opacity: 0;
+  transform: scale(0.8) rotate(-2deg);
+  transition: opacity 260ms ease,
+    transform 420ms cubic-bezier(0.34, 1.7, 0.64, 1);
+  pointer-events: none;
+  z-index: 5;
+}
+.s4 .verdict {
+  opacity: 1;
+  transform: none;
+}

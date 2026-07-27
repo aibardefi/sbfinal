@@ -1,0 +1,219 @@
+.middle {
+  place-items: end center;
+}
+
+.yard {
+  position: relative;
+  width: min(100%, calc(min(50dvh, 420px) * 380 / 360));
+  aspect-ratio: 380 / 360;
+}
+
+.yardSvg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------------------
+   Ambient layer: he leans toward the pointer and his gaze follows it. Driven
+   from JS via custom properties so CSS still owns the easing.
+   --------------------------------------------------------------------------- */
+.lean {
+  transform-box: view-box;
+  transform-origin: 380px 430px;
+  transition: transform 900ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  transform:
+    translateX(calc(var(--px, 0) * 26px))
+    rotate(calc(var(--px, 0) * 2.4deg));
+}
+
+.shadow {
+  transform-box: view-box;
+  transform-origin: 380px 452px;
+  transition: transform 900ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  transform: translateX(calc(var(--px, 0) * 16px)) scaleX(calc(1 - var(--pa, 0) * 0.1));
+}
+
+/* ---------------------------------------------------------------------------
+   Moods. Each is a distinct, hand-timed animation on its own layer so they
+   never fight the ambient lean.
+   --------------------------------------------------------------------------- */
+.mood {
+  transform-box: view-box;
+  transform-origin: 380px 452px;
+  perspective: 800px;
+}
+
+.mJump .mood { animation: mJump 950ms cubic-bezier(0.3, 0.9, 0.4, 1); }
+@keyframes mJump {
+  0%   { transform: translateY(0) scale(1, 1); }
+  8%   { transform: translateY(3px) scale(1.05, 0.93); }
+  14%  { transform: translateY(6px) scale(1.1, 0.86); }
+  28%  { transform: translateY(-52px) scale(0.96, 1.06); }
+  40%  { transform: translateY(-96px) scale(0.92, 1.12); }
+  50%  { transform: translateY(-104px) scale(0.96, 1.06); }
+  56%  { transform: translateY(-100px) scale(1, 1); }
+  70%  { transform: translateY(-20px) scale(1.04, 0.94); }
+  80%  { transform: translateY(4px) scale(1.12, 0.84); }
+  88%  { transform: translateY(-2px) scale(1.04, 0.97); }
+  94%  { transform: translateY(1px) scale(1.02, 0.99); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+
+/* Turning on the spot, done as a width sweep through zero rather than a
+   rotateY: perspective only ever applies to an element's children, so a
+   rotateY here had no depth to work with and just squashed him sideways.
+   Passing scaleX through 0 to -1 and back is the turn, and it needs no 3D. */
+.mSpin .mood {
+  animation: mSpin 1150ms cubic-bezier(0.45, 0.05, 0.3, 1);
+}
+@keyframes mSpin {
+  0%   { transform: scale(1, 1); }
+  10%  { transform: scale(1.07, 0.96); }
+  22%  { transform: scale(0.62, 1.03); }
+  32%  { transform: scale(0.08, 1.06); }
+  42%  { transform: scale(-0.58, 1.03); }
+  52%  { transform: scale(-1, 1); }
+  62%  { transform: scale(-0.55, 1.02); }
+  72%  { transform: scale(0.06, 1.05); }
+  82%  { transform: scale(0.68, 1.02); }
+  92%  { transform: scale(1.06, 0.97); }
+  100% { transform: scale(1, 1); }
+}
+
+.mRage .mood { animation: mRage 760ms steps(2, end) 4; }
+@keyframes mRage {
+  0%   { transform: translate(0, 0) scale(1); }
+  25%  { transform: translate(-6px, -3px) scale(1.03); }
+  50%  { transform: translate(5px, 2px) scale(1.05); }
+  75%  { transform: translate(-4px, 3px) scale(1.03); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+.mFat .mood { animation: mFat 1600ms cubic-bezier(0.3, 1.2, 0.5, 1); }
+@keyframes mFat {
+  0%   { transform: scale(1, 1); }
+  10%  { transform: scale(1.08, 1.04); }
+  25%  { transform: scale(1.28, 1.14); }
+  35%  { transform: scale(1.32, 1.17); }
+  50%  { transform: scale(1.26, 1.20); }
+  65%  { transform: scale(1.18, 1.14); }
+  80%  { transform: scale(1.06, 1.04); }
+  92%  { transform: scale(0.98, 1.01); }
+  100% { transform: scale(1, 1); }
+}
+
+/* Shrinking away from being looked at: he turns half away, sinks into himself
+   and holds there before daring to come back. The old version moved so little
+   it read as a wobble rather than as embarrassment. */
+.mShy .mood { animation: mShy 1900ms cubic-bezier(0.4, 0, 0.25, 1); }
+@keyframes mShy {
+  /* Barely any translate: the scale is anchored at his feet, so shrinking
+     already drops him. Adding a real drop on top walked him out of frame. */
+  0%   { transform: translateY(0) rotate(0deg) scale(1, 1); }
+  12%  { transform: translateY(2px) rotate(-2deg) scale(0.96, 0.97); }
+  30%  { transform: translateY(8px) rotate(-13deg) scale(0.56, 0.66); }
+  42%  { transform: translateY(11px) rotate(-16deg) scale(0.46, 0.58); }
+  62%  { transform: translateY(11px) rotate(-15deg) scale(0.45, 0.57); }
+  74%  { transform: translateY(9px) rotate(-12deg) scale(0.54, 0.64); }
+  87%  { transform: translateY(4px) rotate(-5deg) scale(0.82, 0.86); }
+  95%  { transform: translateY(1px) rotate(1deg) scale(0.98, 0.99); }
+  100% { transform: translateY(0) rotate(0deg) scale(1, 1); }
+}
+
+/* Lying down pivots on his middle, not his feet. About the feet he swung out
+   sideways like a felled tree and landed with his head off in the grass;
+   about the centre he simply tips over onto the ground where he stood. */
+.mSleep .mood {
+  transform-origin: 380px 330px;
+  animation: mSleep 3000ms cubic-bezier(0.45, 0.05, 0.35, 1);
+}
+@keyframes mSleep {
+  0%   { transform: translateY(0) rotate(0deg); }
+  7%   { transform: translateY(-4px) rotate(4deg); }
+  20%  { transform: translateY(6px) rotate(-38deg); }
+  30%  { transform: translateY(14px) rotate(-76deg); }
+  36%  { transform: translateY(16px) rotate(-84deg); }
+  40%  { transform: translateY(16px) rotate(-82deg); }
+  72%  { transform: translateY(16px) rotate(-83deg); }
+  80%  { transform: translateY(12px) rotate(-58deg); }
+  89%  { transform: translateY(6px) rotate(-22deg); }
+  95%  { transform: translateY(-3px) rotate(5deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
+/* While a mood plays, the ambient lean stands down so they don't compete. */
+/* The shadow reads the same pointer value as the lean, so standing only the
+   lean down left the shadow offset and squashed under a centred bear for the
+   whole of every mood. */
+.busy .lean,
+.busy .shadow {
+  transition: transform 300ms ease;
+  transform: none;
+}
+
+/* ---- per-mood overlays ---- */
+.fx { opacity: 0; pointer-events: none; }
+
+.mRage .fxSteam { animation: steam 700ms ease-out 3; }
+@keyframes steam {
+  0%   { opacity: 0.9; transform: translateY(0) scale(0.6); }
+  100% { opacity: 0; transform: translateY(-58px) scale(1.5); }
+}
+.fxSteam { transform-box: view-box; transform-origin: 380px 300px; }
+
+/* No blush overlay for the shy mood. He is drawn with pink cheeks already, so
+   a second saturated pass landed just under his eyes and read as tears. The
+   shrink and the turn carry the mood on their own. */
+
+/* Held back until he is actually down — z's rising off a bear still on his
+   feet read as a bug rather than as sleep. */
+.fxZzz { opacity: 0; }
+/* All three have to finish inside the nap's own 3000ms — the last one used to
+   end at 3700 and was cut mid-rise when the class came off. */
+.mSleep .fxZzz { animation: zzz6 1400ms ease-out 1000ms; }
+.mSleep .fxZzz:nth-of-type(2) { animation-delay: 1300ms; }
+.mSleep .fxZzz:nth-of-type(3) { animation-delay: 1600ms; }
+@keyframes zzz6 {
+  0%   { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  30%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(44px, -68px) scale(1.2); }
+}
+/* Follows the glyphs, which moved to his other side when the nap was
+   rewritten; the pivot was left behind. */
+.fxZzz { transform-box: view-box; transform-origin: 252px 318px; }
+
+.mJump .fxDust, .mFat .fxDust { animation: dust 620ms ease-out; }
+@keyframes dust {
+  0%   { opacity: 0.8; transform: scaleX(0.4) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(2.1) scaleY(0.3); }
+}
+.fxDust { transform-box: view-box; transform-origin: 380px 452px; }
+
+.mSpin .fxSwoosh { animation: swoosh 1000ms ease-out; }
+@keyframes swoosh {
+  0%   { opacity: 0; stroke-dasharray: 0 400; }
+  25%  { opacity: 0.9; }
+  100% { opacity: 0; stroke-dasharray: 400 400; }
+}
+
+/* ---------------- the mood buttons ---------------- */
+.pad {
+  display: flex;
+  gap: clamp(0.4rem, 2vw, 0.9rem);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+
+.active :global(.disc) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 0 var(--ink);
+}
+
+.bubble {
+  top: 6%;
+  left: 2%;
+}

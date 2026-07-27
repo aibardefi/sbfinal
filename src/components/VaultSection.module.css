@@ -1,0 +1,360 @@
+.middle {
+  place-items: end center;
+}
+
+.wrap {
+  position: relative;
+  /* Width drives the box and height follows the ratio. Deriving width from a
+     dvh-capped height instead made the machine 517px wide on a 390px phone. */
+  width: min(92vw, calc(min(54dvh, 490px) * 660 / 560));
+  aspect-ratio: 660 / 560;
+  display: grid;
+  place-items: center;
+}
+
+.svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.readout {
+  position: absolute;
+  top: 0;
+  left: 0;
+  text-align: left;
+  pointer-events: none;
+  z-index: 3;
+}
+.label {
+  font-size: clamp(0.72rem, 1.7vw, 0.8rem);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.value {
+  font-weight: 900;
+  font-size: clamp(1.5rem, 5vw, 2.8rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--sb);
+  -webkit-text-stroke: 0.055em var(--ink);
+}
+
+/* Anchored to the machine so it stays over his shoulder at every viewport. */
+.bubble {
+  top: 18%;
+  right: 0;
+  border-radius: 1.1rem 1.1rem 0.2rem 1.1rem;
+}
+
+/* The jolt when the padlock snaps. On the stage, not <body>, so it can't
+   fight the page's own scrolling. */
+/* Not stepped. steps(2, end) quantises progress to {0, 0.5}, so three of the
+   five stops below never rendered and the "shake" was a single shove and back. */
+.jolt {
+  animation: jolt 280ms ease-in-out 2;
+}
+@keyframes jolt {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-4px, 3px); }
+  50% { transform: translate(4px, -2px); }
+  75% { transform: translate(-2px, -3px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* ---------------- machine parts ---------------- */
+
+/* The layer that falls. Carries no position of its own — its parent does —
+   so its keyframes can be relative offsets without wiping the placement. */
+.drop {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+
+.feedcoin {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+
+/* A coin arriving in the chamber. */
+.inside {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  opacity: 0;
+  transform: scale(0.4);
+}
+.insideIn {
+  opacity: 1;
+  transform: none;
+  transition: opacity 200ms ease, transform 420ms var(--spring-big);
+}
+.bob {
+  animation: bob 2.4s ease-in-out infinite;
+}
+/* Stagger comes in per-coin from the markup: each .bob is now an only child of
+   its own wrapper, so nth-of-type would match every one of them. */
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+.leverArm {
+  /* Pivot on the mounting block in user units — percentages against fill-box
+     include the knob and put the hinge in the wrong place. */
+  transform-box: view-box;
+  transform-origin: 141px 249px;
+}
+
+/* Down and back, not down and parked. Stopping at -104deg left the handle
+   sticking straight out into empty space beside the machine, reading as a part
+   that had snapped off; and a lever you have to look at in its spent position
+   for the rest of the sequence never invites a second pull. It swings past
+   vertical, knocks against the stop, and returns. */
+.pulled .leverArm {
+  animation: leverPull 1300ms cubic-bezier(0.35, 0.1, 0.25, 1) both;
+}
+@keyframes leverPull {
+  0% { transform: rotate(0deg); }
+  20% { transform: rotate(-178deg); }
+  30% { transform: rotate(-168deg); }
+  40% { transform: rotate(-175deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.leverKnob {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+.glint {
+  animation: glint 3.6s ease-in-out infinite;
+}
+@keyframes glint {
+  0%, 82%, 100% { transform: scale(1); }
+  88% { transform: scale(1.13); }
+  94% { transform: scale(0.97); }
+}
+
+/* Hinged on the right, in user units — the barrel hinges are drawn at x=428,
+   so the door has to pivot there and not on its own left edge. */
+.door {
+  transform-box: view-box;
+  transform-origin: 438px 274px;
+  transform: scaleX(0);
+  /* A safe door has mass: slow to break away, fast across, then it arrives
+     rather than stopping dead. */
+  transition: transform 598ms cubic-bezier(0.5, 0.05, 0.25, 1) 1.45s;
+}
+.pulled .door {
+  transform: scaleX(1);
+}
+
+/* The lock itself. Each bolt lives inside the door and shoots left into the
+   frame, one after another — four visible stages instead of one padlock
+   appearing from nowhere. */
+.bolt {
+  transform-box: view-box;
+  transform: translateX(26px);
+  opacity: 0;
+  transition: transform 240ms cubic-bezier(0.3, 1.5, 0.5, 1)
+      calc(2s + var(--i) * 90ms),
+    opacity 90ms linear calc(2s + var(--i) * 90ms);
+}
+.pulled .bolt {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* Two full turns as the bolts go home. */
+.dial {
+  transform-box: view-box;
+  transform-origin: 392px 236px;
+  transition: transform 900ms cubic-bezier(0.35, 0, 0.2, 1) 2.05s;
+}
+.pulled .dial {
+  transform: rotate(720deg);
+}
+
+.handle {
+  transform-box: view-box;
+  transform-origin: 392px 318px;
+  transition: transform 620ms cubic-bezier(0.4, 0, 0.3, 1) 2.1s;
+}
+.pulled .handle {
+  transform: rotate(120deg);
+}
+
+.shell {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+.pulled .shell {
+  animation: shudder 806ms ease-in-out 2.4s;
+}
+/* Decaying, not three even swings — a machine that has taken a hit settles. */
+@keyframes shudder {
+  0% { transform: rotate(0deg); }
+  15% { transform: rotate(1.5deg); }
+  33% { transform: rotate(-1.1deg); }
+  52% { transform: rotate(0.65deg); }
+  71% { transform: rotate(-0.34deg); }
+  87% { transform: rotate(0.14deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.chuteGlow {
+  opacity: 0;
+  transition: opacity 338ms ease 2.7s;
+}
+.pulled .chuteGlow {
+  opacity: 1;
+}
+
+/* Both labels start dim — nothing is locked and nothing has paid out yet. */
+.labelLocked {
+  opacity: 0.3;
+  transition: opacity 338ms ease 2.2s;
+}
+.pulled .labelLocked {
+  opacity: 1;
+}
+.labelOut {
+  opacity: 0.3;
+  transition: opacity 338ms ease 2.7s;
+}
+.pulled .labelOut {
+  opacity: 1;
+}
+
+.lever {
+  cursor: pointer;
+}
+/* Clicking an SVG group focuses it, and the plain :focus ring drew a box round
+   the whole lever that stayed there for the rest of the sequence. Keyboard
+   users still get a ring. */
+.lever:focus {
+  outline: none;
+}
+.lever:focus-visible {
+  outline: 3px solid var(--stamp);
+  outline-offset: 4px;
+}
+
+/* Nudges toward the lever while it is still worth pulling, then gets out of
+   the way once the machine has fired. */
+.pullLabel {
+  transform-box: view-box;
+  transform-origin: 141px 76px;
+  animation: pullNudge 2.2s ease-in-out infinite;
+  transition: opacity 240ms ease;
+}
+@keyframes pullNudge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+.pulled .pullLabel {
+  opacity: 0;
+  animation: none;
+}
+/* Back once the machine has finished paying out. The lever accepts a second
+   pull from that beat onward, so leaving the label hidden left a live control
+   with nothing saying so. */
+.pulled.settled .pullLabel {
+  opacity: 1;
+  animation: pullNudge 2.2s ease-in-out infinite;
+}
+
+/* His own feet, not the machine's bottom edge — the shared .breathe origin
+   resolves against the whole viewBox here and would swing him sideways. */
+.mascotBreath {
+  transform-box: view-box;
+  transform-origin: 552px 504px;
+  animation: mascotBreath 4.2s ease-in-out infinite;
+}
+@keyframes mascotBreath {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.014, 0.986); }
+}
+
+/* ---------------- spend buttons ---------------- */
+
+.spend {
+  display: flex;
+  gap: clamp(0.5rem, 2.4vw, 1rem);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.spendBtn {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  display: grid;
+  justify-items: center;
+  gap: 0.3rem;
+  opacity: 0;
+  transform: translateY(10px) scale(0.85);
+  pointer-events: none;
+  transition: opacity 260ms ease, transform 380ms var(--spring);
+}
+.spendShow .spendBtn {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.spendShow .spendBtn:nth-child(2) { transition-delay: 90ms; }
+.spendShow .spendBtn:nth-child(3) { transition-delay: 180ms; }
+
+.spendDisc {
+  width: clamp(54px, 12.5vw, 70px);
+  height: clamp(54px, 12.5vw, 70px);
+  border-radius: 50%;
+  border: 4px solid var(--ink);
+  background: var(--cream);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 0 0 var(--ink);
+  transition: transform 130ms ease, box-shadow 130ms ease;
+}
+.spendDisc svg {
+  width: 60%;
+  height: 60%;
+  display: block;
+}
+.spendBtn:hover:not(:disabled) .spendDisc {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 0 0 var(--ink);
+}
+.spendBtn:active:not(:disabled) .spendDisc {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 0 var(--ink);
+}
+.spendBtn:focus-visible {
+  outline: none;
+}
+.spendBtn:focus-visible .spendDisc {
+  outline: 3px solid var(--stamp);
+  outline-offset: 3px;
+}
+.spendBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.spendLabel {
+  font-weight: 900;
+  font-size: clamp(0.72rem, 1.6vw, 0.76rem);
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+/* The sheen only means anything once there is a door to catch the light. */
+.glassSheen {
+  opacity: 0;
+  transition: opacity 420ms ease 1.9s;
+}
+.pulled .glassSheen {
+  opacity: 1;
+}

@@ -1,0 +1,116 @@
+.middle {
+  place-items: end center;
+}
+
+.mascot {
+  /* Width drives the box and the artwork's ratio supplies the height. Capping
+     max-height here instead does nothing: the <img> inside is width:100% /
+     height:auto, so it sizes off this box's width and overflows the cap. The
+     cap leaves headroom for the ~1.3x he reaches when fully fed. */
+  width: min(84vw, calc(min(41dvh, 400px) * 795 / 1008));
+  height: auto;
+  min-height: 0;
+  display: block;
+  transform-origin: 50% 100%;
+  transition: transform 460ms var(--spring);
+  filter: drop-shadow(0 12px 10px var(--shadow));
+}
+
+/* A tall narrow screen has vertical room the laptop cap does not use, and the
+   leftover reads as a hole above his head rather than as breathing space. */
+@media (max-width: 640px) {
+  .mascot {
+    width: min(84vw, calc(min(52dvh, 460px) * 795 / 1008));
+  }
+}
+
+.readout {
+  position: absolute;
+  top: 0;
+  right: 0;
+  text-align: right;
+  pointer-events: none;
+  z-index: 2;
+}
+.label {
+  font-size: clamp(0.72rem, 1.7vw, 0.8rem);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.value {
+  font-weight: 900;
+  font-size: clamp(1.6rem, 5.5vw, 3rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--sb);
+  -webkit-text-stroke: 0.055em var(--ink);
+}
+
+.bubble {
+  top: 2%;
+  left: 0;
+}
+
+.rail {
+  display: flex;
+  gap: clamp(0.5rem, 2.4vw, 1.1rem);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Six across does not fit a phone, and left to wrap on its own it broke 4 + 2
+   — a ragged row that reads as two of the coins being an afterthought. Three
+   and three is the only even split of six that fits. */
+@media (max-width: 560px) {
+  .rail {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(0.35rem, 2vw, 0.8rem) clamp(0.25rem, 1.5vw, 0.6rem);
+    width: min(100%, 22rem);
+    margin-inline: auto;
+  }
+}
+
+.reset {
+  background: none;
+  border: 0;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 0.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+.reset.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.reset:focus-visible {
+  outline: 3px solid var(--stamp);
+  outline-offset: 2px;
+}
+
+/* The coin in flight. Two nested elements so each axis gets its own easing. */
+.flyer {
+  position: fixed;
+  border-radius: 50%;
+  border: 4px solid var(--ink);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+  pointer-events: none;
+}
+.flyer svg {
+  width: 58%;
+  height: 58%;
+  display: block;
+}

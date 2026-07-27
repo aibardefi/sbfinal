@@ -1,0 +1,206 @@
+.middle {
+  place-items: center;
+}
+
+.final {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: clamp(0.7rem, 2.4vh, 1.5rem);
+  width: min(100%, 720px);
+}
+
+/* ---- he tips his hat once, on arrival ---- */
+.hero {
+  position: relative;
+  width: clamp(104px, 20vw, 178px);
+}
+
+.tip {
+  transform-origin: 50% 92%;
+  animation: tiphat 1500ms var(--spring) 260ms both;
+}
+@keyframes tiphat {
+  0%   { transform: translateY(26px) rotate(0deg) scale(0.9); opacity: 0; }
+  35%  { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  55%  { transform: translateY(0) rotate(-7deg) scale(1); }
+  75%  { transform: translateY(0) rotate(5deg) scale(1); }
+  100% { transform: translateY(0) rotate(0deg) scale(1); }
+}
+
+.tipImg {
+  width: 100%;
+  display: block;
+}
+
+/* Gold coins puff up behind him as he lands */
+.spark {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  opacity: 0;
+  animation: spark 1200ms var(--swift) 420ms both;
+}
+.spark:nth-of-type(2) { animation-delay: 500ms; }
+.spark:nth-of-type(3) { animation-delay: 580ms; }
+.spark:nth-of-type(4) { animation-delay: 660ms; }
+@keyframes spark {
+  0%   { opacity: 0; transform: translate(0, 0) scale(0.3) rotate(0deg); }
+  30%  { opacity: 1; }
+  100% { opacity: 0;
+         transform: translate(var(--dx), var(--dy)) scale(1) rotate(200deg); }
+}
+
+/* ---- the three doors out ---- */
+.links {
+  display: flex;
+  gap: clamp(0.5rem, 2vw, 0.9rem);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.1rem;
+  border: 4px solid var(--ink);
+  border-radius: 99px;
+  background: var(--cream);
+  color: var(--ink);
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: clamp(0.72rem, 1.7vw, 0.78rem);
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  box-shadow: 0 5px 0 0 var(--ink);
+  opacity: 0;
+  transform: translateY(16px);
+  animation: linkin 620ms var(--spring) both;
+  transition: transform 130ms ease, box-shadow 130ms ease, background 160ms ease;
+  cursor: pointer;
+}
+.link:nth-child(1) { animation-delay: 900ms; }
+.link:nth-child(2) { animation-delay: 1000ms; }
+.link:nth-child(3) { animation-delay: 1100ms; }
+@keyframes linkin {
+  to { opacity: 1; transform: none; }
+}
+.link:hover { transform: translateY(-3px); box-shadow: 0 8px 0 0 var(--ink); }
+.link:active { transform: translateY(2px); box-shadow: 0 1px 0 0 var(--ink); }
+.link:focus-visible { outline: 3px solid var(--stamp); outline-offset: 3px; }
+.link svg { width: 1.15em; height: 1.15em; display: block; flex: none; }
+
+.primary {
+  background: var(--sb);
+  padding: 0.8rem 1.5rem;
+  font-size: clamp(0.72rem, 1.9vw, 0.88rem);
+}
+.primary:hover { background: var(--sb-lit); }
+
+/* ---- contract address: coming soon, copyable when it lands ---- */
+.ca {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  opacity: 0;
+  animation: linkin 620ms var(--spring) 1250ms both;
+}
+
+.caLabel {
+  font-size: clamp(0.72rem, 1.7vw, 0.8rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.caBox {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.7rem 0.55rem 0.95rem;
+  border: 3px dashed var(--ink);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-weight: 900;
+  font-size: clamp(0.72rem, 1.7vw, 0.76rem);
+  letter-spacing: 0.04em;
+  cursor: not-allowed;
+}
+.caBox:focus-visible { outline: 3px solid var(--stamp); outline-offset: 3px; }
+
+.caBoxReady {
+  border-style: solid;
+  background: var(--cream);
+  color: var(--ink);
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.copy { width: 1em; height: 1em; opacity: 0.45; }
+.caBoxReady .copy { opacity: 1; }
+
+.caWrap {
+  position: relative;
+  display: grid;
+  justify-items: center;
+}
+
+.copied {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translate(-50%, 6px);
+  padding: 0.3rem 0.55rem;
+  background: var(--ink);
+  color: var(--cream);
+  border-radius: 8px;
+  font-size: clamp(0.72rem, 1.7vw, 0.8rem);
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 320ms var(--spring);
+  white-space: nowrap;
+}
+.showCopied .copied {
+  opacity: 1;
+  transform: translate(-50%, -8px);
+}
+
+.signoff {
+  font-size: clamp(0.72rem, 1.9vw, 0.8rem);
+  font-weight: 700;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* The cue is a real control on the last screen — it is the only way back up
+   without scrolling the whole page by hand. */
+.toTop {
+  background: none;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+  padding: 0.4rem 0.6rem;
+}
+.toTop:focus-visible {
+  outline: 3px solid var(--stamp);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* One per row on a narrow screen. Three pills of unequal width wrapped 2-then-1
+   and read as ragged rather than composed. */
+@media (max-width: 430px) {
+  .links {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .link {
+    justify-content: center;
+  }
+}

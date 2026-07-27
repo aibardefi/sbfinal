@@ -1,0 +1,96 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  # So the domain can be switched on without an empty commit.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # The one place the address lives.
+      #
+      # Set the repository variable SITE_DOMAIN to sbmeme.xyz once the domain is
+      # registered and DNS points here. Until then it is empty, and the site
+      # serves from the project page path instead — which is why the base path
+      # below is conditional: a Next export hardcodes every asset URL at build
+      # time, so it has to know whether it is living at a domain root or one
+      # directory down.
+      DOMAIN: ${{ vars.SITE_DOMAIN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # enablement: true turns Pages on for the repository on the first run, so
+      # a fresh repo needs nobody to visit Settings before the site exists.
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Work out where this build will live
+        id: where
+        run: |
+          set -euo pipefail
+          if [ -n "$DOMAIN" ]; then
+            echo "base=" >> "$GITHUB_OUTPUT"
+            echo "url=https://$DOMAIN" >> "$GITHUB_OUTPUT"
+          else
+            echo "base=/${GITHUB_REPOSITORY#*/}" >> "$GITHUB_OUTPUT"
+            echo "url=https://${GITHUB_REPOSITORY%%/*}.github.io/${GITHUB_REPOSITORY#*/}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ steps.where.outputs.base }}
+          # Absolute, for og:image — a crawler has nothing to resolve a relative
+          # image URL against, and produces no preview card at all.
+          NEXT_PUBLIC_SITE_URL: ${{ steps.where.outputs.url }}
+
+      - name: Finish the artifact
+        run: |
+          set -euo pipefail
+          test -f out/index.html
+          # Pages serves what it is given verbatim; Jekyll would otherwise strip
+          # the _next directory the export depends on.
+          touch out/.nojekyll
+          # With Actions-based deployment the custom domain is read from the
+          # artifact, not from repository settings — a build without this file
+          # silently unsets it.
+          if [ -n "$DOMAIN" ]; then
+            echo "$DOMAIN" > out/CNAME
+            echo "publishing at $DOMAIN"
+          else
+            echo "publishing at the project page path (SITE_DOMAIN unset)"
+          fi
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

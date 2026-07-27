@@ -1,0 +1,241 @@
+.mid {
+  place-items: center;
+  /* Two in-flow rows now — the label and the deck. The payoff and the mascot
+     are absolutely positioned, so they stay out of this. */
+  align-content: center;
+  gap: clamp(0.4rem, 1.4vh, 0.9rem);
+}
+
+/* The instruction sits with the cards rather than in the bottom status line,
+   matching the lever and the clock on the screens either side of this one. */
+.deckLabel {
+  font-weight: 900;
+  font-size: clamp(0.72rem, 2vw, 0.9rem);
+  color: var(--stamp);
+  min-height: 1.2em;
+  text-align: center;
+  animation: deckNudge 2.2s ease-in-out infinite;
+}
+@keyframes deckNudge {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+/* ---------- card deck ---------- */
+
+.deck {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(0.6rem, 2.4vw, 1.6rem);
+  width: min(100%, 900px);
+  perspective: 1400px;
+}
+
+.card {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform 720ms var(--spring);
+  transform: rotateY(0deg) translateZ(0);
+}
+.card:focus-visible {
+  outline: none;
+}
+.card:focus-visible .faceFront,
+.card:focus-visible .faceBack {
+  outline: 3px solid var(--stamp);
+  outline-offset: 3px;
+}
+.card.flipped {
+  transform: rotateY(180deg);
+}
+/* Short of edge-on deliberately: at exactly 90deg, backface-visibility hides
+   both faces and the lift stage is a blank gap in the middle of the flip. */
+.card.lift {
+  transform: rotateY(74deg) translateZ(40px) scale(1.06);
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border: 5px solid var(--ink);
+  border-radius: 18px;
+  display: grid;
+  overflow: hidden;
+  box-shadow: 0 6px 0 0 var(--ink);
+}
+
+.faceFront {
+  background: var(--cream);
+  grid-template-rows: 1fr auto;
+  place-items: center;
+  padding: 8% 8% 6%;
+  gap: 4%;
+}
+
+.faceBack {
+  background: var(--disc-bg);
+  transform: rotateY(180deg);
+  place-items: center;
+  padding: 10%;
+}
+
+.cardArt {
+  width: 74%;
+  height: auto;
+  display: block;
+}
+.cardArt svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.cardJob {
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: clamp(0.72rem, 1.5vw, 0.8rem);
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: var(--ink);
+  line-height: 1.15;
+}
+
+.punch {
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: clamp(0.72rem, 1.7vw, 1rem);
+  line-height: 1.12;
+  text-align: center;
+  color: var(--cream);
+  text-wrap: balance;
+  opacity: 0;
+  transform: translateY(8px) scale(0.94);
+  transition: opacity 220ms ease 360ms,
+    transform 420ms var(--spring-big) 360ms;
+}
+.card.flipped .punch {
+  opacity: 1;
+  transform: none;
+}
+
+.pip {
+  position: absolute;
+  top: 6%;
+  left: 8%;
+  font-weight: 900;
+  font-size: clamp(0.72rem, 1.3vw, 0.82rem);
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+}
+
+/* ---------- idle breathing ---------- */
+
+.card:not(.flipped):not(.lift) {
+  animation: cardIdle 5.4s ease-in-out infinite;
+}
+.card:nth-child(2):not(.flipped):not(.lift) {
+  animation-delay: -1.8s;
+}
+.card:nth-child(3):not(.flipped):not(.lift) {
+  animation-delay: -3.6s;
+}
+@keyframes cardIdle {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(-0.5deg);
+  }
+}
+
+.card:hover:not(.flipped):not(.lift) {
+  animation: none;
+  transform: translateY(-9px) rotate(-1deg);
+}
+
+/* ---------- tally ---------- */
+
+.tally {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2.5px solid var(--ink);
+  background: transparent;
+  transition: background 240ms ease, transform 320ms var(--spring-big);
+}
+.dotOn {
+  background: var(--stamp);
+  transform: scale(1.25);
+}
+
+/* ---------- payoff ---------- */
+
+.payoff {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: max-content;
+  max-width: 100%;
+  text-align: center;
+  font-size: clamp(1rem, 3.4vw, 2.1rem);
+  opacity: 0;
+  transform: translate(-50%, 14px) rotate(-1.5deg) scale(0.9);
+  transition: opacity 300ms ease, transform 560ms var(--spring-big);
+  pointer-events: none;
+  z-index: 6;
+}
+.allDone .payoff {
+  opacity: 1;
+  transform: translate(-50%, 0) rotate(-1.5deg);
+}
+
+/* ---------- mascot walk-on ---------- */
+
+.mascotWrap {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: clamp(64px, 11vw, 124px);
+  opacity: 0;
+  transform: translateY(34px) rotate(6deg);
+  transition: opacity 300ms ease, transform 640ms var(--spring);
+  pointer-events: none;
+  z-index: 5;
+}
+.allDone .mascotWrap {
+  opacity: 1;
+  transform: none;
+}
+
+@media (max-width: 620px) {
+  .deck {
+    gap: 0.45rem;
+  }
+  /* Three across is a hard width budget on a phone, so the only room left to
+     grow into is downward — at 3/4 they come out barely bigger than a stamp. */
+  .card {
+    aspect-ratio: 1 / 1.72;
+  }
+  .mascotWrap {
+    bottom: 26%;
+    width: 60px;
+  }
+}

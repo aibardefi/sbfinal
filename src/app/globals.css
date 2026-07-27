@@ -1,0 +1,411 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Shared identity for the whole site.
+
+   Only genuinely global things live here: colour tokens, the motion
+   vocabulary, the sticker display type, and the page shell every section
+   reuses. Everything specific to one section lives in that section's CSS
+   module, which Next scopes for us — the seven sections were authored
+   independently and all reuse names like .stage and .middle, so scoping is
+   what keeps them from colliding.
+   --------------------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------------------
+   The palette, as eight roles.
+
+   It used to be thirty-five values: seven tokens defined and never used, a
+   handful of near-misses (two teals four points apart, two creams, two drop
+   shadows for one effect) and eleven colours invented purely to tint buttons.
+   Every colour now has one job, and anything decorative borrows from the coin
+   roster in coins.tsx rather than inventing a new hue.
+
+   Read this as: ground and ink are the page, cyan and orange are type, lime is
+   money, gold is hardware, violet is glass, red is whatever wants touching.
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* --- ground: the page, unchanged on all seven screens, per the brief. The
+         second value only feeds the radial wash at the foot of each screen and
+         is kept close, because a full shade below it painted a visible grey
+         band rather than the hint of ground it was meant to be. */
+  --ground: #efece5;
+  --ground-2: #e7e3da;
+
+  /* --- ink: every outline and every word. */
+  --ink: #12110c;
+  --text: var(--ink);
+  --text-dim: #4f4b42;
+  /* Paper, not ground: speech bubbles, dials, card faces — things that sit on
+     the page rather than being it. */
+  --cream: #f7edd9;
+
+  /* --- type: the blue carries the headline, the orange picks out the one word
+         the line is about. Both sampled off the cyan-on-orange reference.
+         The names are historical — every section's markup says .sticker /
+         .hot, so renaming would touch seven modules to say nothing new. */
+  --navy: #29cdec;
+  --tangerine: #f37208;
+
+  /* --- value: $SB and nothing else. Counters, $SB coins, the launch button.
+         Gold is for things that are merely metal. --sb-lit exists because the
+         launch button's hover was a loose #8ddc0a with no token behind it. */
+  --sb: #7cc606;
+  --sb-lit: #8ddc0a;
+  --sb-deep: #5d9504;
+
+  /* --- metal: all hardware. Dial, throw bolts, barrel hinges, handle, chute,
+         brass corners, the clock's alarm. */
+  --gold: #d9a020;
+  --gold-deep: #b07d14;
+
+  /* --- glass: every transparent volume. Translucent on purpose — the point of
+         both safes is that you can see your memes sitting inside them. */
+  --glass: #8b5cf6;
+  --glass-lit: #c4a8ff;
+  --glass-deep: #4c2a9e;
+
+  /* --- alert: only ever the thing asking to be touched right now. */
+  --stamp: #c4392b;
+
+  /* --- scene colours. Two rooms still need their own objects: the hopper on
+         the machine screen and the bedroom on screen four. Everything else
+         that used to live here — slate, bank green, brown fur — is gone. */
+  --funnel: #2fa8a0;
+  --funnel-dark: #1f7d77;
+  --machine-dark: #2c374a;
+  --furniture: #e07a5f;
+  --furniture-dark: #c25a41;
+  --linen: #5b7b93;
+
+  /* One shadow for one effect. There were two, at different colours and
+     alphas, doing the same job in globals and on the hero. */
+  --shadow: rgba(18, 17, 12, 0.16);
+
+  --display: var(--font-sb), ui-sans-serif, system-ui, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+
+  /* Motion vocabulary. Every section pulls easings from here so the whole
+     site accelerates and settles the same way. */
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --spring-big: cubic-bezier(0.34, 1.8, 0.5, 1);
+  --swift: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
+  /* Each section is a screen, so scrolling settles on whole screens. Mandatory
+     rather than proximity: proximity leaves you parked between two screens
+     whenever you stop mid-gesture, which is what makes the page feel like it
+     is fighting you instead of flowing. */
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--text);
+  font-family: var(--display);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --------------------------------------------------------------------------
+   The shell every section reuses.
+   -------------------------------------------------------------------------- */
+
+.stage {
+  position: relative;
+  min-height: 100dvh;
+  scroll-snap-align: start;
+  /* Never let a snap land halfway through a screen. */
+  scroll-snap-stop: always;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: clamp(0.35rem, 1.4vh, 0.9rem);
+  padding: max(1.1rem, env(safe-area-inset-top)) 1.25rem
+    max(1.1rem, env(safe-area-inset-bottom));
+  background: radial-gradient(
+    120% 55% at 50% 100%,
+    var(--ground-2) 0%,
+    transparent 60%
+  );
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.eyebrow,
+.count {
+  font-size: clamp(0.72rem, 1.7vw, 0.82rem);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.count {
+  font-variant-numeric: tabular-nums;
+  /* "01 / 07" is one token — squeezed by the eyebrow it was breaking after the
+     slash and pushing the page number onto its own line. */
+  white-space: nowrap;
+}
+
+/* At 360px the masthead ran to two lines and took the counter with it. The
+   tracking is what costs the width here, not the letters. */
+@media (max-width: 400px) {
+  .eyebrow,
+  .count {
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+  }
+}
+
+.head {
+  text-align: center;
+  /* The headline used to sit almost against the eyebrow row, which read as the
+     type having been pushed off the top of the screen. Viewport-relative so
+     short phone screens do not spend their scarce height on it. */
+  padding-top: clamp(0.5rem, 3vh, 2rem);
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 4.2vw, 3.2rem);
+}
+
+/* Sticker-outline display type: cream fill over a fat black stroke, lifted
+   from the mascot's own outline art. */
+.sticker {
+  position: relative;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 0.92;
+  text-wrap: balance;
+  color: var(--navy);
+  -webkit-text-stroke: 0.14em var(--ink);
+  paint-order: stroke fill;
+}
+
+/* The accented word inside a headline. Stroke and paint order are inherited,
+   so only the fill changes and the ink outline stays continuous across the
+   join. */
+.hot {
+  color: var(--tangerine);
+}
+
+.middle {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+}
+
+.bottom {
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+}
+
+.hint {
+  font-size: clamp(0.82rem, 2.2vw, 0.95rem);
+  font-weight: 700;
+  color: var(--text-dim);
+  min-height: 1.2em;
+  text-align: center;
+}
+
+/* Speech bubble, tail bottom-left by default. */
+.bubble {
+  position: absolute;
+  padding: 0.55rem 0.8rem;
+  background: var(--cream);
+  color: var(--ink);
+  border: 4px solid var(--ink);
+  border-radius: 1.1rem 1.1rem 1.1rem 0.2rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: clamp(0.72rem, 2.2vw, 0.95rem);
+  line-height: 1.05;
+  max-width: 13ch;
+  opacity: 0;
+  z-index: 4;
+  transform: translateY(6px) rotate(-3deg) scale(0.9);
+  transition: opacity 200ms ease, transform 320ms var(--spring);
+}
+.bubble.show {
+  opacity: 1;
+  transform: translateY(0) rotate(-3deg) scale(1);
+}
+
+/* Sticker button: a disc with a label underneath. */
+.sbtn {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  display: grid;
+  justify-items: center;
+  gap: 0.3rem;
+}
+.disc {
+  width: clamp(54px, 12.5vw, 70px);
+  height: clamp(54px, 12.5vw, 70px);
+  border-radius: 50%;
+  border: 4px solid var(--ink);
+  background: var(--disc-bg, var(--cream));
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 0 0 var(--ink);
+  transition: transform 130ms ease, box-shadow 130ms ease;
+}
+.disc svg {
+  width: 60%;
+  height: 60%;
+  display: block;
+}
+.sbtn:hover:not(:disabled) .disc {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 0 0 var(--ink);
+}
+.sbtn:active:not(:disabled) .disc {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 0 var(--ink);
+}
+.sbtn:focus-visible {
+  outline: none;
+}
+.sbtn:focus-visible .disc {
+  outline: 3px solid var(--stamp);
+  outline-offset: 3px;
+}
+.sbtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.slabel {
+  font-weight: 900;
+  font-size: clamp(0.72rem, 1.6vw, 0.74rem);
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.cue {
+  font-size: clamp(0.72rem, 1.7vw, 0.78rem);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.cue span {
+  display: inline-block;
+  animation: nudge 1.9s ease-in-out infinite;
+}
+@keyframes nudge {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Ambient life. Nothing should ever be perfectly still — a static mascot
+   reads as a placed image, a breathing one reads as a character. Deliberately
+   tiny: ~1% scale over four seconds.
+   -------------------------------------------------------------------------- */
+
+.breathe {
+  /* fill-box, so "50% 100%" means the bottom-centre of *this element*. Under
+     view-box the percentages resolve against the whole viewBox instead —
+     measured at (190, 360) on the playground, which is off his body entirely,
+     so he slid sideways and sank through the ground on every breath rather
+     than breathing where he stood. */
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: breathe 4.2s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.012, 0.988);
+  }
+}
+
+.grounded {
+  filter: drop-shadow(0 10px 8px var(--shadow));
+}
+
+/* --------------------------------------------------------------------------
+   Section entrance. Four elements on one shared curve, each overlapping the
+   last by about half its duration — that overlap is what reads as authored
+   rather than as a page load.
+   -------------------------------------------------------------------------- */
+
+@keyframes entUp {
+  from {
+    opacity: 0;
+    transform: translateY(var(--ent-y, 14px)) scale(var(--ent-s, 1));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes entFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.ent {
+  opacity: 0;
+}
+.entGo {
+  animation: entUp 760ms cubic-bezier(0.22, 0.9, 0.3, 1) both;
+}
+.entGoFade {
+  animation: entFade 620ms ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    /* Delays have to go too, not just durations. Several entrances animate from
+       opacity 0 with `both` fill, so leaving the delay in place kept the exit
+       screen's buttons blank for 1.1s and its address for 1.25s — reduced
+       motion was hiding content rather than revealing it. */
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+  .ent {
+    opacity: 1;
+  }
+  html {
+    scroll-snap-type: none;
+    /* Otherwise every anchor and programmatic scroll still animates. */
+    scroll-behavior: auto;
+  }
+}

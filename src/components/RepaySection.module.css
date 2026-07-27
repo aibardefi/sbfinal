@@ -1,0 +1,175 @@
+.middle {
+  place-items: end center;
+}
+
+.wrap {
+  position: relative;
+  width: min(92vw, calc(min(56dvh, 480px) * 620 / 520));
+  aspect-ratio: 620 / 520;
+}
+.svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.readout {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.label {
+  font-size: clamp(0.72rem, 1.7vw, 0.8rem);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.value {
+  font-weight: 900;
+  font-size: clamp(1.5rem, 5vw, 2.8rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--sb);
+  -webkit-text-stroke: 0.055em var(--ink);
+}
+
+.bubble {
+  top: 12%;
+  right: 0;
+  border-radius: 1.1rem 1.1rem 0.2rem 1.1rem;
+}
+
+/* ---------------- the repay slider ---------------- */
+
+.slider {
+  position: relative;
+  width: min(88vw, 460px);
+  height: 62px;
+  touch-action: none;
+}
+.track {
+  position: absolute;
+  inset: 12px 0;
+  border: 4px solid var(--ink);
+  border-radius: 99px;
+  /* Ink, not a navy of its own: --vault was a one-off #2e3a4f used nowhere
+     else on the site. */
+  background: var(--ink);
+  overflow: hidden;
+}
+/* Gold fills the track from the left as you repay. */
+.fill {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background: linear-gradient(90deg, var(--sb-deep), var(--sb));
+  border-radius: 99px 0 0 99px;
+}
+.knob {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  border: 5px solid var(--ink);
+  background: var(--sb);
+  box-shadow: 0 4px 0 0 var(--ink);
+  cursor: grab;
+  display: grid;
+  place-items: center;
+  /* Only springs back when released short — never during a drag. */
+  transition: left 0ms;
+}
+.snap {
+  transition: left 420ms var(--spring);
+}
+.knob:active {
+  cursor: grabbing;
+}
+.knob svg {
+  width: 54%;
+  height: 54%;
+}
+.slider:focus-visible .knob {
+  outline: 3px solid var(--stamp);
+  outline-offset: 3px;
+}
+.done .knob {
+  background: var(--cream);
+}
+
+/* ---------------- vault internals ---------------- */
+
+.shackle {
+  transform-box: view-box;
+  transform-origin: 310px 250px;
+}
+.shackleGone {
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+/* Each door swings on its own outer edge, where the brass is drawn. With no
+   origin they defaulted to the centre of the vault — the shared inner edge —
+   so both sagged away from their own hinges. */
+.doorL {
+  transform-box: view-box;
+  transform-origin: 122px 261px;
+}
+.doorR {
+  transform-box: view-box;
+  transform-origin: 498px 261px;
+}
+.lockBody {
+  transform-box: view-box;
+  transform-origin: 310px 280px;
+}
+.freed .lockBody {
+  animation: lockdrop 620ms cubic-bezier(0.5, 0, 0.9, 0.5) forwards;
+}
+@keyframes lockdrop {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(170px) rotate(28deg); opacity: 0; }
+}
+
+.memeOut {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+
+@keyframes shakeNo {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-7px); }
+  75% { transform: translateX(7px); }
+}
+.nope {
+  animation: shakeNo 280ms ease-in-out;
+}
+
+
+/* ---------- the glass safe ---------- */
+
+/* Hinged on the right, where the barrel hinges are drawn. Slow to break away
+   and then decisive, so the door has weight. */
+.safeDoor {
+  transform-box: view-box;
+  transform-origin: 432px 248px;
+  transition: transform 900ms cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+/* Both of these are handed their angle inline, straight off the drag — no
+   transition on the dial, or it would lag behind your thumb. */
+.rdial {
+  transform-box: view-box;
+  transform-origin: 362px 186px;
+}
+
+.rhandle {
+  transform-box: view-box;
+  transform-origin: 362px 306px;
+  transition: transform 620ms cubic-bezier(0.34, 1.5, 0.6, 1);
+}
