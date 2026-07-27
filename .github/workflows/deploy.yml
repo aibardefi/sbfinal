@@ -26,10 +26,15 @@ jobs:
       # down — hence the conditional base path below, and hence this being an
       # input rather than an assumption.
       #
-      # The repository variable SITE_DOMAIN overrides it, which is what makes a
-      # move to a different address a settings change rather than a commit; set
-      # it empty to publish at the project page path again.
-      DOMAIN: ${{ vars.SITE_DOMAIN || 'cykablyat.vip' }}
+      # Empty on purpose. cykablyat.vip is served by Cloudflare Pages now, and
+      # two hosts must not both claim one domain: whatever this workflow writes
+      # into CNAME is what GitHub believes its custom domain to be, so leaving
+      # the real address here would have GitHub redirecting to a domain it does
+      # not serve.
+      #
+      # This deployment stays alive at the project page path as a fallback. Set
+      # the repository variable SITE_DOMAIN to take the domain back.
+      DOMAIN: ${{ vars.SITE_DOMAIN }}
 
     steps:
       - uses: actions/checkout@v4

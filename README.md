@@ -17,11 +17,12 @@ npm run dev
 
 Pushing to `main` builds a static export and publishes it to GitHub Pages.
 
-The site lives at **https://cykablyat.vip**, set in one place: `DOMAIN` at the
-top of `.github/workflows/deploy.yml`. The repository variable `SITE_DOMAIN`
-overrides it (Settings → Secrets and variables → Actions → Variables), so moving
-to another address is a settings change rather than a commit; setting it empty
-publishes at the project page path instead.
+**https://cykablyat.vip is served by Cloudflare Pages**, built from this repo.
+The GitHub Pages workflow still runs and publishes to the project page path as a
+fallback, but it no longer claims the domain — `DOMAIN` at the top of
+`.github/workflows/deploy.yml` is empty, and whatever it holds is what GitHub
+believes its custom domain to be. Set the repository variable `SITE_DOMAIN` to
+hand the domain back to GitHub.
 
 Whichever it resolves to, the build branches on it: with a domain it drops the
 base path, uses absolute URLs and writes a `CNAME` into the artifact; without
