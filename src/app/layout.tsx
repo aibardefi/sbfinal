@@ -19,7 +19,7 @@ const sb = Geist({
  */
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ??
-  "https://sbmeme.xyz";
+  "https://cykablyat.vip";
 
 const TITLE = "$CB — Capybara Blyatovich";
 const DESCRIPTION =

@@ -21,13 +21,15 @@ jobs:
     env:
       # The one place the address lives.
       #
-      # Set the repository variable SITE_DOMAIN to sbmeme.xyz once the domain is
-      # registered and DNS points here. Until then it is empty, and the site
-      # serves from the project page path instead — which is why the base path
-      # below is conditional: a Next export hardcodes every asset URL at build
-      # time, so it has to know whether it is living at a domain root or one
-      # directory down.
-      DOMAIN: ${{ vars.SITE_DOMAIN }}
+      # A Next export hardcodes every asset URL at build time, so the build has
+      # to be told whether the site is living at a domain root or one directory
+      # down — hence the conditional base path below, and hence this being an
+      # input rather than an assumption.
+      #
+      # The repository variable SITE_DOMAIN overrides it, which is what makes a
+      # move to a different address a settings change rather than a commit; set
+      # it empty to publish at the project page path again.
+      DOMAIN: ${{ vars.SITE_DOMAIN || 'cykablyat.vip' }}
 
     steps:
       - uses: actions/checkout@v4
