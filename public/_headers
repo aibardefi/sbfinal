@@ -1,0 +1,34 @@
+# Response headers, read by Cloudflare Pages at deploy time.
+#
+# This file is the whole reason Cloudflare is worth moving to. GitHub Pages
+# cannot send custom headers at all, so on that host the policy has to live in a
+# <meta> tag — which works for most of it, but browsers ignore frame-ancestors
+# there. That one is the anti-clickjacking rule, and it is the rule that matters
+# the day this site has a signing UI attached to it.
+#
+# Harmless on GitHub Pages: it just serves the file as static text and ignores
+# it. The <meta> policy in layout.tsx stays either way, so the site is never
+# unprotected on whichever host is answering.
+
+/*
+  # Same policy as the meta tag, plus the two directives a meta tag cannot carry.
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
+  # X-Frame-Options is redundant next to frame-ancestors for a current browser,
+  # and is here for the older ones that only understand this.
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  # Nothing here needs a camera, a location or a payment handler. Denying them
+  # outright means an injected script cannot ask on the site's behalf.
+  Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  # Two years, subdomains included, so app.cykablyat.vip is covered before it
+  # exists. Deliberately not "preload": that submits the domain to a list baked
+  # into browsers, and getting off it takes months.
+  Strict-Transport-Security: max-age=63072000; includeSubDomains
+
+# Every filename under here is content-hashed by the build, so a change ships a
+# new name rather than a new version of an old name. Nothing needs revalidating.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable

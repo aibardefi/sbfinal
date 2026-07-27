@@ -42,3 +42,23 @@ Content-Security-Policy in `src/app/layout.tsx` keeps it that way.
 
 The real risk to a site like this is not its code — it is the domain. Keep
 registrar 2FA and the transfer lock on.
+
+## Moving to Cloudflare Pages
+
+The repo is ready for it; the dashboard part is manual.
+
+Workers & Pages -> Create -> Pages -> Connect to Git -> `aibardefi/sbfinal`, then:
+
+| Field | Value |
+| --- | --- |
+| Framework preset | Next.js (Static HTML Export) |
+| Build command | `npm run build` |
+| Build output directory | `out` |
+
+`public/_headers` is then read at deploy time and becomes real response headers —
+including `frame-ancestors`, which a `<meta>` CSP cannot carry and which is the
+one that stops a signing UI being framed. GitHub Pages ignores the file.
+
+Once Cloudflare serves the domain, stop this workflow claiming it: set the
+repository variable `SITE_DOMAIN` to an empty value so GitHub Pages publishes at
+the project page path instead, or disable the workflow.
