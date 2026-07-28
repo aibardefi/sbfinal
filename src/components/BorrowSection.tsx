@@ -187,6 +187,13 @@ export function BorrowSection() {
           </div>
         </div>
 
+        {/* Directly under the diagram it describes, not pinned to the floor of
+            the screen — down there the gap made it read as a footnote about the
+            page rather than a caption on the picture. */}
+        <div className={`hint ${s.say}`}>
+          Spend it however you like. <b>Repay $CB and your memecoin unlocks.</b>
+        </div>
+
         {/* Rides above everything, positioned from the measurement above. */}
         <div className={s.flyer} ref={flyerRef} aria-hidden="true">
           <svg viewBox="-50 -50 100 100">
@@ -199,9 +206,6 @@ export function BorrowSection() {
       </div>
 
       <div className="bottom">
-        <div className={`hint ${s.say}`}>
-          Spend it however you like. <b>Repay it and your memecoin unlocks.</b>
-        </div>
         <div className="cue">
           <span>Scroll ↓</span>
         </div>

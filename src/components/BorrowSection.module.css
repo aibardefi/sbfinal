@@ -2,8 +2,20 @@
   overflow: hidden;
 }
 
+/* Picture and caption are one centred block. The global .middle is a grid with
+   place-items:center, which would stack both children into the same cell —
+   same rule the treasury screen uses for the same reason. */
 .middle {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* Deliberately a large, viewport-relative gap. The whole block stays
+     centred, so growing the gap lifts the picture and drops the caption
+     together — which lands the sentence about halfway between the safe and the
+     foot of the screen rather than tucked under it. */
+  gap: clamp(1.25rem, 22vh, 16rem);
 }
 
 /* Three units and two arrows, always on one line. The left-to-right reading is
