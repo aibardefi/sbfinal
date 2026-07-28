@@ -239,6 +239,13 @@
   font-weight: 700;
   color: var(--text-dim);
   text-align: center;
+  /* Holds its line while empty. It starts with nothing to say, and without
+     this the tokenomics above it would jump the moment it did. The
+     line-height is pinned to the same 1.2 so the reserved box and the filled
+     box are exactly equal — leaving it to the default made the filled state
+     ~2px taller, which is a small jump but still a jump. */
+  line-height: 1.2;
+  min-height: 1.2em;
 }
 
 /* The cue is a real control on the last screen — it is the only way back up

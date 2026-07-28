@@ -24,7 +24,9 @@ export function JoinSection() {
   const ref = useEntrance<HTMLElement>();
   const flashTimer = useRef<number | undefined>(undefined);
 
-  const [signoff, setSignoff] = useState("He is expecting you.");
+  /* Starts empty. The line exists to explain why a click did nothing — it has
+     nothing to say until you click something. */
+  const [signoff, setSignoff] = useState("");
   const [toastText, setToastText] = useState("Copied");
   const [showToast, setShowToast] = useState(false);
   const [run, setRun] = useState(0);
@@ -34,7 +36,7 @@ export function JoinSection() {
   // him greet you again instead of being frozen mid-welcome on every return.
   const rearm = useCallback(() => {
     setRun((n) => n + 1);
-    setSignoff("He is expecting you.");
+    setSignoff("");
     setShowToast(false);
     window.clearTimeout(flashTimer.current);
   }, []);
