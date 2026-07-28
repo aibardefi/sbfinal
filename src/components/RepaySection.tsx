@@ -352,36 +352,28 @@ export function RepaySection() {
               <rect x="358" y="426" width="72" height="26" rx="10" fill="var(--ink)" />
             </g>
 
-            {/* Dial and handle: solid brass over the glass, and the only parts
-                that answer the drag directly. */}
+            {/* The handle: solid brass over the glass, and the part that
+                answers the drag directly. The combination dial above it used to
+                take the drag while the handle only flipped at the end; with the
+                dial gone the wheel does both, which is closer to what unlocking
+                a safe actually looks like. Two full turns off your thumb, then a
+                further 120° as it comes free. */}
             <g
-              className={s.rdial}
-              stroke="var(--ink)"
-              strokeWidth="6"
-              style={{ transform: `rotate(${(-p * 720).toFixed(1)}deg)` }}
-            >
-              <circle cx="362" cy="186" r="38" fill="var(--gold)" />
-              <circle cx="362" cy="186" r="21" fill="var(--gold-deep)" />
-              <path d="M362 186 L362 155" strokeWidth="7" />
-            </g>
-            <g stroke="var(--ink)" strokeWidth="4" strokeLinecap="round">
-              <path d="M362 140 v9 M362 223 v9 M316 186 h9 M399 186 h9" />
-            </g>
-
-            <g
-              className={s.rhandle}
+              className={`${s.rhandle} ${freed ? s.rhandleFreed : ""}`}
               stroke="var(--ink)"
               strokeWidth="5"
-              style={{ transform: freed ? "rotate(-120deg)" : "rotate(0deg)" }}
+              style={{
+                transform: `rotate(${(-p * 720 + (freed ? -120 : 0)).toFixed(1)}deg)`,
+              }}
             >
-              <circle cx="362" cy="306" r="30" fill="none" />
+              <circle cx="362" cy="248" r="30" fill="none" />
               <path
-                d="M362 306 V276 M362 306 L388 321 M362 306 L336 321"
+                d="M362 248 V218 M362 248 L388 263 M362 248 L336 263"
                 stroke="var(--gold)"
                 strokeWidth="10"
                 strokeLinecap="round"
               />
-              <circle cx="362" cy="306" r="11" fill="var(--gold)" />
+              <circle cx="362" cy="248" r="11" fill="var(--gold)" />
             </g>
 
             <image

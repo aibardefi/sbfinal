@@ -161,15 +161,15 @@
   transition: transform 900ms cubic-bezier(0.3, 0.8, 0.3, 1);
 }
 
-/* Both of these are handed their angle inline, straight off the drag — no
-   transition on the dial, or it would lag behind your thumb. */
-.rdial {
-  transform-box: view-box;
-  transform-origin: 362px 186px;
-}
-
+/* Handed its angle inline, straight off the drag — deliberately no transition
+   while you are dragging, or the wheel would lag behind your thumb. */
 .rhandle {
   transform-box: view-box;
-  transform-origin: 362px 306px;
+  transform-origin: 362px 248px;
+}
+
+/* The spring is added only for the last 120°, once the safe is open and the
+   angle stops tracking a finger. */
+.rhandleFreed {
   transition: transform 620ms cubic-bezier(0.34, 1.5, 0.6, 1);
 }

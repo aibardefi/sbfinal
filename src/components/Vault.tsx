@@ -119,25 +119,20 @@ export function Vault({
         <rect x="358" y="426" width="72" height="26" rx="10" fill="var(--ink)" />
       </g>
 
-      {/* Dial and handle sit above the door so they stay solid brass over
-          glass — that contrast is what makes it a safe and not a display case. */}
-      <g stroke="var(--ink)" strokeWidth="6">
-        <circle cx="362" cy="186" r="38" fill="var(--gold)" />
-        <circle cx="362" cy="186" r="21" fill="var(--gold-deep)" />
-        <path d="M362 186 L362 155" strokeWidth="7" />
-      </g>
-      <g stroke="var(--ink)" strokeWidth="4" strokeLinecap="round">
-        <path d="M362 140 v9 M362 223 v9 M316 186 h9 M399 186 h9" />
-      </g>
+      {/* The handle, solid brass over glass — that contrast is what makes this
+          a safe and not a display case. There was a combination dial above it
+          too; it said the same thing twice, so the spoked wheel does the job
+          alone and the door is quieter for it. Centred on the door now that it
+          is the only piece of hardware on the face. */}
       <g stroke="var(--ink)" strokeWidth="5">
-        <circle cx="362" cy="306" r="30" fill="none" />
+        <circle cx="362" cy="248" r="30" fill="none" />
         <path
-          d="M362 306 V276 M362 306 L388 321 M362 306 L336 321"
+          d="M362 248 V218 M362 248 L388 263 M362 248 L336 263"
           stroke="var(--gold)"
           strokeWidth="10"
           strokeLinecap="round"
         />
-        <circle cx="362" cy="306" r="11" fill="var(--gold)" />
+        <circle cx="362" cy="248" r="11" fill="var(--gold)" />
       </g>
     </svg>
   );

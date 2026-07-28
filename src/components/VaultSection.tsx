@@ -545,26 +545,20 @@ export function VaultSection() {
                 />
               </g>
 
-              {/* Dial and handle sit above the door so they stay solid while it
-                  moves — brass on a glass door is the whole idea. */}
-              <g className={s.dial}>
-                <circle cx="392" cy="236" r="34" fill="var(--gold)" />
-                <circle cx="392" cy="236" r="19" fill="var(--gold-deep)" />
-                <path d="M392 236 L392 208" strokeWidth="7" />
-              </g>
-              <g stroke="var(--ink)" strokeWidth="4" strokeLinecap="round">
-                <path d="M392 194 v8 M392 270 v8 M350 236 h8 M426 236 h8" />
-              </g>
-
+              {/* The handle sits above the door so it stays solid while the
+                  door moves — brass on glass is the whole idea. The
+                  combination dial that used to sit above it is gone: two round
+                  brass fittings spinning at the same moment said the same
+                  thing twice. Centred on the door as the only one left. */}
               <g className={s.handle}>
-                <circle cx="392" cy="318" r="26" fill="none" strokeWidth="5" />
+                <circle cx="392" cy="274" r="26" fill="none" strokeWidth="5" />
                 <path
-                  d="M392 318 V292 M392 318 L414 331 M392 318 L370 331"
+                  d="M392 274 V248 M392 274 L414 287 M392 274 L370 287"
                   stroke="var(--gold)"
                   strokeWidth="9"
                   strokeLinecap="round"
                 />
-                <circle cx="392" cy="318" r="10" fill="var(--gold)" strokeWidth="5" />
+                <circle cx="392" cy="274" r="10" fill="var(--gold)" strokeWidth="5" />
               </g>
 
               {/* Four throw bolts. They live inside the door and shoot left into
