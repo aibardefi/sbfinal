@@ -1,0 +1,294 @@
+.stage {
+  overflow: hidden;
+}
+
+.middle {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.7rem, 2.4vh, 1.3rem);
+}
+
+.tflow {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(1.4rem, 9vw, 6rem);
+}
+
+.unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  flex: none;
+}
+
+.cap {
+  font-size: clamp(0.72rem, 1.5vw, 0.8rem);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.4;
+  opacity: 0;
+}
+
+.cap b {
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.safewrap {
+  width: clamp(120px, 26vw, 250px);
+  opacity: 0;
+}
+
+.vault {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* The share, written on the door of the thing that holds it. */
+.vpct {
+  font-size: 74px;
+  font-weight: 900;
+  fill: var(--au);
+  letter-spacing: -2px;
+}
+
+/* Three borrowers overlapping into one silhouette — enough to read as a crowd,
+   few enough to stay small. The middle one is larger so the group has a shape
+   rather than being three identical heads in a row. */
+.crowd {
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(-0.4rem, -1vw, -0.2rem);
+  opacity: 0;
+}
+
+.capy {
+  width: clamp(46px, 8.4vw, 86px);
+  height: auto;
+  display: block;
+}
+
+.crowd .capy:nth-child(2) {
+  width: clamp(54px, 9.8vw, 100px);
+  z-index: 2;
+}
+
+.stampline {
+  display: grid;
+  place-items: center;
+}
+
+/* Sits directly under its picture. Pinned to the bottom of the screen it read
+   as a footnote about the page rather than a label on the treasury. */
+.never {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  border: 4px solid var(--ink);
+  border-radius: 12px;
+  background: var(--stamp);
+  color: #fff;
+  padding: 0.5rem 0.9rem;
+  font-size: clamp(0.72rem, 1.4vw, 0.8rem);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  box-shadow: 0 5px 0 var(--ink);
+  text-align: center;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* The mechanism, not the claim — smaller, so the two are not read as one
+   sentence. */
+.never small {
+  font-size: clamp(0.72rem, 1.3vw, 0.76rem);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  opacity: 0.92;
+  text-transform: none;
+}
+
+.say {
+  opacity: 0;
+  max-width: 56ch;
+}
+
+/* A coin on the orbit. Positioned from the measurement, then moved only by
+   transform so it stays on its own compositor layer for the whole lap. */
+.gc {
+  position: absolute;
+  width: clamp(22px, 3.4vw, 34px);
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.gc svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* --- the timeline ------------------------------------------------------- */
+
+.play .safewrap {
+  animation: pop 0.5s var(--spring) 0.1s forwards;
+}
+.play .crowd {
+  animation: pop 0.5s var(--spring) 0.35s forwards;
+}
+.play .c1 {
+  animation: rise 0.45s var(--swift) 0.4s forwards;
+}
+.play .c2 {
+  animation: rise 0.45s var(--swift) 0.6s forwards;
+}
+.play .never {
+  animation: stamp 0.55s var(--spring) 1.2s forwards;
+}
+.play .say {
+  animation: rise 0.5s var(--swift) 1.6s forwards;
+}
+
+/* Linear over the whole lap, with the easing inside the keyframes. Easing the
+   lap as a whole made the coin decelerate to a stop, vanish and re-accelerate
+   from the same point — one visible hitch per revolution. */
+/* The stagger is an inline animation-delay per coin, so the three share one
+   rule rather than needing a class each. */
+.play .gc {
+  animation: cbloop 4.2s linear infinite;
+}
+
+@keyframes cbloop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.55);
+    animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(
+        calc(-50% + var(--ox) * 0.22),
+        calc(-50% + var(--oy) * 0.22 - 26px)
+      )
+      scale(1);
+  }
+  30% {
+    transform: translate(
+        calc(-50% + var(--ox) * 0.62),
+        calc(-50% + var(--oy) * 0.62 - 34px)
+      )
+      scale(1);
+  }
+  44% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--ox)), calc(-50% + var(--oy))) scale(1);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+  }
+  50% {
+    transform: translate(calc(-50% + var(--ox)), calc(-50% + var(--oy)))
+      scale(0.88);
+  }
+  56% {
+    transform: translate(calc(-50% + var(--ox)), calc(-50% + var(--oy))) scale(1);
+  }
+  72% {
+    transform: translate(
+        calc(-50% + var(--ox) * 0.6),
+        calc(-50% + var(--oy) * 0.6 + 32px)
+      )
+      scale(1);
+  }
+  88% {
+    opacity: 1;
+    transform: translate(
+        calc(-50% + var(--ox) * 0.18),
+        calc(-50% + var(--oy) * 0.18 + 20px)
+      )
+      scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.55);
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(9px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Rotation and scale only. The centring is done by the grid wrapper, because a
+   transform that also had to hold the element centred kept losing the offset
+   and stranding the stamp off-axis. */
+@keyframes stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.5) rotate(-8deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.94) rotate(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-2deg);
+  }
+}
+
+@media (max-width: 480px) {
+  .tflow {
+    gap: 1rem;
+  }
+  /* Two borrowers still read as a crowd; three at this width read as mush. */
+  .crowd .capy:nth-child(3) {
+    display: none;
+  }
+  .never {
+    padding: 0.45rem 0.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .safewrap,
+  .crowd,
+  .cap,
+  .never,
+  .say {
+    opacity: 1;
+    animation: none !important;
+  }
+  .gc {
+    display: none;
+  }
+}

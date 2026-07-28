@@ -105,7 +105,7 @@ export function WakeSection() {
       ref={ref}
     >
       <div className="top" data-ent="fade" data-ent-delay="0">
-        <div className="count">04 / 07</div>
+        <div className="count">06 / 09</div>
       </div>
 
       <div className="head" data-ent="up" data-ent-delay="90">

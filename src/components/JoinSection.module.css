@@ -97,6 +97,69 @@
 }
 .primary:hover { background: var(--cb-lit); }
 
+/* ---- tokenomics: a spec sheet, not a set of cards ----
+   Boxing four short facts made them look like four separate claims competing
+   for attention. Left label, right value, dotted leader between: the reader's
+   eye runs along the line instead of hopping between containers, and the two
+   "None" rows land with the weight they deserve. */
+.spec {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: min(100%, 322px);
+  margin: clamp(0.5rem, 2vh, 1rem) 0 0;
+  opacity: 0;
+  animation: linkin 620ms var(--spring) 1450ms both;
+}
+
+.specRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  font-size: clamp(0.78rem, 1.9vw, 0.95rem);
+}
+
+.slab {
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+  font-size: clamp(0.72rem, 1.35vw, 0.78rem);
+}
+
+.sdots {
+  flex: 1;
+  border-bottom: 3px dotted rgba(18, 17, 12, 0.26);
+  transform: translateY(-0.25em);
+}
+
+.sval {
+  margin: 0;
+  font-weight: 900;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Orange, not gold: gold had the lowest contrast of anything on the screen and
+   would introduce a fourth accent the site never uses in type. Orange is
+   already the rule for "the one thing this line is about". */
+.hot {
+  color: var(--tangerine);
+}
+
+/* Sized absolutely, not as an em of the value. The row is already at its own
+   clamp minimum on a phone, so a fraction of it landed under the reading
+   floor — and this is the qualifier that matters most on the line. */
+.sval small {
+  font-size: clamp(0.72rem, 1.5vw, 0.78rem);
+  font-weight: 900;
+  color: var(--stamp);
+  letter-spacing: 0.02em;
+}
+
 /* ---- contract address: coming soon, copyable when it lands ---- */
 .ca {
   display: grid;

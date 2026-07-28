@@ -11,6 +11,14 @@ import s from "./HeroSection.module.css";
 const MAX = 10;
 const PER = 4200; // $CB borrowed per coin
 
+/**
+ * Where the two calls to action point. Placeholders until the app and the pool
+ * are live — `handleCta` catches "#" so a visitor gets told rather than being
+ * bounced to the top of the page.
+ */
+const BUY_URL = "#";
+const BORROW_URL = "#";
+
 /** What he says, and when. Deadpan escalation. */
 const LINES: Record<number, string> = {
   1: "fine.",
@@ -156,6 +164,17 @@ export function HeroSection() {
     });
   };
 
+  /** A placeholder link should say so, not silently jump to the top. */
+  const handleCta = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>) => {
+      if (e.currentTarget.getAttribute("href") === "#") {
+        e.preventDefault();
+        say("soon.");
+      }
+    },
+    [say]
+  );
+
   const { sx, sy } = shape(fed);
   const full = fed >= MAX;
 
@@ -171,7 +190,22 @@ export function HeroSection() {
   return (
     <section className="stage" ref={ref}>
       <div className="top" data-ent="fade" data-ent-delay="0">
-        <div className="count">01 / 07</div>
+        <div className="count">01 / 09</div>
+        {/* The two things a visitor can actually do, on the one screen everyone
+            sees. Orange buys, blue borrows — the same two colours the headline
+            already uses for those two words. */}
+        <div className={s.topcta}>
+          <a className={`${s.cta} ${s.buy}`} href={BUY_URL} onClick={handleCta}>
+            Buy $CB
+          </a>
+          <a
+            className={`${s.cta} ${s.borrow}`}
+            href={BORROW_URL}
+            onClick={handleCta}
+          >
+            Borrow $CB
+          </a>
+        </div>
       </div>
 
       <div className="head" data-ent="up" data-ent-delay="90">

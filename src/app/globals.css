@@ -59,6 +59,12 @@
   --gold: #d9a020;
   --gold-deep: #b07d14;
 
+  /* --- bullion: the $CB coin's own face, and nothing else. Deliberately
+         brighter than the hardware brass above, because a $CB coin lying next
+         to a brass dial has to read as the money rather than as another part
+         of the safe. Flat: no gradient, no highlight, no dark rim. */
+  --au: #ffc61f;
+
   /* --- glass: every transparent volume. Translucent on purpose — the point of
          both safes is that you can see your memes sitting inside them. */
   --glass: #8b5cf6;

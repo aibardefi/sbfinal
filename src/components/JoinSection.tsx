@@ -111,7 +111,7 @@ export function JoinSection() {
   return (
     <section className="stage" ref={ref}>
       <div className="top" data-ent="fade" data-ent-delay="0">
-        <div className="count">07 / 07</div>
+        <div className="count">09 / 09</div>
       </div>
 
       <div className="head" data-ent="up" data-ent-delay="90">
@@ -224,6 +224,34 @@ export function JoinSection() {
               </button>
             </div>
           </div>
+
+          {/* No boxes, no cards: four lines with dotted leaders, the way a spec
+              sheet reads. The two "None" rows are the ones people actually scan
+              for, so they are given the same weight as the supply. */}
+          <dl className={s.spec}>
+            <div className={s.specRow}>
+              <dt className={s.slab}>Total supply</dt>
+              <span className={s.sdots} aria-hidden="true" />
+              <dd className={s.sval}>1,000,000,000</dd>
+            </div>
+            <div className={s.specRow}>
+              <dt className={s.slab}>Treasury</dt>
+              <span className={s.sdots} aria-hidden="true" />
+              <dd className={`${s.sval} ${s.hot}`}>
+                20% <small>never sold</small>
+              </dd>
+            </div>
+            <div className={s.specRow}>
+              <dt className={s.slab}>Presale</dt>
+              <span className={s.sdots} aria-hidden="true" />
+              <dd className={s.sval}>None</dd>
+            </div>
+            <div className={s.specRow}>
+              <dt className={s.slab}>Team allocation</dt>
+              <span className={s.sdots} aria-hidden="true" />
+              <dd className={s.sval}>None</dd>
+            </div>
+          </dl>
 
           <div className={s.signoff}>{signoff}</div>
         </div>

@@ -114,3 +114,65 @@
   height: 58%;
   display: block;
 }
+
+/* ---- the two calls to action ----
+   Orange buys, blue borrows: the same two accents the headline already gives
+   to "memes" and "the meme", so the buttons read as belonging to the sentence
+   above them rather than as chrome bolted on. */
+.topcta {
+  margin-left: auto;
+  display: flex;
+  gap: 0.45rem;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  border: 3px solid var(--ink);
+  border-radius: 99px;
+  padding: 0.4rem 0.8rem;
+  font-size: clamp(0.72rem, 1.35vw, 0.78rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--ink);
+  box-shadow: 0 4px 0 var(--ink);
+  white-space: nowrap;
+  transition: transform 120ms var(--swift), box-shadow 120ms var(--swift);
+}
+
+.cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 var(--ink);
+}
+
+.cta:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--ink);
+}
+
+.cta:focus-visible {
+  outline: 3px solid var(--tangerine);
+  outline-offset: 3px;
+}
+
+.buy {
+  background: var(--tangerine);
+}
+
+.borrow {
+  background: var(--navy);
+}
+
+/* Four fixed things on one line; on a phone every one of them was wrapping
+   mid-label. None are long enough to need to. */
+@media (max-width: 520px) {
+  .topcta {
+    gap: 0.35rem;
+  }
+  .cta {
+    padding: 0.34rem 0.5rem;
+    letter-spacing: 0;
+  }
+}
