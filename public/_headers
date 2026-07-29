@@ -32,3 +32,19 @@
 # new name rather than a new version of an old name. Nothing needs revalidating.
 /_next/static/*
   Cache-Control: public, max-age=31536000, immutable
+
+# The opposite case. Everything in public/ is copied verbatim by the static
+# export, so the mascot and the share card keep the same URL when the art
+# inside them changes — a repaint ships new bytes under an old name. Without a
+# rule here they fall through to whatever the CDN and the browser decide, and a
+# returning visitor can be handed last month's artwork indefinitely.
+#
+# max-age=0 with must-revalidate is not "do not cache": the bytes are still
+# held, the client just asks "changed?" first and gets a bodyless 304 when they
+# have not. One conditional request is the right price for art that must not go
+# stale on the day it is updated.
+/assets/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/og.png
+  Cache-Control: public, max-age=0, must-revalidate
