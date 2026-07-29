@@ -1,7 +1,10 @@
-# $SB — Capybara Blyatovich
+# $CB — Capybara Blyatovich
 
-Seven screens. One tired capybara who runs a lending desk: you lock memes with
+Nine screens. One tired capybara who runs a lending desk: you lock memes with
 him, he lends you the meme, you pay him back and he lets them out again.
+
+Working notes for agents and anyone new to the repo are in `CLAUDE.md` —
+including the checks that have caught real bugs here.
 
 A toy, deliberately. There is no LTV, no interest rate and no risk copy anywhere
 on it, because there is no protocol behind it to describe yet.
@@ -38,15 +41,16 @@ file silently unsets the domain.
 
 No network calls, no third-party scripts, no analytics, no cookies or storage,
 and no wallet or signing code of any kind. The only external hosts referenced
-anywhere in the built bundle are `x.com` and `t.me`, both plain links. A
-Content-Security-Policy in `src/app/layout.tsx` keeps it that way.
+anywhere in the built bundle are `x.com`, `t.me` and `app.cykablyat.vip`, all
+plain links. A Content-Security-Policy in `src/app/layout.tsx` keeps it that way.
 
 The real risk to a site like this is not its code — it is the domain. Keep
 registrar 2FA and the transfer lock on.
 
-## Moving to Cloudflare Pages
+## Cloudflare Pages — how it was set up
 
-The repo is ready for it; the dashboard part is manual.
+Done; recorded because the dashboard part is manual and would otherwise have to
+be rediscovered.
 
 Workers & Pages -> Create -> Pages -> Connect to Git -> `aibardefi/sbfinal`, then:
 

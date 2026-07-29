@@ -1,0 +1,68 @@
+# Working on this repo
+
+Nine full-screen sections, one per idea, scroll-snapped. Next 16 static export
+(`output: "export"`), CSS Modules per section, design tokens in `globals.css`.
+
+**Pushing to `main` is deploying.** Cloudflare Pages watches this repo and
+rebuilds `cykablyat.vip` in 2–3 minutes. There is no separate publish step. To
+let someone look before it goes live, push a branch — Pages builds every
+non-production branch to its own URL and leaves the domain alone.
+
+## Where things are
+
+| | |
+| --- | --- |
+| Screen order | `src/app/page.tsx` — counters (`03 / 09`) live in each component |
+| Shared coins | `src/components/coins.tsx` — never redraw one, import it |
+| Shared safe | `src/components/Vault.tsx` — used by screens 02 and 05 |
+| Entrance / replay | `src/lib/useEntrance.ts`, `useReplay.ts`, `useAutoRearm.ts` |
+| Response headers | `public/_headers` — Cloudflare reads this at deploy |
+| Device audit | 22 viewports from the client's spec; see "Checks" below |
+
+## Checks that have caught real bugs here
+
+Each of these is a mistake that actually shipped or nearly shipped in this repo.
+They are cheap; run them.
+
+**Look at it. A clean build proves nothing.** `next build` was green while the
+travelling coin landed *below* the safe, the "20%" wore a fat black outline it
+inherited from a parent `<g stroke>`, and the mascot had a pale halo on dark
+backgrounds. All three were invisible to tooling and obvious in a screenshot.
+
+**Run the check that would fail.** Testing for semi-transparent pixels "proved"
+there was no halo — the halo was fully-opaque pale pixels. `grep -c` counts
+lines, and minified CSS is one line, so it reported 1 font-face out of 6. If a
+check passes first time, ask what it would have to see to fail.
+
+**One asset is usually several files.** The hat text lived in the mascot, the OG
+card *and* the favicon. The favicon is a crop of his head and is easy to forget.
+
+**Measure anything spatial the client describes in words.** "In the middle"
+became a measured fraction (0.5 = midway) tested across three viewport heights,
+rather than a gap tuned until it looked right on one screen.
+
+**Deleting decoration can delete function.** The combination dial was ornament
+on three safes and the part that answered the drag on the repay screen.
+
+**`git fetch` before editing.** Other sessions push here. A push was rejected
+after another agent changed the same two files; merging kept both.
+
+**Shipped ≠ seen.** Everything in `public/` keeps its filename when its contents
+change, so caches serve stale art. `_headers` now sets `must-revalidate` on
+`/assets/*` and `/og.png`. Cloudflare's *Browser Cache TTL* must stay on
+**Respect Existing Headers** or it overrides that.
+
+**When something "doesn't work", find the test that halves the problem before
+applying any fix.** `…/assets/kapibara.webp?v=2` is a URL no cache can hold, so
+it proves server-vs-cache in five seconds. That test was reached after a
+Cloudflare purge and a settings change — wrong order, and it cost an hour.
+
+**Say what you did not verify.** `cykablyat.vip` is unreachable from the agent
+sandbox (proxy 403). Local checks are not live checks; report the difference.
+
+## Facts that are settled
+
+- 1,000,000,000 $CB · fair launch · no presale · no team allocation
+- Treasury holds 20%, stated on screen 05 as contract-locked
+- Copy says "memecoin", never a specific ticker. Artwork may show real coins.
+- Robinhood Chain memecoins only
