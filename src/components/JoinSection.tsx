@@ -14,7 +14,7 @@ const CONTRACT: string | null = null;
  * in handleLink still compiles for anything not yet live.
  */
 const X_URL = "https://x.com/cykablyatvip";
-const TELEGRAM_URL = "https://t.me/sbmemetoken";
+const TELEGRAM_URL = "https://t.me/cykablyatvip";
 /** The lending app. Same tab — it is ours, not somewhere off-site. */
 const APP_URL = "https://app.cykablyat.vip";
 
