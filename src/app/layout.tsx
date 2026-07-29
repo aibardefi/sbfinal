@@ -50,6 +50,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    // Attributes the share card to the account, so a link posted by anyone
+    // carries "@cykablyatvip" under it rather than a bare domain.
+    site: "@cykablyatvip",
+    creator: "@cykablyatvip",
     title: TITLE,
     description: DESCRIPTION,
     images: ["/og.png"],

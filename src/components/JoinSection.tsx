@@ -13,7 +13,7 @@ const CONTRACT: string | null = null;
  * change when a link moves, and typed as string so the "#" placeholder branch
  * in handleLink still compiles for anything not yet live.
  */
-const X_URL = "https://x.com/sbmemecoin";
+const X_URL = "https://x.com/cykablyatvip";
 const TELEGRAM_URL = "https://t.me/sbmemetoken";
 
 function shorten(a: string) {
