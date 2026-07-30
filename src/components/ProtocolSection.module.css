@@ -105,6 +105,19 @@
   box-shadow: 0 18px 40px -20px rgb(0 0 0 / 0.35);
 }
 
+/* A note for whoever tries to size the positions list against this card.
+
+   `.stage` is `min-height: 100dvh`, not `height`, so when its content is tall
+   the grid is content-sized and the `1fr` middle row grows with it. A percentage
+   `max-height` on this card therefore resolves against a track that has already
+   stretched to fit, and clamps nothing — measured, not assumed: six positions
+   pushed the card to 1096px inside an 813px viewport and it still reported
+   itself as "within" its own grid area. Since every section is
+   `scroll-snap-stop: always`, that bottom is somewhere nobody can scroll to.
+
+   `minmax(0, 1fr)` on the track does not rescue it either, for the same reason.
+   The list is capped in `dvh` instead — see Positions.module.css. */
+
 .rowLabel {
   display: block;
   font-size: 0.68rem;

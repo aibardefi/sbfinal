@@ -12,12 +12,37 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  max-height: min(50dvh, 26rem);
+  /* The list is capped against the viewport, minus the chrome above and below
+     it. Not a percentage: `.stage` is `min-height: 100dvh`, so its middle row
+     grows with its content and a percentage clamps nothing (the note in
+     ProtocolSection.module.css has the measurement).
+
+     The subtrahend is measured, not guessed. Available height for this list, on
+     the built page, at width 1000:
+
+         viewport  1200  1000   900   800   700   600 | 550   500   460   400
+         available  894   697   605   526   432   337 | 382   343   304   247
+         viewport −  306   303   295   274   268   263 | 168   157   156   153
+
+     310 clears the worst of the upper regime with a few pixels to spare. Below
+     580px the short-screen tiers shrink the headline, the card padding and the
+     footer, and the chrome drops by about 100px — which is why the two tiers
+     below exist rather than one number stretched across the whole range.
+
+     The old cap was `min(50dvh, 26rem)`. The 26rem arm bound at 416px on any
+     window taller than about 830px, which is what made two loans scroll with
+     nearly 200px of unused space beneath them. */
+  max-height: calc(100dvh - 310px);
   overflow-y: auto;
-  /* Reserves the scrollbar's width whether or not it is showing, so a row does
-     not sit under it and the list does not jump sideways when a third position
-     tips it into scrolling. Replaces a hand-guessed padding-right. */
-  scrollbar-gutter: stable;
+  /* No `scrollbar-gutter: stable` here. It reserves the scrollbar's width
+     whether or not one is showing, which stops the list jumping sideways the
+     first time it overflows — but with the cap above sized to the screen, the
+     list only overflows at four or five loans. So the gutter bought a rare,
+     one-off shift and charged 16px of dead space on the right of every row, on
+     every visit, for it. The rows sat left of centre inside the card and the
+     asymmetry was the most visible thing on the tab.
+
+     A transient nobody meets is worth less than an alignment everybody sees. */
 }
 
 /* Grid and flex children default to `min-width: auto`, which means they refuse
@@ -315,9 +340,17 @@
   }
 }
 
+/* The tier where the headline, the card padding and the footer all shrink, so
+   the chrome around the list drops by roughly 100px and it can have that back. */
+@media (max-height: 580px) {
+  .list {
+    max-height: calc(100dvh - 175px);
+  }
+}
+
 @media (max-height: 500px) {
   .list {
-    max-height: 40dvh;
+    max-height: calc(100dvh - 165px);
     gap: 0.4rem;
   }
   .row {

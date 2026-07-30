@@ -2,6 +2,18 @@
   padding: 0.9rem 0 1.35rem;
 }
 
+/* A ruler in a position row is a picture, not a control.
+
+   The 0.9rem above exists to clear the interactive track's 38px grab area — see
+   `.live`, which hangs 14px of padding outside a 10px bar — and a read-only
+   ruler has no grab area to clear. It was paying 14px a row for a hit target it
+   does not have, which is most of a row's worth of height across a list of
+   loans. The space below stays: that is where the 80 and 90 labels sit, and they
+   are the whole reason the ruler is legible. */
+.compact {
+  padding-top: 0.3rem;
+}
+
 .track {
   position: relative;
   height: 10px;

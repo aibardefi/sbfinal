@@ -27,11 +27,16 @@ export function Ruler({
   onChange,
   interactive = false,
   label,
+  compact = false,
 }: {
   ltv: number;
   onChange?: (next: number) => void;
   interactive?: boolean;
   label?: string;
+  /** Drops the clearance an interactive track needs for its grab area. For
+      read-only rulers stacked in a list, where that space is bought and never
+      used. Never set this on an interactive one. */
+  compact?: boolean;
 }) {
   const track = useRef<HTMLDivElement>(null);
   const health = healthOf(ltv);
@@ -69,7 +74,7 @@ export function Ruler({
   const pct = rulerPct(ltv);
 
   return (
-    <div className={s.wrap}>
+    <div className={`${s.wrap} ${compact && !interactive ? s.compact : ""}`}>
       <div
         ref={track}
         className={`${s.track} ${interactive ? s.live : ""}`}

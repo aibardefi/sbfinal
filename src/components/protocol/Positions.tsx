@@ -232,7 +232,7 @@ function PositionRow({
         </div>
       </dl>
 
-      <Ruler ltv={ltv} />
+      <Ruler ltv={ltv} compact />
 
       <div className={s.actions}>
         {ACTIONS.map((a) => (
