@@ -138,64 +138,50 @@ export function Vault({
   );
 }
 
-/** A roster coin as an SVG group, sized to sit inside the safe. */
-export function CoinInVault({
-  coin,
-  cx,
-  cy,
-  r,
-  className = "",
-}: {
-  coin: { bg: string; glyphOn: string; glyph: ReactNode };
-  cx: number;
-  cy: number;
-  r: number;
-  className?: string;
-}) {
-  return (
-    <g className={className} transform={`translate(${cx} ${cy})`}>
-      <circle r={r} fill={coin.bg} stroke="var(--ink)" strokeWidth="6" />
-      {/* Glyphs are authored in a 100-unit box, hence the scale against r. */}
-      <g
-        transform={`scale(${((r * 2 * 0.76) / 100).toFixed(3)}) translate(-50 -50)`}
-        fill={coin.glyphOn}
-      >
-        {coin.glyph}
-      </g>
-    </g>
-  );
-}
-
 /**
- * A $CB coin. One flat bright-gold fill inside the usual fat outline — no
- * gradient, no shine, no dark rim, per the client's call.
+ * A $CB coin.
+ *
+ * This is the same coin the machine pays out on screen 02, and it has to be —
+ * the treasury screen answers where that gold came from, so a different-looking
+ * disc reads as a different token. The payout builds its coins with
+ * `setAttribute` at a fixed r=17, so those numbers are the master and every
+ * measurement here is that drawing scaled: a 5-wide ink rim, `$CB` set at 12
+ * with the baseline 4.5 below centre and -0.4 of tracking.
  */
+const REF_R = 17;
+
 export function CbCoin({
   r = 26,
   cx = 0,
   cy = 0,
-  label = "$",
+  label = "$CB",
 }: {
   r?: number;
   cx?: number;
   cy?: number;
   label?: string;
 }) {
+  const k = r / REF_R;
   return (
     <g transform={`translate(${cx} ${cy})`}>
-      {/* stroke="none" explicitly: dropped inside the safe this sits within a
-          group carrying a 7px ink stroke, which it would otherwise inherit —
-          and the client's call was gold with no dark perimeter. */}
-      <circle r={r} fill="var(--au)" stroke="none" />
-      {/* The mark is a label on the coin, not the coin itself — at r*1.05 the
-          glyph filled the disc and the whole thing read as a dark blob rather
-          than as gold. */}
+      {/* The stroke is stated rather than inherited. `Vault` wraps `inside` in a
+          `<g stroke="none">` precisely so its contents cannot pick up the 7px ink
+          stroke the carcass is drawn with, which means a coin dropped in there
+          gets no rim at all unless it asks for one. */}
+      <circle
+        r={r}
+        fill="var(--gold)"
+        stroke="var(--ink)"
+        strokeWidth={(5 * k).toFixed(2)}
+      />
+      {/* The mark is a label on the coin, not the coin itself — filling the disc
+          with the glyph made the whole thing read as a dark blob. */}
       <text
-        y={r * 0.32}
-        fontSize={label.length > 1 ? r * 0.62 : r * 0.88}
+        y={(4.5 * k).toFixed(2)}
+        fontSize={(12 * k).toFixed(2)}
         fontWeight="900"
         textAnchor="middle"
-        letterSpacing={label.length > 1 ? "-1" : "0"}
+        letterSpacing={(-0.4 * k).toFixed(2)}
         fill="var(--ink)"
       >
         {label}

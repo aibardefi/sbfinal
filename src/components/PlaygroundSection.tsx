@@ -214,7 +214,7 @@ export function PlaygroundSection() {
   return (
     <section className={stageClasses} ref={ref}>
       <div className="top" data-ent="fade" data-ent-delay="0">
-        <div className="count">08 / 09</div>
+        <div className="count">07 / 08</div>
       </div>
 
       <div className="head" data-ent="up" data-ent-delay="90">

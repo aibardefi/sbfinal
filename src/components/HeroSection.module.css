@@ -1,27 +1,24 @@
 .middle {
-  place-items: end center;
+  place-items: center;
 }
 
 .mascot {
   /* Width drives the box and the artwork's ratio supplies the height. Capping
      max-height here instead does nothing: the <img> inside is width:100% /
-     height:auto, so it sizes off this box's width and overflows the cap. The
-     cap leaves headroom for the ~1.3x he reaches when fully fed. */
-  width: min(84vw, calc(min(41dvh, 400px) * 795 / 1008));
+     height:auto, so it sizes off this box's width and overflows the cap.
+
+     Sized off the shared `--art` budget rather than a cap of its own, so he lands
+     on the same height as the artwork on every other screen. The budget below is
+     smaller than the shared default because this screen also carries a six-coin
+     rail and a corner readout, and it is the finished block that has to match —
+     not the drawing in isolation. */
+  width: min(100%, calc(var(--art) * 795 / 1008));
   height: auto;
   min-height: 0;
   display: block;
   transform-origin: 50% 100%;
   transition: transform 460ms var(--spring);
   filter: drop-shadow(0 12px 10px var(--shadow));
-}
-
-/* A tall narrow screen has vertical room the laptop cap does not use, and the
-   leftover reads as a hole above his head rather than as breathing space. */
-@media (max-width: 640px) {
-  .mascot {
-    width: min(84vw, calc(min(52dvh, 460px) * 795 / 1008));
-  }
 }
 
 .readout {
@@ -41,7 +38,9 @@
 }
 .value {
   font-weight: 900;
-  font-size: clamp(1.6rem, 5.5vw, 3rem);
+  /* The same size as the readouts on the vault and repay screens, which repeat
+     this figure. A size larger here made the three read as different objects. */
+  font-size: clamp(1.5rem, 5vw, 2.8rem);
   line-height: 1;
   font-variant-numeric: tabular-nums;
   color: var(--cb);
@@ -174,5 +173,66 @@
   .cta {
     padding: 0.34rem 0.5rem;
     letter-spacing: 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   The budget, tier by tier. This screen's fixed rows are the heaviest on the
+   site — a six-coin rail plus a top bar of four buttons — so it gives up more
+   artwork height than the others as the viewport shortens.
+   -------------------------------------------------------------------------- */
+
+/* The Buy / Borrow pair in the top bar, laid out for a mouse. */
+@media (pointer: coarse) {
+  .cta {
+    min-height: 44px;
+    padding-block: 0.5rem;
+  }
+}
+
+@media (max-height: 870px) {
+  .middle {
+    --art: min(40dvh, 460px);
+  }
+}
+@media (max-height: 700px) {
+  .middle {
+    --art: min(34dvh, 460px);
+  }
+  .reset {
+    font-size: 0.68rem;
+    padding: 0.3rem 0.7rem;
+  }
+}
+
+/* A tall narrow screen has vertical room the laptop tier does not use, and the
+   leftover reads as a hole above his head rather than as breathing space. */
+@media (max-width: 560px) {
+  .middle {
+    --art: min(44dvh, 460px);
+  }
+  .reset {
+    font-size: 0.68rem;
+    padding: 0.3rem 0.7rem;
+  }
+}
+
+/* The readout is pinned to a corner of this row, which works while there is
+   space around the artwork. On a short screen the row is only as tall as the
+   artwork itself, so "$CB EATEN" printed across his hat. It joins the flow as
+   one line instead, and the artwork gives up the height that costs. */
+@media (max-width: 560px) and (max-height: 700px) {
+  .middle {
+    --art: min(31dvh, 460px);
+  }
+  .readout {
+    position: static;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    justify-self: end;
+  }
+  .value {
+    font-size: 1.3rem;
   }
 }

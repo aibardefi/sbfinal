@@ -1,15 +1,65 @@
+/* This screen carries a readout, a speech bubble and the four-step explanation
+   alongside the machine, so it reaches the same finished block as the others on a
+   smaller artwork budget than the shared default. */
 .middle {
-  place-items: end center;
+  --art: min(48dvh, 450px);
+  place-items: center;
+  row-gap: clamp(0.3rem, 1.2vh, 0.9rem);
 }
 
 .wrap {
   position: relative;
   /* Width drives the box and height follows the ratio. Deriving width from a
-     dvh-capped height instead made the machine 517px wide on a 390px phone. */
-  width: min(92vw, calc(min(54dvh, 490px) * 660 / 560));
+     dvh-capped height instead made the machine 517px wide on a 390px phone.
+     100%, not 92vw: vw ignores the stage's own side padding, which put the
+     artwork a few pixels past the content box on every phone. */
+  width: min(100%, calc(var(--art) * 660 / 560));
   aspect-ratio: 660 / 560;
   display: grid;
   place-items: center;
+}
+
+/* ---------------- the four steps ----------------
+   Set exactly as `.bubble` sets the line he says on this same screen: uppercase
+   in --ink, no tracking, the same clamp and the same 1.05 leading. Two weights
+   only — the verb carries the accent, the words joining it step back. Geist is a
+   variable face here, so 600 is a real weight and not a synthesised one. */
+.steps {
+  /* Placed off the same expression that sizes the machine, so the column tracks
+     it at every viewport instead of drifting out to the window frame. The 0.40
+     rather than 0.50 is the machine's own empty margin: its viewBox is 660 wide
+     and the lever, the leftmost thing drawn, starts near x=95, so measuring to the
+     box edge would leave a gap of nothing. Absolute, so it does not disturb the
+     section's existing four-row grid. */
+  --machine: min(100%, calc(var(--art) * 660 / 560));
+  position: absolute;
+  right: calc(50% + var(--machine) * 0.4);
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(17rem, calc(50% - var(--machine) * 0.4 - 1.5rem));
+  margin: 0;
+  display: grid;
+  gap: 0.85rem;
+  text-align: left;
+  z-index: 3;
+}
+
+.steps dt,
+.steps dd {
+  margin: 0;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: clamp(0.72rem, 2.2vw, 0.95rem);
+  line-height: 1.05;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+.steps dt {
+  font-weight: 900;
+}
+.steps dd {
+  margin-top: 0.2rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .svg {
@@ -300,9 +350,14 @@
 .spendShow .spendBtn:nth-child(2) { transition-delay: 90ms; }
 .spendShow .spendBtn:nth-child(3) { transition-delay: 180ms; }
 
+/* The same expression as globals' `.disc`, and it has to stay the same: this is
+   the one disc on the site that is not that class, so a fix applied there does
+   not reach here. Width-only, it kept this screen's bottom row 54px tall on
+   exactly the short viewports the artwork budget above is giving height back
+   for. */
 .spendDisc {
-  width: clamp(54px, 12.5vw, 70px);
-  height: clamp(54px, 12.5vw, 70px);
+  width: clamp(40px, min(12.5vw, 8.6dvh), 70px);
+  height: clamp(40px, min(12.5vw, 8.6dvh), 70px);
   border-radius: 50%;
   border: 4px solid var(--ink);
   background: var(--cream);
@@ -350,4 +405,89 @@
 }
 .pulled .glassSheen {
   opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   The responsive tiers, last in the file on purpose: every rule in here is a
+   single class, the same specificity as the base rules above, so source order
+   is the only thing that decides. Written earlier, the `.readout` override
+   below silently lost to the pinned rule it was meant to replace.
+   -------------------------------------------------------------------------- */
+
+/* Narrow screens have no room beside the machine, so the column rejoins the flow
+   under it — a sibling row inside `.middle`, which is why it is a sibling of
+   `.wrap` in the markup and not a child of it. Under, not above: above, the row's
+   leftover height all collected between the readout and the words and read as a
+   hole. The machine also runs a size smaller here, since the steps now take a row
+   of their own. */
+@media (max-width: 980px) {
+  .middle {
+    --art: min(43dvh, 450px);
+  }
+  .steps {
+    position: static;
+    transform: none;
+    /* 100%, not 94vw. vw does not know about the stage's own 1.25rem of side
+       padding, so 94vw was 367px inside a 350px content box on a 390 phone —
+       enough to stretch this grid column and drag the counter, the headline, the
+       machine and the scroll cue off-centre with it. At 320 it put 1px of real
+       horizontal overflow on the panel. */
+    width: min(30rem, 100%);
+    margin: 0 auto;
+    justify-items: center;
+    text-align: center;
+    /* Four across is 85px a column at 390px. Two by two instead, each pair wide
+       enough for its line to stay on one or two lines. */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem 1.1rem;
+    justify-content: center;
+  }
+}
+
+/* The readout is pinned to this row's top-left, which works while there is space
+   around the artwork. Once the row is only as tall as the artwork there is none:
+   on a short phone "$CB BORROWED" printed across the safe door, and on a short
+   wide window — 1024x600 — the step column, which is centred on the row, rose
+   into the same corner and printed over it. One cause, so one fix, and keyed on
+   height alone because width was never what was short. */
+@media (max-height: 700px) {
+  .readout {
+    position: static;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    justify-self: start;
+  }
+  .value {
+    font-size: 1.3rem;
+  }
+}
+
+/* Short and narrow: the words, the readout and the machine are all competing for
+   the same 330px, so the machine gives up height and the steps tighten. */
+@media (max-width: 560px) and (max-height: 700px) {
+  .middle {
+    --art: min(40dvh, 450px);
+  }
+  .steps {
+    gap: 0.45rem 0.9rem;
+  }
+  .steps dt,
+  .steps dd {
+    font-size: 0.72rem;
+  }
+}
+@media (max-width: 560px) and (max-height: 620px) {
+  .middle {
+    --art: min(36dvh, 450px);
+  }
+  .steps {
+    gap: 0.35rem 0.8rem;
+  }
+  /* 0.66rem is 10.6px — still legible, and it takes the longest step from three
+     wrapped lines to two, which is what buys the machine its height back. */
+  .steps dt,
+  .steps dd {
+    font-size: 0.66rem;
+  }
 }

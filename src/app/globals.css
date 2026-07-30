@@ -25,7 +25,7 @@
    --------------------------------------------------------------------------- */
 
 :root {
-  /* --- ground: the page, unchanged on all seven screens, per the brief. The
+  /* --- ground: the page, unchanged on all eight screens, per the brief. The
          second value only feeds the radial wash at the foot of each screen and
          is kept close, because a full shade below it painted a visible grey
          band rather than the hint of ground it was meant to be. */
@@ -59,10 +59,12 @@
   --gold: #d9a020;
   --gold-deep: #b07d14;
 
-  /* --- bullion: the $CB coin's own face, and nothing else. Deliberately
-         brighter than the hardware brass above, because a $CB coin lying next
-         to a brass dial has to read as the money rather than as another part
-         of the safe. Flat: no gradient, no highlight, no dark rim. */
+  /* --- bullion: the brightest gold, for figures and accents that have to lift
+         off a surface rather than sit on it — the treasury share written on the
+         safe door, and the borrowers' crown, coin and grin. This used to be the
+         $CB coin's own face too; the coin now takes --gold and an ink rim so it
+         matches the one the machine pays out, which is the only place a visitor
+         sees the two side by side. */
   --au: #ffc61f;
 
   /* --- glass: every transparent volume. Translucent on purpose — the point of
@@ -75,7 +77,7 @@
   --stamp: #c4392b;
 
   /* --- scene colours. Two rooms still need their own objects: the hopper on
-         the machine screen and the bedroom on screen four. Everything else
+         the machine on screen 02 and the bedroom on screen 05. Everything else
          that used to live here — slate, bank green, brown fur — is gone. */
   --funnel: #2fa8a0;
   --funnel-dark: #1f7d77;
@@ -126,6 +128,17 @@ body {
    -------------------------------------------------------------------------- */
 
 .stage {
+  /* One artwork-height budget for all eight screens.
+
+     Each section used to size its own artwork independently, and the eight of
+     them ranged from 19% of the screen to 65% — the sparse ones read as
+     half-empty next to the full ones. Every screen now converts this one number
+     through its own aspect ratio, which is why the multipliers differ from
+     section to section while the resulting height does not. Two screens cannot
+     reach the budget by growing taller and are widened instead: Wake is a 2.4:1
+     room and Story is three 3:4 cards in a row, so at any honest width their
+     height is a fraction of their span. */
+  --art: min(54dvh, 500px);
   position: relative;
   min-height: 100dvh;
   scroll-snap-align: start;
@@ -134,8 +147,13 @@ body {
   display: grid;
   grid-template-rows: auto auto 1fr auto;
   gap: clamp(0.35rem, 1.4vh, 0.9rem);
+  /* The bottom inset is 0 on any phone without a home indicator, and on those
+     the old max(1.1rem, inset) left 17.6px under the lowest line — close enough
+     to the edge that it read as clipped. 2.4rem is the floor now, and where an
+     inset does exist it is added to a smaller pad rather than replacing it, so a
+     notched phone does not end up with less clearance than a plain one. */
   padding: max(1.1rem, env(safe-area-inset-top)) 1.25rem
-    max(1.1rem, env(safe-area-inset-bottom));
+    max(2.4rem, calc(env(safe-area-inset-bottom) + 1.4rem));
   background: radial-gradient(
     120% 55% at 50% 100%,
     var(--ground-2) 0%,
@@ -208,6 +226,12 @@ h1 {
   position: relative;
   display: grid;
   place-items: center;
+  /* Nothing should be stuck against one edge of this row with the leftover
+     height pooled at the other. Centred, every screen carries the same margin
+     above and below its block, and that evenness is most of what reads as one
+     rhythm from screen to screen. The artwork keeps its own ground inside its
+     viewBox, so nothing starts to float. */
+  align-content: center;
   min-height: 0;
 }
 
@@ -259,8 +283,14 @@ h1 {
   gap: 0.3rem;
 }
 .disc {
-  width: clamp(54px, 12.5vw, 70px);
-  height: clamp(54px, 12.5vw, 70px);
+  /* Six of these in a row is the tallest fixed thing on Hero and Playground, and
+     at 12.5vw it was 70px regardless of how little height there was — 194px of a
+     600px window on its own, which is what pushed both screens past the bottom
+     edge under `scroll-snap-stop: always`. Height-aware at every width now; on a
+     normal desktop min(12.5vw, 8.6dvh) still resolves above the 70px cap, so the
+     full-size design is untouched. The 40px floor is still a comfortable tap. */
+  width: clamp(40px, min(12.5vw, 8.6dvh), 70px);
+  height: clamp(40px, min(12.5vw, 8.6dvh), 70px);
   border-radius: 50%;
   border: 4px solid var(--ink);
   background: var(--disc-bg, var(--cream));
@@ -385,6 +415,88 @@ h1 {
 }
 .entGoFade {
   animation: entFade 620ms ease both;
+}
+
+/* --------------------------------------------------------------------------
+   Handling. Nothing you tap, pull or drag should highlight — there was no
+   user-select rule anywhere, so hitting the clock or dragging the repay handle
+   left a blue selection lying across the artwork. The one thing a visitor might
+   genuinely want to copy is excluded.
+   -------------------------------------------------------------------------- */
+
+main .stage {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Dragging an SVG or an image otherwise starts a native drag. */
+main .stage svg,
+main .stage image,
+main .stage use {
+  -webkit-user-drag: none;
+}
+
+/* --------------------------------------------------------------------------
+   Fitting one screen.
+
+   `.stage` is `min-height: 100dvh` with rows `auto auto 1fr auto`, so anything
+   in the three fixed rows that will not shrink pushes the panel past the
+   viewport — and under `scroll-snap-type: y mandatory` with
+   `scroll-snap-stop: always` that overflow is close to unreachable. Hero was
+   705px on a 568px screen, Join 790px and Playground 593px.
+
+   The artwork was already dvh-capped; the control rows were not. So these tiers
+   are height-keyed, not width-keyed: a wide short window — a tablet on its side,
+   a small laptop, a phone in landscape — has exactly the same problem as a short
+   phone and none of the width rules ever reached it.
+   -------------------------------------------------------------------------- */
+
+@media (max-height: 870px) {
+  .head {
+    padding-top: clamp(0.25rem, 1.2vh, 1rem);
+  }
+  /* Reserving 1.2em for a line that is often empty costs more than it buys once
+     height is scarce. */
+  .hint {
+    min-height: 1em;
+  }
+}
+
+@media (max-width: 560px) {
+  .slabel {
+    font-size: 0.66rem;
+  }
+  .head {
+    padding-top: clamp(0.25rem, 1.2vh, 1rem);
+  }
+  h1.sticker {
+    font-size: clamp(1.3rem, 4.2vw, 2.4rem);
+  }
+  .hint {
+    font-size: 0.8rem;
+    min-height: 1em;
+  }
+  .cue {
+    font-size: 0.66rem;
+  }
+}
+
+/* Short screens cannot spare the full bottom reserve; they still get half again
+   on the 17.6px they had. */
+@media (max-width: 560px) and (max-height: 700px) {
+  .stage {
+    padding-bottom: max(1.8rem, calc(env(safe-area-inset-bottom) + 1.1rem));
+  }
+}
+
+/* Tap targets. The SVG controls — the lever, the clock, the yard — carry their
+   own hit areas inside the artwork; the plain buttons were laid out for a
+   mouse. */
+@media (pointer: coarse) {
+  .sbtn {
+    min-height: 44px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

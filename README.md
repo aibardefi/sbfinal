@@ -1,6 +1,6 @@
 # $CB — Capybara Blyatovich
 
-Nine screens. One tired capybara who runs a lending desk: you lock memes with
+Eight screens. One tired capybara who runs a lending desk: you lock memes with
 him, he lends you the meme, you pay him back and he lets them out again.
 
 Working notes for agents and anyone new to the repo are in `CLAUDE.md` —

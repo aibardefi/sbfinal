@@ -1,20 +1,28 @@
+/* The verdict is absolutely positioned directly above the room, so it rides
+   upward with the room as the viewport gets shorter — and its size was driven by
+   width (4vw) while the space it had was driven by height. On a landscape iPad,
+   where the browser toolbar takes a slice of the height, the two met and the line
+   crossed into the headline. Two fixes, both needed: the line is capped by height
+   as well as width, so a wide short viewport stops asking for a 38px line it has
+   no room for; and this row reserves the space that line needs above the room
+   rather than relying on there happening to be some. Both read the one custom
+   property so they cannot drift apart. */
 .mid {
-  place-items: end center;
+  --verdict: clamp(1.1rem, min(4vw, 5.2vh), 2.4rem);
+  padding-top: calc(var(--verdict) * 1.4 + 0.7rem);
+  /* A 2.4:1 room is only ever as tall as a phone is wide, so bottom-aligning it
+     dumps the whole screen's slack above the scene. Centred, the room reads as
+     placed rather than as fallen to the floor. */
+  place-items: center;
 }
 
 .room {
   position: relative;
-  width: min(94vw, calc(min(52dvh, 430px) * 700 / 292));
+  /* Widened off the budget rather than capped by it: at any honest width this
+     room's height is a fraction of its span, so growing it taller would mean
+     cropping the alarm clock out of the scene. */
+  width: min(100%, calc(var(--art) * 700 / 292));
   aspect-ratio: 700 / 292;
-}
-
-/* A 2.4:1 room is only ever as tall as a phone is wide, so bottom-aligning it
-   dumps the whole screen's slack above the scene. Centred, the room reads as
-   placed rather than as fallen to the floor. */
-@media (max-width: 640px) {
-  .mid {
-    place-items: center;
-  }
 }
 
 .roomSvg {
@@ -279,7 +287,7 @@
   /* The lamp's own colour. Same token the lampshade and its glow are painted
      with, so the line he wakes up saying is lit by the thing that woke him. */
   color: var(--cb);
-  font-size: clamp(1.1rem, 4vw, 2.4rem);
+  font-size: var(--verdict);
   opacity: 0;
   transform: scale(0.8) rotate(-2deg);
   transition: opacity 260ms ease,
@@ -290,4 +298,27 @@
 .s4 .verdict {
   opacity: 1;
   transform: none;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive tiers, last in the file so equal-specificity rules win on source
+   order.
+   -------------------------------------------------------------------------- */
+
+/* Narrow enough that the verdict takes two lines. */
+@media (max-width: 700px) {
+  .mid {
+    padding-top: calc(var(--verdict) * 2.5 + 0.7rem);
+  }
+}
+
+/* Wide and short — a small landscape window — is the one case where the room is
+   sized by height rather than by width, so it is also the one case where
+   reserving space above it costs the room its fit. This gives that back.
+   Portrait phones are untouched: their room is width-bound and this never
+   binds. */
+@media (max-height: 660px) {
+  .mid {
+    --art: min(40dvh, 430px);
+  }
 }

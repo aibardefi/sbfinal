@@ -39,7 +39,12 @@ export function RepaySection() {
   const [freed, setFreed] = useState(false);
   const [snap, setSnap] = useState(false);
   const [nope, setNope] = useState(false);
-  const [hint, setHint] = useState("Drag the handle right to repay");
+  /* The status line is derived from `p` and `freed` below rather than stored,
+     because storing it meant an effect that wrote state on every drag frame. The
+     one thing that is not derivable is the telling-off after a short drag: it has
+     to outlive the spring back to zero, where `p` is 0 again and indistinguishable
+     from never having touched it. */
+  const [scolded, setScolded] = useState(false);
 
   const say = useCallback((text: string) => {
     const el = bubbleRef.current;
@@ -55,7 +60,6 @@ export function RepaySection() {
 
   const free = useCallback(() => {
     setFreed(true);
-    setHint("Unlocked. They are yours again.");
     say("we are square.");
 
     // The door itself is driven by `freed` through an inline transform, so all
@@ -90,6 +94,7 @@ export function RepaySection() {
     (v: number) => {
       const next = Math.max(0, Math.min(1, v));
       setP(next);
+      setScolded(false);
       if (next >= 1 && !freed) free();
       return next;
     },
@@ -121,28 +126,11 @@ export function RepaySection() {
         setNope(true);
         window.setTimeout(() => setNope(false), 300);
         say(was > 0.75 ? "so close." : "not enough.");
-        setHint("All of it, or nothing comes out.");
+        setScolded(true);
       }
       return 0;
     });
   }, [freed, say]);
-
-  useEffect(() => {
-    if (freed) return;
-    setHint((h) =>
-      h === "All of it, or nothing comes out."
-        ? h
-        : p === 0
-          ? "Drag the handle right to repay"
-          : p < 0.35
-            ? `${Math.round(p * 100)}% repaid — the lock is lifting`
-            : p < 0.8
-              ? `${Math.round(p * 100)}% repaid — keep going`
-              : p < 1
-                ? `${Math.round(p * 100)}% — almost off`
-                : "Paid in full."
-    );
-  }, [p, freed]);
 
   useEffect(
     () => () => {
@@ -167,7 +155,7 @@ export function RepaySection() {
     setFreed(false);
     setSnap(false);
     setP(0);
-    setHint("Drag the handle right to repay");
+    setScolded(false);
   }, []);
 
   useReplay(ref, rearm, () => dragging.current);
@@ -192,13 +180,26 @@ export function RepaySection() {
     commit(keys[e.key]);
   };
 
-  const x = p * travel();
   const owed = Math.round(TOTAL * (1 - p));
+  const pct = Math.round(p * 100);
+  const hint = freed
+    ? "Unlocked. They are yours again."
+    : scolded
+      ? "All of it, or nothing comes out."
+      : p === 0
+        ? "Drag the handle right to repay"
+        : p < 0.35
+          ? `${pct}% repaid — the lock is lifting`
+          : p < 0.8
+            ? `${pct}% repaid — keep going`
+            : p < 1
+              ? `${pct}% — almost off`
+              : "Paid in full.";
 
   return (
     <section className={`stage ${freed ? s.freed : ""}`} ref={ref}>
       <div className="top" data-ent="fade" data-ent-delay="0">
-        <div className="count">04 / 09</div>
+        <div className="count">03 / 08</div>
       </div>
 
       <div className="head" data-ent="up" data-ent-delay="90">
@@ -417,7 +418,15 @@ export function RepaySection() {
             dragging.current = true;
             setSnap(false);
             e.currentTarget.setPointerCapture(e.pointerId);
-            commit(pointerP(e.clientX));
+            // A mouse press is unambiguous, so jumping the handle to it is a
+            // real affordance. A finger press is not: `touch-action: pan-y` on
+            // this strip means the browser has not yet decided whether the
+            // gesture is a drag or a page scroll, and if it rules scroll it
+            // sends pointercancel — which is wired to release(). Committing
+            // here would move the amount, and the cancel would spring it back
+            // with a shake of the safe and a telling-off, for a swipe that was
+            // only ever trying to leave the screen. Touch waits for a move.
+            if (e.pointerType === "mouse") commit(pointerP(e.clientX));
           }}
           onPointerMove={(e) => {
             if (!dragging.current || freed) return;
@@ -432,7 +441,12 @@ export function RepaySection() {
           <div
             ref={knobRef}
             className={`${s.knob} ${snap ? s.snap : ""}`}
-            style={{ left: `${x}px` }}
+            /* A fraction of the track rather than a measured pixel offset. The
+               offset needed `sliderRef.current` during render, which is a ref read
+               React warns about and which silently returned 1px on the first
+               render. `--knob` is the knob's own width, declared once in the
+               stylesheet. */
+            style={{ left: `calc(${p} * (100% - var(--knob)))` }}
           >
             <svg viewBox="0 0 100 100" fill="var(--ink)" aria-hidden="true">
               <path d="M38 22 L66 50 L38 78 Z" />

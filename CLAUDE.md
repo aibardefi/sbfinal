@@ -1,6 +1,6 @@
 # Working on this repo
 
-Nine full-screen sections, one per idea, scroll-snapped. Next 16 static export
+Eight full-screen sections, one per idea, scroll-snapped. Next 16 static export
 (`output: "export"`), CSS Modules per section, design tokens in `globals.css`.
 
 **Pushing to `main` is deploying.** Cloudflare Pages watches this repo and
@@ -12,17 +12,27 @@ non-production branch to its own URL and leaves the domain alone.
 
 | | |
 | --- | --- |
-| Screen order | `src/app/page.tsx` — counters (`03 / 09`) live in each component |
+| Screen order | `src/app/page.tsx` — counters (`03 / 08`) live in each component |
 | Shared coins | `src/components/coins.tsx` — never redraw one, import it |
-| Shared safe | `src/components/Vault.tsx` — used by screens 02 and 05 |
+| Shared safe | `src/components/Vault.tsx` — screen 04 only, since 02 went |
 | Entrance / replay | `src/lib/useEntrance.ts`, `useReplay.ts`, `useAutoRearm.ts` |
 | Response headers | `public/_headers` — Cloudflare reads this at deploy |
-| Device audit | 22 viewports from the client's spec; see "Checks" below |
+| Artwork budget | `--art` on `.stage` in `globals.css`; each section converts it |
+| Device audit | `npm run audit` — 23 viewports x 8 screens; see "Checks" below |
 
 ## Checks that have caught real bugs here
 
 Each of these is a mistake that actually shipped or nearly shipped in this repo.
 They are cheap; run them.
+
+**`npm run audit` before shipping anything that changes a size.** Every screen is
+a `scroll-snap-stop: always` panel of `min-height: 100dvh`, so a panel one pixel
+taller than the viewport hides its bottom where nobody can scroll to it. The
+audit asserts the fit and 18px of clearance under the lowest line, on 23
+viewports, and it needs `npm i -D playwright-core` plus a Chromium — which is why
+it is a script and not part of `next build`. It has found: Join 790px on a
+568px screen, a 70px coin disc in a 600px-tall window, and the scroll cue 7px
+*below* the bottom edge of a landscape iPad.
 
 **Look at it. A clean build proves nothing.** `next build` was green while the
 travelling coin landed *below* the safe, the "20%" wore a fat black outline it
@@ -63,6 +73,6 @@ sandbox (proxy 403). Local checks are not live checks; report the difference.
 ## Facts that are settled
 
 - 1,000,000,000 $CB · fair launch · no presale · no team allocation
-- Treasury holds 20%, stated on screen 05 as contract-locked
+- Treasury holds 20%, stated on screen 04 as contract-locked
 - Copy says "memecoin", never a specific ticker. Artwork may show real coins.
 - Robinhood Chain memecoins only

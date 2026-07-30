@@ -1,10 +1,15 @@
+/* A readout in one corner and a bubble in the other, so the finished block is
+   taller than the drawing and the budget allows for that. */
 .middle {
-  place-items: end center;
+  --art: min(49dvh, 455px);
+  place-items: center;
 }
 
 .wrap {
   position: relative;
-  width: min(92vw, calc(min(56dvh, 480px) * 620 / 520));
+  /* 100%, not 92vw: vw ignores the stage's own side padding, which put the
+     artwork a few pixels past the content box on every phone. */
+  width: min(100%, calc(var(--art) * 620 / 520));
   aspect-ratio: 620 / 520;
 }
 .svg {
@@ -47,9 +52,17 @@
 
 .slider {
   position: relative;
+  /* The knob's diameter, declared once. The knob reads it for its own size and
+     the inline `left` reads it to place itself as a fraction of the track, so the
+     two cannot drift apart. */
+  --knob: 62px;
   width: min(88vw, 460px);
-  height: 62px;
-  touch-action: none;
+  height: var(--knob);
+  /* pan-y, not none. This is a full-width strip inside a mandatory-snap page, so
+     `none` meant a vertical swipe that happened to land on it neither scrolled
+     the page nor did anything else — the one gesture a phone user makes most,
+     swallowed. Horizontal drags still reach the knob. */
+  touch-action: pan-y;
 }
 .track {
   position: absolute;
@@ -72,9 +85,8 @@
 .knob {
   position: absolute;
   top: 0;
-  left: 0;
-  width: 62px;
-  height: 62px;
+  width: var(--knob);
+  height: var(--knob);
   border-radius: 50%;
   border: 5px solid var(--ink);
   background: var(--cb);
@@ -172,4 +184,30 @@
    angle stops tracking a finger. */
 .rhandleFreed {
   transition: transform 620ms cubic-bezier(0.34, 1.5, 0.6, 1);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive tiers, last in the file: single-class rules at the same
+   specificity as the base ones above, so source order is what decides.
+   -------------------------------------------------------------------------- */
+
+/* The readout is pinned to a corner of this row, which works while there is
+   space around the artwork. On a short screen the row is only as tall as the
+   artwork, so "LEFT TO REPAY" printed across the safe. It joins the flow as one
+   line instead, and the safe gives up the height that costs. */
+@media (max-width: 560px) and (max-height: 700px) {
+  .middle {
+    --art: min(46dvh, 480px);
+    row-gap: 0.4rem;
+  }
+  .readout {
+    position: static;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    justify-self: start;
+  }
+  .value {
+    font-size: 1.3rem;
+  }
 }

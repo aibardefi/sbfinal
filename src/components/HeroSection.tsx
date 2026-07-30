@@ -192,7 +192,7 @@ export function HeroSection() {
   return (
     <section className="stage" ref={ref}>
       <div className="top" data-ent="fade" data-ent-delay="0">
-        <div className="count">01 / 09</div>
+        <div className="count">01 / 08</div>
         {/* The two things a visitor can actually do, on the one screen everyone
             sees. Orange buys, blue borrows — the same two colours the headline
             already uses for those two words. */}

@@ -1,10 +1,10 @@
 .middle {
-  place-items: end center;
+  place-items: center;
 }
 
 .yard {
   position: relative;
-  width: min(100%, calc(min(50dvh, 420px) * 380 / 360));
+  width: min(100%, calc(var(--art) * 380 / 360));
   aspect-ratio: 380 / 360;
 }
 
@@ -216,4 +216,16 @@
 .bubble {
   top: 6%;
   left: 2%;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive tiers, last in the file so equal-specificity rules win on source
+   order. This screen carries a six-button pad under the yard, which is the
+   tallest fixed row on the site after Hero's coin rail.
+   -------------------------------------------------------------------------- */
+
+@media (max-height: 870px) {
+  .middle {
+    --art: min(46dvh, 500px);
+  }
 }

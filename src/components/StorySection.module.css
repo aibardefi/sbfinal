@@ -10,7 +10,9 @@
    matching the lever and the clock on the screens either side of this one. */
 .deckLabel {
   font-weight: 900;
-  font-size: clamp(0.72rem, 2vw, 0.9rem);
+  /* The same size as the instruction line doing this job on the vault and wake
+     screens. A size larger here made it read as a different kind of label. */
+  font-size: clamp(0.72rem, 1.7vw, 0.8rem);
   color: var(--stamp);
   min-height: 1.2em;
   text-align: center;
@@ -30,9 +32,17 @@
 
 .deck {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* repeat(3, 1fr) is repeat(3, minmax(auto, 1fr)), so a card's min-content — the
+     longest word on its face — could push its column past a third of the deck and
+     the third card off the right edge. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(0.6rem, 2.4vw, 1.6rem);
-  width: min(100%, 900px);
+  /* Widened off the shared budget rather than capped by it: three 3:4 cards in a
+     row are 0.44 of the deck's width tall, so forcing the height would mean
+     cropping the cards. A card is a third of the deck and 3:4, so deck height is
+     deck width x 4/9 — about 2.05x the height wanted, once the label is allowed
+     for. */
+  width: min(100%, calc(var(--art) * 2.05));
   perspective: 1400px;
 }
 
@@ -237,5 +247,26 @@
   .mascotWrap {
     bottom: 26%;
     width: 60px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Responsive tiers, last in the file so equal-specificity rules win on source
+   order.
+   -------------------------------------------------------------------------- */
+
+/* Three cards across means the deck's width is fixed by the screen, and on a
+   phone 3:4 cards come out 118x158 — the sparsest block on the site. The cards go
+   taller rather than the deck going wider, which is the only axis left.
+
+   `button.card` rather than a bare `.card`: cardFace, cardBack and cardArt all
+   start with the same name, and setting a ratio on those shrank the art inside
+   instead of making the card taller. */
+@media (max-width: 640px) {
+  button.card {
+    aspect-ratio: 3 / 5;
+  }
+  .deck {
+    gap: clamp(0.4rem, 1.8vw, 1rem);
   }
 }

@@ -98,7 +98,7 @@ export function TreasurySection() {
   return (
     <section className={`stage ${s.stage} ${play ? s.play : ""}`} ref={setRefs}>
       <div className="top" data-ent="fade" data-ent-delay="0">
-        <div className="count">05 / 09</div>
+        <div className="count">04 / 08</div>
       </div>
 
       <div className="head" data-ent="up" data-ent-delay="90">
@@ -116,9 +116,17 @@ export function TreasurySection() {
                 alt="The treasury vault, holding 20% of all $CB"
                 inside={
                   <>
-                    <CbCoin cx={150} cy={330} r={26} />
-                    <CbCoin cx={206} cy={330} r={26} />
-                    <CbCoin cx={262} cy={330} r={26} />
+                    {/* Bigger than the 26 these were, so `$CB` is legible once
+                        the 440-unit box is drawn at ~210px — but the pitch is set
+                        off the *painted* width, not the radius. An SVG stroke
+                        straddles the geometry, so at r=32 the 9.4-wide ink rim
+                        reaches 36.7 from centre and a 70 pitch merged all three
+                        rims into one black band. 76 leaves 2.6 units of daylight,
+                        and puts the left rim at 109 — clear of the throw bolts,
+                        which end at x=102. */}
+                    <CbCoin cx={146} cy={330} r={32} />
+                    <CbCoin cx={222} cy={330} r={32} />
+                    <CbCoin cx={298} cy={330} r={32} />
                     <text
                       x="205"
                       y="215"
@@ -157,7 +165,11 @@ export function TreasurySection() {
               style={{ animationDelay: `${i * 1.4}s` }}
               aria-hidden="true"
             >
-              <svg viewBox="-50 -50 100 100">
+              {/* -54, not -50. The rim straddles the circle, so at r=45 the
+                  paint reaches 51.6 from centre — past a 50-unit half-extent,
+                  and a root <svg> clips at its viewBox, so every orbiting coin
+                  had a flat spot at each of the four cardinal points. */}
+              <svg viewBox="-54 -54 108 108">
                 <CbCoin r={45} />
               </svg>
             </span>

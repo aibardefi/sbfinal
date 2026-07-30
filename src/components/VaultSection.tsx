@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MASCOT_HREF } from "./Mascot";
-import { COINS, COIN_COLOR, CoinGlyph } from "./coins";
+import { COINS, COIN_COLOR } from "./coins";
 import { useEntrance, prefersReducedMotion } from "@/lib/useEntrance";
 import { useAutoRearm } from "@/lib/useAutoRearm";
 import s from "./VaultSection.module.css";
@@ -390,7 +390,7 @@ export function VaultSection() {
       ref={setRefs}
     >
       <div className="top" data-ent="fade" data-ent-delay="0">
-        <div className="count">03 / 09</div>
+        <div className="count">02 / 08</div>
       </div>
 
       <div className="head" data-ent="up" data-ent-delay="90">
@@ -714,6 +714,29 @@ export function VaultSection() {
             </g>
           </svg>
         </div>
+
+        {/* The four steps that used to be their own screen. They live here now,
+            beside the machine that performs them, rather than one screen earlier
+            saying the same thing in pictures. Only the verbs are heavy — a block
+            where everything is bold reads as slowly as one where nothing is. */}
+        <dl className={s.steps}>
+          <div>
+            <dt>Lock</dt>
+            <dd>$1,000 of a memecoin</dd>
+          </div>
+          <div>
+            <dt>Borrow</dt>
+            <dd>Up to $800 in $CB</dd>
+          </div>
+          <div>
+            <dt>Spend</dt>
+            <dd>Use the $CB however you want</dd>
+          </div>
+          <div>
+            <dt>Repay</dt>
+            <dd>Return the $CB to unlock your memecoin</dd>
+          </div>
+        </dl>
       </div>
 
       <div className="bottom">

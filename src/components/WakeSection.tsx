@@ -105,7 +105,7 @@ export function WakeSection() {
       ref={ref}
     >
       <div className="top" data-ent="fade" data-ent-delay="0">
-        <div className="count">06 / 09</div>
+        <div className="count">05 / 08</div>
       </div>
 
       <div className="head" data-ent="up" data-ent-delay="90">
@@ -123,7 +123,15 @@ export function WakeSection() {
           <div
             className={`${s.verdict} sticker`}
           >
-            Cykablyat enough, I need a different life
+            {/* Two words: it is what is painted on his ushanka, and the payoff
+                line of the whole site should not spell it differently.
+
+                One expression rather than text with an interpolated nbsp in the
+                middle: React separates adjacent children with `<!-- -->`, and a
+                comment sitting inside the phrase is not something to leave in the
+                one line everybody screenshots. The nbsp keeps "I" with "need" so
+                the wrap, when it comes, never leaves a lone letter on a line. */}
+            {"Cyka blyat enough, I\u00a0need a different life"}
           </div>
 
           <svg

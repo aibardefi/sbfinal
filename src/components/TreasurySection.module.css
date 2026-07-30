@@ -15,7 +15,12 @@
   position: relative;
   display: flex;
   align-items: flex-start;
-  gap: clamp(1.4rem, 9vw, 6rem);
+  /* 7vw, not 9vw. The borrowers now scale with the safe, and at 768 wide the
+     safe, this gap and the crowd came to 730px inside a 728px content box — and
+     this screen's stage is the one with `overflow: hidden`, so the 2px was cut
+     off the far borrower rather than scrolled to. The desktop gap is unchanged:
+     7vw is past the 6rem ceiling from 1372px up. */
+  gap: clamp(1.4rem, 7vw, 6rem);
 }
 
 .unit {
@@ -42,8 +47,23 @@
   font-weight: 900;
 }
 
+/* Was clamp(120px, 26vw, 250px) — pure width, which is why this screen never
+   filled at any height: 26vw is 250px on a laptop whether the window is 900px
+   tall or 600px.
+
+   Capped on both axes now. `.tflow` is a flex row with no width of its own, so a
+   height-derived safe alone drove the row to 770px inside a 390px phone — and
+   this screen's stage is the one with `overflow: hidden`, so it silently cut the
+   crowd off rather than scrolling. The vw half keeps the safe inside the row's
+   share of the screen; the budget half is what makes it fill on a laptop.
+
+   The 289px ceiling is 15% off the 340px this was first drawn at, at the
+   client's call. The safe is drawn edge to edge in its box where every other
+   screen's artwork has slack inside its viewBox — the machine on screen 02 fills
+   295px of a 509px box — so at a matching box size this one read a size larger
+   than everything else. */
 .safewrap {
-  width: clamp(120px, 26vw, 250px);
+  width: clamp(120px, min(calc(var(--art) * 0.78), 40vw), 289px);
   opacity: 0;
 }
 
@@ -71,14 +91,16 @@
   opacity: 0;
 }
 
+/* The borrowers scale with the safe, so the crowd keeps its proportion to the
+   vault they are borrowing from. */
 .capy {
-  width: clamp(46px, 8.4vw, 86px);
+  width: clamp(46px, min(calc(var(--art) * 0.26), 16vw), 118px);
   height: auto;
   display: block;
 }
 
 .crowd .capy:nth-child(2) {
-  width: clamp(54px, 9.8vw, 100px);
+  width: clamp(54px, min(calc(var(--art) * 0.3), 18vw), 136px);
   z-index: 2;
 }
 
@@ -128,7 +150,10 @@
    transform so it stays on its own compositor layer for the whole lap. */
 .gc {
   position: absolute;
-  width: clamp(22px, 3.4vw, 34px);
+  /* Up from clamp(22px, 3.4vw, 34px), which is not enough width for `$CB` to read
+     as anything. The borrowers grew with the safe, so this keeps its proportion to
+     the crowd it is being handed to. */
+  width: clamp(30px, 4.6vw, 46px);
   opacity: 0;
   pointer-events: none;
   will-change: transform, opacity;
@@ -267,9 +292,6 @@
 }
 
 @media (max-width: 480px) {
-  .tflow {
-    gap: 1rem;
-  }
   /* Two borrowers still read as a crowd; three at this width read as mush. */
   .crowd .capy:nth-child(3) {
     display: none;
@@ -290,5 +312,66 @@
   }
   .gc {
     display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Responsive tiers, last in the file so equal-specificity rules win on source
+   order.
+   -------------------------------------------------------------------------- */
+
+@media (max-height: 870px) {
+  .middle {
+    --art: min(46dvh, 500px);
+  }
+}
+
+/* This screen's lowest line is two lines of copy on a phone, and with a smaller
+   safe there is height going spare — so it reserves more at the bottom than the
+   rest and its whole block sits higher. */
+.stage {
+  padding-bottom: max(4rem, calc(env(safe-area-inset-bottom) + 3rem));
+}
+@media (max-width: 560px) and (max-height: 700px) {
+  .stage {
+    padding-bottom: max(2.8rem, calc(env(safe-area-inset-bottom) + 2rem));
+  }
+}
+
+/* On a phone the safe and the crowd side by side can only ever be as tall as
+   half the screen is wide, which is what kept this the emptiest screen of the
+   eight at any budget. Stacked, the safe gets the full width and the flow reads
+   top-down instead of left-right — the orbit follows, because it is measured
+   from the real boxes rather than tuned. */
+@media (max-width: 640px) {
+  .tflow {
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(0.6rem, 2.4vh, 1.4rem);
+  }
+  .safewrap {
+    width: min(calc(var(--art) * 0.81), 53vw);
+  }
+  .capy {
+    width: clamp(46px, 19vw, 118px);
+  }
+  .crowd .capy:nth-child(2) {
+    width: clamp(54px, 22vw, 136px);
+  }
+}
+
+/* Stacked, this screen's height is set by the safe's width, so on the shortest
+   phones the width cap is the only thing that can give — the budget is not what
+   binds here. At 62vw it ran 33px past a 320x568 and put the scroll cue below
+   the bottom edge. */
+@media (max-width: 560px) and (max-height: 660px) {
+  .safewrap {
+    width: min(calc(var(--art) * 0.81), 41vw);
+  }
+  .tflow {
+    gap: 0.4rem;
+  }
+  .middle {
+    gap: 0.4rem;
   }
 }

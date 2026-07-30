@@ -1,4 +1,8 @@
+/* This screen is content rather than artwork — a mascot, three pills, a spec
+   sheet and an address — so the budget sizes the mascot and the rest gives from
+   its spacing. */
 .middle {
+  --art: min(50dvh, 465px);
   place-items: center;
 }
 
@@ -13,7 +17,7 @@
 /* ---- he tips his hat once, on arrival ---- */
 .hero {
   position: relative;
-  width: clamp(104px, 20vw, 178px);
+  width: clamp(96px, calc(var(--art) * 0.34), 170px);
 }
 
 .tip {
@@ -178,6 +182,12 @@
 }
 
 .caBox {
+  /* The one thing on the site worth selecting. Everything inside `.stage` is
+     user-select: none so a drag on the artwork does not paint a blue selection
+     over it, and a contract address you cannot select is a contract address you
+     cannot check against a block explorer. */
+  -webkit-user-select: text;
+  user-select: text;
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -253,7 +263,13 @@
 .toTop {
   background: none;
   border: 0;
-  font: inherit;
+  /* font-family only, not the `font` shorthand. This button also carries the
+     global `.cue` class, and `font: inherit` reset its size back to the body's
+     16px — so the scroll cue on the last screen ran a third larger than the same
+     cue on the other seven, and the extra height was what pushed this panel 7px
+     past a 320x568 viewport. A button still needs the family said out loud, or it
+     falls back to the UA's own. */
+  font-family: inherit;
   cursor: pointer;
   padding: 0.4rem 0.6rem;
 }
@@ -263,14 +279,102 @@
   border-radius: 6px;
 }
 
-/* One per row on a narrow screen. Three pills of unequal width wrapped 2-then-1
-   and read as ragged rather than composed. */
-@media (max-width: 430px) {
-  .links {
-    flex-direction: column;
-    align-items: stretch;
+
+/* --------------------------------------------------------------------------
+   Responsive tiers, last in the file so equal-specificity rules win on source
+   order. This screen was 790px tall on a 568px viewport — the worst overflow on
+   the site — because four pill links stacked one per row took 218px of it.
+   -------------------------------------------------------------------------- */
+
+@media (max-height: 700px) {
+  .final {
+    gap: clamp(0.3rem, 1.1vh, 0.9rem);
+  }
+  .spec {
+    gap: 0.15rem;
+    margin-top: 0.15rem;
+  }
+  .specRow {
+    font-size: 0.8rem;
   }
   .link {
+    padding: 0.45rem 0.8rem;
+    border-width: 3px;
+  }
+  .hero {
+    width: clamp(74px, 12vh, 130px);
+  }
+}
+
+/* The pills are 169px wide, so two never fit side by side and all three wrapped
+   into a 2-then-1 stack that read as ragged. Two equal columns fit at 320px, and
+   the third spans both — so the block is two tidy rows rather than three, which is
+   the height this screen could not spare. (An odd count is why the plain
+   two-column grid is not enough on its own: it would leave the bottom-right cell
+   empty and put us back where we started.) */
+@media (max-width: 560px) {
+  .links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem;
+    width: 100%;
+  }
+  .link:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+  .link {
+    padding: 0.45rem 0.5rem;
+    font-size: 0.76rem;
+    border-width: 3px;
     justify-content: center;
+  }
+  .hero {
+    width: clamp(74px, 15vw, 120px);
+  }
+  .final {
+    gap: clamp(0.35rem, 1.2vh, 0.9rem);
+  }
+  .spec {
+    gap: 0.2rem;
+    margin-top: 0.2rem;
+  }
+  .specRow {
+    font-size: 0.74rem;
+  }
+  .caLabel {
+    font-size: 0.68rem;
+  }
+}
+
+@media (max-width: 560px) and (max-height: 700px) {
+  .hero {
+    width: clamp(64px, 15vw, 120px);
+  }
+  .final {
+    gap: clamp(0.28rem, 1vh, 0.9rem);
+  }
+  .links {
+    gap: 0.3rem;
+  }
+  .spec {
+    gap: 0.12rem;
+    margin-top: 0.1rem;
+  }
+  .specRow {
+    font-size: 0.7rem;
+  }
+}
+
+/* Tap targets: these were laid out for a mouse. */
+@media (pointer: coarse) {
+  .link {
+    min-height: 44px;
+  }
+  /* The last thing on the site, and 29px tall. */
+  .toTop {
+    min-height: 34px;
+    padding: 0.35rem 0.7rem;
+    display: inline-flex;
+    align-items: center;
   }
 }

@@ -44,7 +44,7 @@ export const metadata: Metadata = {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "Capybara Blyatovich in his cykablyat ushanka, beside the words: lock memes, borrow the meme.",
+        alt: "Capybara Blyatovich in his 'cyka blyat' ushanka, beside the words: lock memes, borrow the meme.",
       },
     ],
   },
