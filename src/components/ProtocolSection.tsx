@@ -55,6 +55,21 @@ import t from "./protocol/theme.module.css";
  */
 const LIVE = true;
 
+/**
+ * Where the ruler starts.
+ *
+ * Not zero. A form that opens at 0% asks the visitor to invent a ratio before it
+ * will tell them anything, and the number most of them invent is the maximum.
+ * 60% is the design's own opening position and it leaves a third of the
+ * collateral's value as headroom — `dropToLiquidation(60)` is 33%, so the coin
+ * has to fall by a third before liquidation.
+ *
+ * It is a starting point, not a floor or a ceiling: typing into the borrow field
+ * or moving the ruler takes it over, and from then on the amount is the
+ * visitor's, not ours.
+ */
+const DEFAULT_LTV = 60;
+
 type Tab = "borrow" | "positions";
 type Theme = "light" | "dark";
 /** Which amount the visitor pinned. The ruler moves the other one. */
@@ -87,6 +102,11 @@ export function ProtocolSection() {
   const [chosen, setChosen] = useState<Address>();
   const [lock, setLock] = useState("");
   const [borrow, setBorrow] = useState("");
+  /* Until the borrow amount is the visitor's own, it is derived from the lock at
+     DEFAULT_LTV. Tracked rather than written into state on every keystroke so a
+     late price, a coin change or a cleared field all resolve on the next render
+     instead of needing an effect to chase them. */
+  const [borrowTouched, setBorrowTouched] = useState(false);
   const [pin, setPin] = useState<Pin>("lock");
   const [picking, setPicking] = useState(false);
   const [explaining, setExplaining] = useState(false);
@@ -117,7 +137,16 @@ export function ProtocolSection() {
   const cbUnitWeth = market.data?.cbUnitWeth ?? 0n;
 
   const lockWei = coin ? parseAmount(lock, coin.decimals) : 0n;
-  const borrowWei = parseAmount(borrow, cbDecimals);
+
+  /* The field's value, derived while untouched. Deriving rather than storing is
+     what makes "type a lock amount and the borrow follows at 60%" survive the
+     prices arriving a second later, or the coin being swapped underneath it. */
+  const borrowValue =
+    borrowTouched || !coin || lockWei <= 0n || cbUnitWeth <= 0n
+      ? borrow
+      : exactAmount(borrowForLtv(lockWei, DEFAULT_LTV, coin, cbDecimals, cbUnitWeth), cbDecimals);
+
+  const borrowWei = parseAmount(borrowValue, cbDecimals);
 
   const ltv = coin ? ltvPercentFor(lockWei, borrowWei, coin, cbDecimals, cbUnitWeth) : 0;
   const risk = riskOf(ltv);
@@ -143,6 +172,7 @@ export function ProtocolSection() {
     if (!coin) return;
     if (pin === "lock") {
       setBorrow(exactAmount(borrowForLtv(lockWei, next, coin, cbDecimals, cbUnitWeth), cbDecimals));
+      setBorrowTouched(true);
     } else {
       setLock(
         exactAmount(collateralForLtv(borrowWei, next, coin, cbDecimals, cbUnitWeth), coin.decimals)
@@ -209,6 +239,7 @@ export function ProtocolSection() {
     if (await tx.send(steps)) {
       setLock("");
       setBorrow("");
+      setBorrowTouched(false);
       market.refresh();
       positions.refresh();
     }
@@ -323,7 +354,9 @@ export function ProtocolSection() {
 
       {/* ---------------- the deal ---------------- */}
       <div className={`middle ${s.middle}`} data-ent="up" data-ent-delay="240">
-        <div className={s.deal}>
+        {/* The sheet is a table and wants room; the borrow card is a column and
+            does not. One container, two widths. */}
+        <div className={s.deal} data-wide={tab === "positions" || undefined}>
           {tab === "borrow" ? (
             <>
               <div className={s.pitch}>
@@ -429,9 +462,10 @@ export function ProtocolSection() {
                       type="text"
                       inputMode="decimal"
                       placeholder="0"
-                      value={borrow}
+                      value={borrowValue}
                       onChange={(e) => {
                         setBorrow(e.target.value.replace(/[^0-9.,]/g, ""));
+                        setBorrowTouched(true);
                         setPin("borrow");
                       }}
                     />
@@ -446,6 +480,7 @@ export function ProtocolSection() {
                         className={s.pct}
                         onClick={() => {
                           setBorrow(exactAmount(maxBorrowWei, cbDecimals));
+                          setBorrowTouched(true);
                           setPin("borrow");
                         }}
                       >

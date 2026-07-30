@@ -692,3 +692,10 @@
     font-size: 0.64rem;
   }
 }
+
+/* The positions sheet is a table and needs room. The borrow card is a single
+   column and reads badly stretched, so the width belongs to the tab rather than
+   to the container. 54rem is the prototype's own `.sheet` width. */
+.deal[data-wide] {
+  max-width: 54rem;
+}

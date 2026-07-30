@@ -46,11 +46,15 @@ import s from "./Positions.module.css";
 
 type Action = "repay" | "add" | "withdraw" | "borrow";
 
+/* The design's order, and it is not alphabetical or arbitrary: the two that can
+   only improve a position sit at the ends, and the two the 80% cap applies to
+   are in the middle. Repay is last because it is the default and the eye lands
+   on the selected one. */
 const ACTIONS: { id: Action; label: string; safe: boolean }[] = [
   { id: "add", label: "Add", safe: true },
-  { id: "repay", label: "Repay", safe: true },
   { id: "withdraw", label: "Withdraw", safe: false },
   { id: "borrow", label: "Borrow", safe: false },
+  { id: "repay", label: "Repay", safe: true },
 ];
 
 export function Positions({
@@ -144,6 +148,18 @@ export function Positions({
         </span>
       </div>
 
+      {/* Column names, wide layout only — see the media query in the stylesheet.
+          On a narrow screen each row labels itself and a header would be a row
+          of words with nothing under them. */}
+      <div className={s.colhead} aria-hidden="true">
+        <span>ID</span>
+        <span>Locked</span>
+        <span>Debt</span>
+        <span>LTV</span>
+        <span>0 — 80 — 90</span>
+        <span />
+      </div>
+
       <ul className={s.list}>
         {rows.map((p) => (
           <Row key={p.id.toString()} position={p} market={market} onManage={() => setManaging(p.id)} />
@@ -205,47 +221,53 @@ function Row({
 
   return (
     <li className={s.row}>
-      <div className={s.rowHead}>
-        <span className={s.pid}>#{position.id.toString()}</span>
-        <span className={s.sp} />
+      <span className={s.pid}>#{position.id.toString()}</span>
+
+      <div className={s.locked}>
+        <b>
+          {formatAmount(position.collateralAmount, collDecimals)} {coin?.symbol ?? "?"}
+        </b>
+        <small>
+          {coin ? formatWeth(valueInWeth(position.collateralAmount, collDecimals, coin.unitWeth)) : "—"}
+        </small>
+      </div>
+
+      <div className={s.debt}>
+        <b>
+          {formatAmount(position.debtCB, cbDecimals)} {BORROWED}
+        </b>
+        <small>
+          {market ? formatWeth(valueInWeth(position.debtCB, cbDecimals, market.cbUnitWeth)) : "—"}
+        </small>
+      </div>
+
+      <div className={s.ltvCell}>
         <span className={s.pltv} data-tone={tone}>
           {ltv.toFixed(1)}%
         </span>
-      </div>
-
-      <div className={s.stacks}>
-        <div className={s.stack}>
-          <b>
-            {formatAmount(position.collateralAmount, collDecimals)} {coin?.symbol ?? "?"}
-          </b>
-          <small>
-            {coin ? formatWeth(valueInWeth(position.collateralAmount, collDecimals, coin.unitWeth)) : "—"}
-          </small>
-        </div>
-        <div className={s.stack}>
-          <b>
-            {formatAmount(position.debtCB, cbDecimals)} {BORROWED}
-          </b>
-          <small>
-            {market ? formatWeth(valueInWeth(position.debtCB, cbDecimals, market.cbUnitWeth)) : "—"}
-          </small>
-        </div>
-        <span className={s.sp} />
-        <button
-          type="button"
-          className={urgent ? `${s.action} ${s.actionHot}` : s.action}
-          onClick={onManage}
-        >
-          {urgent ? "Repay now" : "Manage"}
-        </button>
+        {/* The word, always, beside the colour. The design leaves a bare red
+            number here, which is a state you cannot read without seeing red. */}
+        <small className={s.riskWord} data-tone={tone}>
+          {riskLabel(risk)}
+        </small>
       </div>
 
       {/* No legend on these: the notches repeat on every row and the words would
-          too. The percentage above says the number. */}
-      <Ruler ltv={ltv} scale={false} />
+          too. The column header says the scale once. */}
+      <div className={s.rulerCell}>
+        <Ruler ltv={ltv} scale={false} />
+      </div>
 
-      {/* Written as well as coloured, so the state survives not being able to
-          tell the colours apart — the design leaves a bare red number here. */}
+      <button
+        type="button"
+        className={urgent ? `${s.action} ${s.actionHot}` : s.action}
+        onClick={onManage}
+      >
+        {urgent ? "Repay now" : "Manage"}
+      </button>
+
+      {/* The full sentence only where there is room for it. On the wide layout
+          the risk word above carries the same state in one column. */}
       <p className={s.rowRisk} data-tone={tone}>
         {riskLabel(risk)} · a {dropToLiquidation(ltv).toFixed(0)}% fall in {coin?.symbol ?? "the coin"}{" "}
         liquidates you.

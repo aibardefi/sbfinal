@@ -22,7 +22,10 @@
   /* Never taller than the screen; the body scrolls inside instead. A dialog that
      runs off the bottom of a phone has its confirm button where nobody can
      reach it. */
-  max-height: min(34rem, calc(100dvh - 2rem));
+  /* Manage is the tallest popup on the screen: four actions, a field, a
+     projected ruler, three readout rows, a note and a button. 34rem cut it in
+     half and made the body scroll on a desktop with room to spare. */
+  max-height: min(46rem, calc(100dvh - 2rem));
   display: flex;
   flex-direction: column;
   background: var(--p1-paper);
@@ -90,6 +93,13 @@
   padding: 0.4rem 1.25rem 1.25rem;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* A grid with a gap rather than bare stacking. Every popup here is a sequence
+     of blocks — a segmented control, a field, a readout, a note — and without
+     this they run into each other, which is what made Manage read as one dense
+     slab instead of four steps. */
+  display: grid;
+  gap: 0.8rem;
+  align-content: start;
 }
 
 .foot {

@@ -12,8 +12,10 @@
   overflow: hidden;
   color: var(--p1-ink);
   display: grid;
-  /* rows must be able to shrink for the list's own scroll to engage */
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  /* sub-tab header, column names, the list, the tally. Only the list may take
+     the slack — the rest must keep their content height or the sheet collapses
+     them before it scrolls. */
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   min-height: 0;
 }
 
@@ -53,38 +55,83 @@
   max-height: calc(100dvh - 400px);
 }
 
+/* One row, two shapes.
+
+   Narrow it stacks — id and ratio on a line, the two amounts under them, the
+   ruler across, then the sentence and the button. Wide it becomes the design's
+   table: the ruler moves inline beside the ratio and the column header above
+   names the parts once instead of every row labelling itself.
+
+   Areas rather than six hand-placed children, so the two layouts are two
+   templates over the same markup and nothing has to be duplicated or hidden. */
 .row {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.4rem 0.7rem;
   padding: 0.7rem 0.9rem;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "id      ltv"
+    "locked  debt"
+    "ruler   ruler"
+    "risk    action";
+  align-items: center;
   min-width: 0;
 }
 .row + .row {
   border-top: 1px solid var(--p1-line);
+}
+.row:hover {
+  background: var(--p1-sunk);
 }
 
 /* Grid and flex children default to `min-width: auto` and refuse to shrink
    below their content, which is what made an earlier version of this list
    scroll sideways over its own controls. */
 .row,
-.rowHead,
-.stacks,
-.stack {
+.locked,
+.debt,
+.ltvCell,
+.rulerCell {
   min-width: 0;
 }
 
-.rowHead {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-}
-.sp {
-  margin-left: auto;
-}
 .pid {
+  grid-area: id;
   font-size: 0.86rem;
   color: var(--p1-dim);
   font-variant-numeric: tabular-nums;
+}
+.locked {
+  grid-area: locked;
+}
+.debt {
+  grid-area: debt;
+}
+.locked,
+.debt {
+  display: grid;
+  gap: 0.05rem;
+}
+.locked b,
+.debt b {
+  font-size: 0.86rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.locked small,
+.debt small {
+  font-size: 0.72rem;
+  color: var(--p1-dim);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.ltvCell {
+  grid-area: ltv;
+  display: grid;
+  gap: 0.05rem;
+  justify-items: end;
+  text-align: right;
 }
 .pltv {
   font-size: 0.98rem;
@@ -95,29 +142,28 @@
 .pltv[data-tone="danger"] {
   color: var(--p1-danger);
 }
-
-.stacks {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem 1rem;
-  flex-wrap: wrap;
-}
-.stack {
-  display: grid;
-  gap: 0.05rem;
-}
-.stack b {
-  font-size: 0.86rem;
+/* Hidden by default. On the narrow layout the sentence under the row already
+   says "High risk" in words, and printing it twice in one row reads as a
+   glitch; wide, the sentence is gone and this is what carries the state
+   alongside the colour. */
+.riskWord {
+  display: none;
+  font-size: 0.66rem;
   font-weight: 600;
-  overflow-wrap: anywhere;
-}
-.stack small {
-  font-size: 0.72rem;
   color: var(--p1-dim);
-  font-weight: 500;
+  white-space: nowrap;
+}
+.riskWord[data-tone="danger"] {
+  color: var(--p1-danger);
+}
+
+.rulerCell {
+  grid-area: ruler;
 }
 
 .action {
+  grid-area: action;
+  justify-self: end;
   border: 0;
   border-radius: var(--p1-r);
   padding: 0.4rem 0.75rem;
@@ -130,7 +176,7 @@
   white-space: nowrap;
 }
 .action:hover {
-  filter: brightness(0.97);
+  filter: brightness(0.95);
 }
 .action:focus-visible {
   outline: 2px solid var(--p1-accent);
@@ -144,6 +190,7 @@
 }
 
 .rowRisk {
+  grid-area: risk;
   margin: 0;
   font-size: 0.72rem;
   font-weight: 500;
@@ -152,6 +199,54 @@
 .rowRisk[data-tone="danger"] {
   color: var(--p1-danger);
   font-weight: 600;
+}
+
+/* The column names. Hidden until the table layout exists to name. */
+.colhead {
+  display: none;
+}
+
+@media (min-width: 46rem) {
+  .colhead,
+  .row {
+    grid-template-columns: 3rem minmax(6rem, 1fr) minmax(6rem, 1fr) 4.8rem minmax(7rem, 1.3fr) auto;
+    gap: 0.7rem;
+  }
+  .colhead {
+    display: grid;
+    align-items: center;
+    padding: 0.5rem 0.9rem;
+    border-bottom: 1px solid var(--p1-line);
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--p1-dim);
+  }
+  /* The scale is named once here rather than under every row's ruler. */
+  .colhead span:nth-child(5) {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+  }
+  .row {
+    grid-template-areas: "id locked debt ltv ruler action";
+  }
+  .ltvCell {
+    justify-items: end;
+  }
+  /* The sentence is the narrow layout's way of stating the risk in words. Wide,
+     the label under the percentage does that in one column. */
+  .rowRisk {
+    display: none;
+  }
+  .riskWord {
+    display: block;
+  }
+}
+
+/* Pushes whatever follows it to the far end of a flex row. */
+.sp {
+  margin-left: auto;
 }
 
 .tally {
@@ -239,9 +334,12 @@
 
 /* ---------------- manage popup ---------------- */
 
+/* One row of four, as the design has it. A 2x2 grid reads as two unrelated
+   pairs and hides that these are four alternatives for one position. Falls back
+   to 2x2 only where four labels genuinely cannot fit. */
 .seg {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.15rem;
   background: var(--p1-sunk);
   border-radius: var(--p1-r);
@@ -265,6 +363,12 @@
 .segBtn:focus-visible {
   outline: 2px solid var(--p1-accent);
   outline-offset: -1px;
+}
+
+@media (max-width: 25rem) {
+  .seg {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .mfield {
