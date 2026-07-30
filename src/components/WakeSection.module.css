@@ -322,3 +322,9 @@
     --art: min(40dvh, 430px);
   }
 }
+
+@media (max-height: 500px) {
+  .mid {
+    --art: min(32dvh, 430px);
+  }
+}

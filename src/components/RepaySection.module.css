@@ -211,3 +211,17 @@
     font-size: 1.3rem;
   }
 }
+
+/* The handle comes down with everything else and stays over the 44px tap floor. */
+@media (max-height: 500px) {
+  .middle {
+    --art: min(30dvh, 480px);
+    row-gap: 0.25rem;
+  }
+  .slider {
+    --knob: 46px;
+  }
+  .knob {
+    border-width: 4px;
+  }
+}

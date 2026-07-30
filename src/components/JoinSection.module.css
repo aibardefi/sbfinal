@@ -378,3 +378,75 @@
     align-items: center;
   }
 }
+
+/* Five stacked blocks and no artwork to shrink, so every one of them gives — and
+   the sign-off, which holds an empty line until there is something to say, gives
+   up the line. */
+@media (max-height: 500px) {
+  .final {
+    gap: 0.2rem;
+  }
+  .hero {
+    width: clamp(52px, 11vh, 90px);
+  }
+  .link {
+    padding: 0.3rem 0.6rem;
+    border-width: 3px;
+    font-size: 0.64rem;
+    box-shadow: 0 3px 0 0 var(--ink);
+  }
+  .primary {
+    padding: 0.32rem 0.8rem;
+    font-size: 0.68rem;
+  }
+  .links {
+    gap: 0.25rem;
+  }
+  .ca {
+    gap: 0.1rem;
+  }
+  .caLabel {
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+  }
+  .caBox {
+    padding: 0.28rem 0.5rem 0.28rem 0.65rem;
+    font-size: 0.64rem;
+  }
+  .spec {
+    gap: 0;
+    margin-top: 0.05rem;
+  }
+  .specRow {
+    font-size: 0.66rem;
+  }
+  .slab {
+    font-size: 0.58rem;
+  }
+  .signoff {
+    display: none;
+  }
+}
+
+@media (max-height: 580px) {
+  .final {
+    gap: 0.28rem;
+  }
+  .hero {
+    width: clamp(56px, 12vh, 100px);
+  }
+  .link {
+    padding: 0.36rem 0.7rem;
+    font-size: 0.68rem;
+  }
+  .spec {
+    gap: 0.04rem;
+    margin-top: 0.1rem;
+  }
+  .specRow {
+    font-size: 0.7rem;
+  }
+  .signoff {
+    display: none;
+  }
+}

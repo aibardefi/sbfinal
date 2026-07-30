@@ -1,10 +1,28 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Poppins } from "next/font/google";
 import "./globals.css";
 
 const sb = Geist({
   variable: "--font-sb",
   subsets: ["latin"],
+});
+
+/**
+ * The borrow screen's face, and only that screen's.
+ *
+ * Through `next/font/google` rather than a data: URI or a CDN link, because the
+ * CSP here is `font-src 'self'` with no `data:` — Next downloads the files at
+ * build time and serves them from this origin, which is the only arrangement
+ * that policy allows. A CDN link fails silently and falls back to Arial.
+ *
+ * Four weights, no italics: 400 for prose, 600 for figures, 700 for labels,
+ * 800 for the headline.
+ */
+const app = Poppins({
+  variable: "--font-app",
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "800"],
+  display: "swap",
 });
 
 /**
@@ -103,7 +121,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={sb.variable}>
+    <html lang="en" className={`${sb.variable} ${app.variable}`}>
       <head>
         <meta httpEquiv="Content-Security-Policy" content={CSP} />
         {/* No referrer leaves this site: the outbound links go to X and

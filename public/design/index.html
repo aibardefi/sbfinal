@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wiring a contract to cykablyat.vip</title>
+<meta name="robots" content="noindex">
+<style>
+/* Served from public/, so it is copied verbatim into the export and lives at
+   /design/index.html. Deliberately one file with no build step: whoever needs it
+   opens a link.
+
+   Against this site's Content-Security-Policy an inline <style> and an inline
+   <script> are both allowed, and images may be data: URIs — but fonts may not
+   (font-src is 'self' with no data:), so this page uses the system stack rather
+   than shipping a face of its own. */
+:root {
+  --bg: #12110c;
+  --panel: #1b1a14;
+  --line: #322f25;
+  --ink: #f2ede0;
+  --dim: #a49c8a;
+  --accent: #7cc606;
+  --warn: #d9a020;
+  --bad: #e4634f;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #efece5;
+    --panel: #fbf9f4;
+    --line: #ddd8ca;
+    --ink: #12110c;
+    --dim: #5c564a;
+    --accent: #4c7c04;
+    --warn: #8a6410;
+    --bad: #b03626;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 46rem; margin: 0 auto; padding: clamp(2rem, 6vw, 4rem) clamp(1rem, 4vw, 2rem) 6rem; }
+h1 { margin: 0 0 .4rem; font-size: clamp(1.5rem, 5vw, 2.2rem); line-height: 1.15; letter-spacing: -.02em; }
+.sub { margin: 0 0 2.5rem; color: var(--dim); max-width: 60ch; }
+h2 {
+  margin: 3rem 0 .8rem; font-size: 1.1rem; letter-spacing: .01em;
+  padding-top: 1.4rem; border-top: 1px solid var(--line);
+}
+h3 { margin: 1.6rem 0 .4rem; font-size: .95rem; }
+p, li { max-width: 68ch; }
+code { font-family: var(--mono); font-size: .88em; background: var(--panel); padding: .1em .35em; border-radius: 4px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.15rem; margin: 1rem 0; }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .9rem; }
+th, td { text-align: left; padding: .55rem .6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--dim); font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; }
+td:first-child { white-space: nowrap; font-family: var(--mono); font-size: .85rem; }
+.need { counter-reset: n; list-style: none; padding: 0; margin: 1rem 0; }
+.need li {
+  counter-increment: n; position: relative; padding: .7rem 0 .7rem 2.6rem;
+  border-bottom: 1px solid var(--line);
+}
+.need li::before {
+  content: counter(n); position: absolute; left: 0; top: .7rem;
+  width: 1.8rem; height: 1.8rem; display: grid; place-items: center;
+  background: var(--accent); color: var(--bg); border-radius: 50%;
+  font-weight: 700; font-size: .8rem;
+}
+.need b { display: block; }
+.need small { color: var(--dim); }
+.scroller { overflow-x: auto; }
+.tag { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: .15rem .45rem; border-radius: 4px; }
+.tag.no { background: color-mix(in srgb, var(--bad) 20%, transparent); color: var(--bad); }
+.tag.yes { background: color-mix(in srgb, var(--accent) 20%, transparent); color: var(--accent); }
+a { color: var(--ink); }
+footer { margin-top: 4rem; padding-top: 1.4rem; border-top: 1px solid var(--line); color: var(--dim); font-size: .85rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Wiring a contract to cykablyat.vip</h1>
+<p class="sub">
+  The borrow screen is built and live as the first page of the site. It has no
+  wallet code in it — the page cannot reach a blockchain at all yet. This is what
+  it needs in order to, what it already assumes, and how it gets switched on.
+</p>
+
+<h2>1. What the page needs</h2>
+<p>Four things. Nothing else is required to arm it.</p>
+<ol class="need">
+  <li><b>Contract address</b><small>The deployed lending contract.</small></li>
+  <li><b>ABI</b><small>The compiled interface, as JSON.</small></li>
+  <li><b>Chain ID</b><small>Pinned on every write, so a wallet on the wrong network cannot send.</small></li>
+  <li><b>RPC origins</b><small>The exact hostnames the page may talk to. See section 4 — this one is not a formality.</small></li>
+</ol>
+
+<h2>2. What the page already assumes</h2>
+<p>
+  These are compiled into it. If the deployment disagrees with any of them, the
+  page is wrong and it needs to be corrected before it is switched on — not
+  after.
+</p>
+<div class="scroller">
+<table>
+  <tr><th>Assumption</th><th>Value</th><th>Where</th></tr>
+  <tr><td>MAX_LTV</td><td>80% — the most you may borrow to</td><td><code>src/lib/health.ts</code></td></tr>
+  <tr><td>LIQ_LTV</td><td>90% — the point of liquidation</td><td><code>src/lib/health.ts</code></td></tr>
+  <tr><td>Liquidation</td><td>All of it. No partial, no grace.</td><td>stated on the page</td></tr>
+  <tr><td>Ruler scale</td><td>0 → 100, always</td><td><code>rulerPct</code></td></tr>
+  <tr><td>UI cap</td><td>79%, not 80 — see below</td><td><code>UI_MAX_LTV</code></td></tr>
+</table>
+</div>
+
+<h3>Two of those deserve a sentence each</h3>
+<p>
+  <b>The ruler is drawn 0 → 100 everywhere.</b> The 80 and 90 marks therefore land
+  in the same place on the borrow form and on every position, which is the whole
+  reason several loans can be compared at a glance. Scaling to the liquidation
+  threshold instead — <code>ltv / 90 * 100</code> — puts 80% at 89% of the bar and
+  silently destroys that.
+</p>
+<p>
+  <b>The page stops at 79%, not 80%.</b> The contract rounds three ways in its own
+  favour: collateral value down, debt value up, and the final ratio up. A loan
+  computed at exactly 80% therefore arrives on-chain as 8001 basis points and is
+  refused. Everything offered as a maximum is shaded below the limit first, so
+  "the most you can borrow" is a number that actually goes through.
+</p>
+
+<h2>3. Two behaviours that must not be changed</h2>
+<p>
+  Both are already correct in the page. They are written down because both are
+  easy to "tidy up" into something wrong.
+</p>
+<div class="panel">
+  <h3 style="margin-top:0">Adding collateral and repaying are never blocked</h3>
+  <p style="margin-bottom:0">
+    The 80% cap applies to borrowing and to withdrawing collateral. It does not
+    apply to adding collateral or to repaying — those two only ever improve a
+    position, so they are allowed at any ratio, including when the position is
+    already past 80%. Gating all four together looks tidy and breaks the one
+    action that saves someone who is about to be liquidated.
+  </p>
+</div>
+<div class="panel">
+  <h3 style="margin-top:0">One risk scale, not three</h3>
+  <p style="margin-bottom:0">
+    Health comes from <code>healthOf()</code> and nothing else: under 80 healthy,
+    80–90 at risk, 90 and over liquidatable. Adding a second rule-of-thumb
+    alongside it produces rows that are red next to a button that says everything
+    is fine. The words are rendered too, not just the colour, so the state does
+    not depend on being able to see red.
+  </p>
+</div>
+
+<h2>4. Switching it on</h2>
+<p>Three edits, all in this repository.</p>
+<div class="scroller">
+<table>
+  <tr><th>File</th><th>Change</th></tr>
+  <tr><td>src/components/ProtocolSection.tsx</td><td><code>LIVE</code> from <code>false</code> to <code>true</code></td></tr>
+  <tr><td>public/_headers</td><td><code>connect-src</code> gains the RPC origins</td></tr>
+  <tr><td>src/app/layout.tsx</td><td>the same change, in the meta tag</td></tr>
+</table>
+</div>
+<div class="panel">
+  <p style="margin-top:0">
+    <span class="tag no">not this</span>
+    <code>connect-src 'self' *</code> — or <code>default-src</code> widened, or a
+    wildcard host.
+  </p>
+  <p style="margin-bottom:0">
+    <span class="tag yes">this</span>
+    <code>connect-src 'self' https://rpc.example https://rpc2.example</code> —
+    named origins only.
+  </p>
+</div>
+<p>
+  That single line is what currently makes "a script on this page cannot ask for
+  your wallet" a fact rather than a hope. Widening it to everything removes the
+  protection entirely while looking like a one-word change.
+</p>
+
+<h2>5. Where things are</h2>
+<div class="scroller">
+<table>
+  <tr><th>Path</th><th>What</th></tr>
+  <tr><td>src/components/ProtocolSection.tsx</td><td>the screen, the tabs, the popups' contents</td></tr>
+  <tr><td>src/components/protocol/Ruler.tsx</td><td>the LTV ruler, shared by the form and every position</td></tr>
+  <tr><td>src/components/protocol/Modal.tsx</td><td>popup shell — focus trap, inert background, scroll lock</td></tr>
+  <tr><td>src/components/protocol/tokens.ts</td><td>the accepted collateral list</td></tr>
+  <tr><td>src/lib/health.ts</td><td>the thresholds. Change them here, nowhere else.</td></tr>
+  <tr><td>scripts/device-audit.mjs</td><td><code>npm run audit</code> — every screen against 39 viewports</td></tr>
+</table>
+</div>
+
+<footer>
+  <p>
+    The page is the first screen of <a href="/">cykablyat.vip</a>. Everything on
+    it is explorable now — pick a coin, move the ruler, open the popups — and
+    nothing on it can send anything.
+  </p>
+</footer>
+
+</div>
+</body>
+</html>

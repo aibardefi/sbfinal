@@ -1,0 +1,122 @@
+.wrap {
+  padding: 0.9rem 0 1.35rem;
+}
+
+.track {
+  position: relative;
+  height: 10px;
+  border-radius: 99px;
+  background: var(--p1-sunk);
+  /* No border. Everything else on this screen is borderless — a bordered track
+     would be the only outlined object left and would read as a leftover. The
+     sunk fill and the two marks carry the meaning on their own. */
+}
+
+.live {
+  /* pan-y, not none: this is a full-width strip on a page that scrolls, and
+     swallowing a vertical swipe is worse than losing a diagonal drag. */
+  touch-action: pan-y;
+  cursor: pointer;
+  /* The track is 10px but the thing you grab is 38px. content-box is the whole
+     trick: the site sets `box-sizing: border-box` globally, under which
+     `height: 10px` with 14px of padding leaves a content box of zero and the
+     track paints nothing at all — a slider you can drag but cannot see. */
+  box-sizing: content-box;
+  padding-block: 14px;
+  margin-block: -14px;
+  background-clip: content-box;
+}
+
+.live:focus-visible {
+  outline: 3px solid var(--p1-accent);
+  outline-offset: 6px;
+  border-radius: 99px;
+}
+
+.fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  border-radius: 99px;
+  background: var(--p1-accent);
+  transition: width 90ms linear, background 200ms ease;
+}
+.live .fill {
+  inset-block: 14px;
+}
+
+/* Health is the only place amber and red appear, and never as a surface tint —
+   the number beside the ruler takes the same colour so the signal is not
+   carried by one pixel row alone. */
+.track[data-health="warn"] .fill {
+  background: var(--p1-warn);
+}
+.track[data-health="danger"] .fill {
+  background: var(--p1-danger);
+}
+
+.mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: color-mix(in srgb, var(--p1-ink) 34%, transparent);
+  pointer-events: none;
+}
+.live .mark {
+  top: 14px;
+  bottom: 14px;
+}
+
+.mark[data-kind="liq"] {
+  background: color-mix(in srgb, var(--p1-danger) 70%, transparent);
+}
+
+.mark span {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--p1-dim);
+  font-variant-numeric: tabular-nums;
+}
+.mark[data-kind="liq"] span {
+  color: var(--p1-danger);
+}
+
+.knob {
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin-left: -11px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: var(--p1-paper);
+  box-shadow: 0 0 0 3px var(--p1-accent), 0 2px 8px rgb(0 0 0 / 0.22);
+  transition: left 90ms linear, box-shadow 200ms ease;
+  pointer-events: none;
+}
+.track[data-health="warn"] .knob {
+  box-shadow: 0 0 0 3px var(--p1-warn), 0 2px 8px rgb(0 0 0 / 0.22);
+}
+.track[data-health="danger"] .knob {
+  box-shadow: 0 0 0 3px var(--p1-danger), 0 2px 8px rgb(0 0 0 / 0.22);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill,
+  .knob {
+    transition: none;
+  }
+}
+
+@media (max-height: 500px) {
+  .wrap {
+    padding: 0.55rem 0 0.95rem;
+  }
+}

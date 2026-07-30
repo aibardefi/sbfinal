@@ -1,13 +1,21 @@
 # $CB — Capybara Blyatovich
 
-Eight screens. One tired capybara who runs a lending desk: you lock memes with
-him, he lends you the meme, you pay him back and he lets them out again.
+A borrow screen, then eight screens of story. One tired capybara who runs a
+lending desk: you lock memes with him, he lends you the meme, you pay him back
+and he lets them out again.
 
 Working notes for agents and anyone new to the repo are in `CLAUDE.md` —
 including the checks that have caught real bugs here.
 
-A toy, deliberately. There is no LTV, no interest rate and no risk copy anywhere
-on it, because there is no protocol behind it to describe yet.
+The eight story screens are a toy, deliberately — no figures, no risk copy, no
+numbers to get wrong.
+
+The first screen is not. It states the 80% limit, the 90% liquidation threshold
+and that liquidation takes everything, because those are the terms and a page
+that shows a borrow form without them is worse than one that shows nothing. It
+carries no wallet code at all: `LIVE` is `false` in `ProtocolSection.tsx` and the
+CSP's `connect-src 'self'` means nothing on the page can reach a chain even if it
+tried. `/design/` explains what arming it would take.
 
 ## Running it
 

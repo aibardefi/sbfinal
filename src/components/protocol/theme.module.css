@@ -1,0 +1,56 @@
+/* --------------------------------------------------------------------------
+   The borrow screen's palette, in one place that two subtrees can both wear.
+
+   It cannot live only on the section. The popups portal to `<body>` — they have
+   to, because `<html>` is a scroll-snap container and a dialog rendered inside a
+   snap target scrolls away with it — and at body level none of these names are
+   declared, so every `var(--p1-*)` resolves to nothing. The result is a modal
+   with no background at all: the card behind it shows straight through and two
+   sets of text overlap. It looks like a rendering bug and it is a scoping one.
+
+   So the tokens are a class, and both the section and the portal root wear it.
+
+   Still deliberately not on `:root`. The names are page-1-only, so nothing else
+   would break — but a theme that lives on `:root` is a theme the next person
+   will reach for from another screen, and these eight are hand-coloured cream
+   with no dark variant. Keeping it a class keeps the boundary visible.
+
+   White text is unusable on the light ground — measured between 1.3:1 and 2.6:1
+   against these brights — so text on any bright surface here is a deep ink, and
+   "deep" means violet or forest, never black.
+   -------------------------------------------------------------------------- */
+
+.tokens {
+  --p1-ground: #b298e7;
+  --p1-paper: #f7f3fd;
+  --p1-sunk: #e9dffb;
+  --p1-ink: #1e1435;
+  --p1-dim: #4b3b6b;
+  --p1-head: #1e1435;
+  --p1-head-dim: #3b2c58;
+  --p1-display: #052b1f;
+  --p1-accent: #4dffbc;
+  --p1-on-accent: #052b1f;
+  --p1-token: #052b1f;
+
+  /* Health is separate from the accent on purpose: mint and cyan are both clear
+     of the amber/red band, so a status can never be mistaken for a button. */
+  --p1-warn: #b8791b;
+  --p1-danger: #c4392b;
+}
+
+.tokens[data-p1-theme="dark"] {
+  --p1-ground: #0d1117;
+  --p1-paper: #161d26;
+  --p1-sunk: #111821;
+  --p1-ink: #e6f9ff;
+  --p1-dim: #8aa5b3;
+  --p1-head: #e6f9ff;
+  --p1-head-dim: #8aa5b3;
+  --p1-display: #42eaff;
+  --p1-accent: #42eaff;
+  --p1-on-accent: #06202a;
+  --p1-token: #ff7900;
+  --p1-warn: #e0a53a;
+  --p1-danger: #ff6b5b;
+}

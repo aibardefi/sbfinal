@@ -1,7 +1,14 @@
 # Working on this repo
 
-Eight full-screen sections, one per idea, scroll-snapped. Next 16 static export
-(`output: "export"`), CSS Modules per section, design tokens in `globals.css`.
+Nine full-screen sections, scroll-snapped: the borrow screen, then eight of
+story. Next 16 static export (`output: "export"`), CSS Modules per section,
+design tokens in `globals.css`.
+
+The borrow screen is the odd one out and stays that way. It has its own palette
+and its own typeface, declared on its own `.stage` — **not** on `:root`, because
+one unscoped theme toggle would repaint eight hand-coloured screens with it. It
+is also outside the `NN / 08` count: it is the product, the eight are the story
+about it.
 
 **Pushing to `main` is deploying.** Cloudflare Pages watches this repo and
 rebuilds `cykablyat.vip` in 2–3 minutes. There is no separate publish step. To
@@ -18,7 +25,10 @@ non-production branch to its own URL and leaves the domain alone.
 | Entrance / replay | `src/lib/useEntrance.ts`, `useReplay.ts`, `useAutoRearm.ts` |
 | Response headers | `public/_headers` — Cloudflare reads this at deploy |
 | Artwork budget | `--art` on `.stage` in `globals.css`; each section converts it |
-| Device audit | `npm run audit` — 23 viewports x 8 screens; see "Checks" below |
+| Borrow screen | `src/components/ProtocolSection.tsx` + `protocol/`; `LIVE` arms it |
+| Thresholds | `src/lib/health.ts` — 80 / 90, and every mark is computed from them |
+| Handover | `public/design/` — what wiring a contract to page 1 needs |
+| Device audit | `npm run audit` — 39 viewports x 9 screens; see "Checks" below |
 
 ## Checks that have caught real bugs here
 
@@ -28,11 +38,18 @@ They are cheap; run them.
 **`npm run audit` before shipping anything that changes a size.** Every screen is
 a `scroll-snap-stop: always` panel of `min-height: 100dvh`, so a panel one pixel
 taller than the viewport hides its bottom where nobody can scroll to it. The
-audit asserts the fit and 18px of clearance under the lowest line, on 23
-viewports, and it needs `npm i -D playwright-core` plus a Chromium — which is why
-it is a script and not part of `next build`. It has found: Join 790px on a
-568px screen, a 70px coin disc in a 600px-tall window, and the scroll cue 7px
-*below* the bottom edge of a landscape iPad.
+audit asserts the fit and 18px of clearance under the lowest line, and it needs
+`npm i -D playwright-core` plus a Chromium — which is why it is a script and not
+part of `next build`. It has found: Join 790px on a 568px screen, a 70px coin
+disc in a 600px-tall window, and the scroll cue 7px *below* the bottom edge of a
+landscape iPad.
+
+**A phone's screen size is not the viewport it gives you.** The audit lists each
+phone twice for this reason. An iPhone SE advertises 568px and hands Safari about
+460; at that height five of eight screens overflowed while a list of device
+resolutions reported everything green. **Phones on their side are deliberately
+out of scope** — that is a decision, written into the script above `VIEWPORTS`,
+not an omission to be tidied up.
 
 **Look at it. A clean build proves nothing.** `next build` was green while the
 travelling coin landed *below* the safe, the "20%" wore a fat black outline it

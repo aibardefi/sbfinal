@@ -375,3 +375,52 @@
     gap: 0.4rem;
   }
 }
+
+/* This screen reserves 4rem at the bottom unconditionally so its block sits
+   higher — which also beat the global short-screen reserve and spent 45px of a
+   460px viewport on empty space. */
+@media (max-height: 500px) {
+  .middle {
+    --art: min(34dvh, 500px);
+    gap: 0.3rem;
+  }
+  .stage {
+    padding-bottom: max(1.6rem, calc(env(safe-area-inset-bottom) + 0.9rem));
+  }
+  .tflow {
+    gap: 0.5rem;
+  }
+  .unit {
+    gap: 0.2rem;
+  }
+  .cap {
+    font-size: 0.6rem;
+    line-height: 1.2;
+  }
+  .never {
+    padding: 0.28rem 0.5rem;
+    font-size: 0.6rem;
+    box-shadow: 0 3px 0 var(--ink);
+  }
+  .never small {
+    font-size: 0.58rem;
+  }
+}
+
+@media (max-height: 580px) {
+  .middle {
+    --art: min(38dvh, 500px);
+    gap: 0.4rem;
+  }
+  .stage {
+    padding-bottom: max(1.6rem, calc(env(safe-area-inset-bottom) + 0.9rem));
+  }
+  .cap {
+    font-size: 0.64rem;
+    line-height: 1.25;
+  }
+  .never {
+    padding: 0.34rem 0.6rem;
+    font-size: 0.64rem;
+  }
+}

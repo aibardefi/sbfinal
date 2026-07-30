@@ -236,3 +236,45 @@
     font-size: 1.3rem;
   }
 }
+
+/* The coin rail is the tallest fixed row on the site, and at 560px it wraps to
+   two rows of three. Two rows of 40px discs plus their labels is 118px of a
+   460px viewport. Six across fits at 320px — 6x40 is 240 — so one row it is, and
+   the discs keep their 40px tap floor. */
+@media (max-height: 500px) {
+  .middle {
+    --art: min(26dvh, 460px);
+  }
+  .rail {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.25rem;
+    width: 100%;
+  }
+  .reset {
+    font-size: 0.6rem;
+    padding: 0.1rem 0.4rem;
+  }
+  .cta {
+    padding: 0.22rem 0.5rem;
+    border-width: 2px;
+    font-size: 0.62rem;
+    box-shadow: 0 3px 0 var(--ink);
+  }
+  .topcta {
+    gap: 0.3rem;
+  }
+}
+
+/* 512 and 553 are real: a budget Android and an iPhone 8, both with their
+   browser bars up. They need less than the 460px tier takes, but more than the
+   tiers above give. */
+@media (max-height: 580px) {
+  .middle {
+    --art: min(30dvh, 460px);
+  }
+  .rail {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.3rem;
+    width: 100%;
+  }
+}

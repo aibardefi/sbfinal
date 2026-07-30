@@ -270,3 +270,14 @@
     gap: clamp(0.4rem, 1.8vw, 1rem);
   }
 }
+
+@media (max-height: 500px) {
+  .mid {
+    --art: min(34dvh, 500px);
+    gap: 0.2rem;
+  }
+  .deckLabel {
+    font-size: 0.6rem;
+    min-height: 0;
+  }
+}

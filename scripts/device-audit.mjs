@@ -44,31 +44,57 @@ try {
   process.exit(2);
 }
 
-/** The client's spec, plus the short landscape cases that caught real bugs. */
+/**
+ * Every phone appears twice, and the second number is the point.
+ *
+ * A device's screen resolution is not the viewport a browser hands the page. On a
+ * 320x568 iPhone SE, Safari gives about 460px with both bars showing and 548px
+ * with one — never 568. This list used to carry resolutions only, so it passed
+ * while five of eight screens overflowed at the height that phone actually has.
+ *
+ * So: the browser height first, because that is the honest one, then the device
+ * height as the generous reading still worth holding.
+ */
+const PHONES = [
+  // [width, browser height with both bars, device height, name]
+  [320, 460, 568, "iPhone SE 1 / 5s"],
+  [375, 553, 667, "iPhone SE 2-3 / 8"],
+  [375, 629, 812, "iPhone X / XS / 11 Pro / 12-13 mini"],
+  [390, 659, 844, "iPhone 12-14 / 15 / 16"],
+  [393, 664, 852, "iPhone 15-16 Pro"],
+  [402, 680, 874, "iPhone 16 Pro"],
+  [414, 622, 736, "iPhone 8 Plus"],
+  [428, 745, 926, "iPhone 12-14 Pro Max"],
+  [430, 745, 932, "iPhone 15-16 Plus / Pro Max"],
+  [360, 512, 640, "Galaxy S5-S8 / budget Android"],
+  [360, 672, 800, "Galaxy A-series / S22"],
+  [384, 726, 854, "Pixel 7-8"],
+  [412, 787, 915, "Pixel 6-8 Pro / S21-S24"],
+  [412, 755, 883, "Pixel 5 / 4a"],
+  [480, 939, 1067, "Galaxy S24 Ultra"],
+];
+
+/**
+ * Portrait only, deliberately.
+ *
+ * Turned sideways these screens do overflow, and badly — at 844x312 seven of the
+ * eight run past the bottom edge. That is a known, measured, accepted gap: the
+ * client's call is that nobody reads this site with their phone on its side. It
+ * is written down here rather than left as an absence so the next person to read
+ * this list knows it is a decision and not an oversight.
+ */
 const VIEWPORTS = [
-  // iPhone, every model still in use
-  [320, 568, "iPhone SE 1 / 5s"],
-  [375, 667, "iPhone SE 2-3 / 8"],
-  [390, 844, "iPhone 12-14 / 15 / 16"],
-  [393, 852, "iPhone 15-16 Pro"],
-  [402, 874, "iPhone 16 Pro"],
-  [414, 736, "iPhone 8 Plus"],
-  [428, 926, "iPhone 12-14 Pro Max"],
-  [430, 932, "iPhone 15-16 Plus / Pro Max"],
-  // Android, the popular sizes
-  [360, 640, "Galaxy S5-S8 / budget Android"],
-  [360, 800, "Galaxy A-series / S22"],
-  [384, 854, "Pixel 7-8"],
-  [412, 915, "Pixel 6-8 Pro / S21-S24"],
-  [412, 883, "Pixel 5 / 4a"],
-  [480, 1067, "Galaxy S24 Ultra"],
-  // Tablets, both ways up
+  ...PHONES.flatMap(([w, browser, device, name]) => [
+    [w, browser, `${name} — browser height`],
+    [w, device, `${name} — full height`],
+  ]),
+  // Tablets, both ways up: a tablet on its side is a normal way to hold one.
   [768, 1024, "iPad mini / 9.7 portrait"],
   [810, 1080, "iPad 10.2 portrait"],
   [834, 1112, "iPad Air 10.5 portrait"],
   [1024, 768, "iPad 9.7 landscape"],
   [1080, 810, "iPad 10.2 landscape"],
-  // Laptops and the short windows that never got a width-keyed rule
+  // Laptops, and the short windows no width-keyed rule ever reached.
   [1024, 600, "netbook / short laptop window"],
   [1280, 720, "720p laptop"],
   [1440, 900, "MacBook Air"],
@@ -206,7 +232,13 @@ for (const [w, h, name] of list) {
         }
       }
       return {
-        counter: sec.querySelector(".count")?.textContent?.trim() ?? `#${n}`,
+        // Page 1 carries no `NN / 08` counter — it is the app, not part of the
+        // story — so fall back to its headline rather than an index nobody can
+        // place.
+        counter:
+          sec.querySelector(".count")?.textContent?.trim() ??
+          sec.querySelector("h1")?.textContent?.trim().slice(0, 28) ??
+          `#${n}`,
         height: Math.round(box.height),
         low: low ? { bottom: Math.round(low.bottom), text: low.text } : null,
       };
@@ -244,4 +276,11 @@ if (failures.length) {
   for (const f of failures) console.log("  " + f);
   process.exit(1);
 }
-console.log("All panels fit, and every lowest line clears the bottom edge.");
+// Named, not just "all panels fit". A green run is quoted later as evidence, and
+// it should carry what it actually covered — an unqualified pass was cited once
+// for a case this list had never run.
+console.log(
+  `All panels fit and every lowest line clears the bottom edge, ` +
+    `across ${list.length} portrait phone and tablet/desktop viewport(s). ` +
+    `Phones held sideways are not covered — see the note above VIEWPORTS.`
+);

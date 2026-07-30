@@ -1,0 +1,478 @@
+/* The palette lives in `theme.module.css`, worn by this stage and by the portal
+   the popups render into. See that file for why it is not declared here. */
+
+.stage {
+  /* Opaque, so it covers the radial ground gradient the shell paints under every
+     section rather than blending with it. */
+  background: var(--p1-ground);
+  color: var(--p1-head);
+  font-family: var(--font-app), var(--display);
+}
+
+/* ---------------- top row ---------------- */
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--p1-paper) 34%, transparent);
+}
+
+.tab {
+  border: 0;
+  border-radius: 99px;
+  padding: 0.38rem 0.9rem;
+  background: none;
+  color: var(--p1-head-dim);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+.tabOn {
+  background: var(--p1-paper);
+  color: var(--p1-ink);
+}
+.tab:focus-visible {
+  outline: 3px solid var(--p1-accent);
+  outline-offset: 2px;
+}
+
+.theme {
+  margin-left: auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--p1-paper) 34%, transparent);
+  color: var(--p1-head);
+  cursor: pointer;
+}
+.theme svg {
+  width: 18px;
+  height: 18px;
+}
+.theme:focus-visible {
+  outline: 3px solid var(--p1-accent);
+  outline-offset: 2px;
+}
+
+/* ---------------- headline ---------------- */
+
+.h1 {
+  margin: 0;
+  font-family: var(--font-app), var(--display);
+  font-size: clamp(1.35rem, 4vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: var(--p1-display);
+}
+.token {
+  color: var(--p1-token);
+}
+
+/* ---------------- the card ---------------- */
+
+.middle {
+  --art: min(54dvh, 500px);
+  place-items: center;
+  align-content: center;
+}
+
+.card {
+  /* width + max-width, not `min(28rem, 100%)`. In a `min()` a percentage is
+     treated as `auto` while a grid track is being sized, so that expression
+     hands the track a 448px minimum and the whole screen inherits it. */
+  width: 100%;
+  max-width: 28rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border-radius: 20px;
+  /* Borderless. The step from ground to paper is what separates the card; a
+     border on top of that contrast is a third edge saying the same thing. */
+  background: var(--p1-paper);
+  color: var(--p1-ink);
+  box-shadow: 0 18px 40px -20px rgb(0 0 0 / 0.35);
+}
+
+.rowLabel {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--p1-dim);
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+  padding: 0.55rem 0.55rem 0.55rem 0.85rem;
+  border-radius: 14px;
+  background: var(--p1-sunk);
+}
+
+.amount {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--p1-ink);
+  font: inherit;
+  font-size: 1.35rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.amount:focus-visible {
+  outline: 3px solid var(--p1-accent);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+.pick {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 0;
+  border-radius: 10px;
+  padding: 0.4rem 0.5rem;
+  background: var(--p1-paper);
+  color: var(--p1-ink);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pick svg {
+  width: 15px;
+  height: 15px;
+  opacity: 0.6;
+}
+.pick:focus-visible {
+  outline: 3px solid var(--p1-accent);
+  outline-offset: 2px;
+}
+
+.dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.62rem;
+  font-weight: 800;
+  flex: none;
+}
+
+/* ---------------- summary ---------------- */
+
+.summary {
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.summary > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.summary dt {
+  font-size: 0.78rem;
+  color: var(--p1-dim);
+}
+.summary dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.big {
+  font-size: 1.35rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+.big small {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--p1-dim);
+}
+
+/* Amber and red appear here and on the ruler, and nowhere else. */
+.summary dd[data-health="warn"],
+.terms dd[data-health="warn"] {
+  color: var(--p1-warn);
+}
+.summary dd[data-health="danger"],
+.terms dd[data-health="danger"] {
+  color: var(--p1-danger);
+}
+.bad {
+  color: var(--p1-danger);
+}
+
+.note {
+  margin: 0.9rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--p1-dim);
+}
+
+.link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--p1-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.link:focus-visible {
+  outline: 3px solid var(--p1-accent);
+  outline-offset: 2px;
+}
+
+/* ---------------- buttons ---------------- */
+
+.primary {
+  width: 100%;
+  margin-top: 1rem;
+  border: 0;
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  /* Flat: fill only, no border, no shadow. */
+  background: var(--p1-accent);
+  color: var(--p1-on-accent);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 140ms ease;
+}
+.primary:hover {
+  filter: brightness(0.95);
+}
+.primary:focus-visible {
+  outline: 3px solid var(--p1-ink);
+  outline-offset: 3px;
+}
+
+.ghost {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 0.7rem 1rem;
+  background: var(--p1-sunk);
+  color: var(--p1-ink);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ghost:focus-visible {
+  outline: 3px solid var(--p1-accent);
+  outline-offset: 2px;
+}
+
+/* ---------------- positions: nothing yet ---------------- */
+
+.empty {
+  display: grid;
+  gap: 0.6rem;
+  justify-items: center;
+  text-align: center;
+  padding: 1rem 0;
+}
+.emptyTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.emptyBody {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--p1-dim);
+}
+.empty .ghost {
+  width: auto;
+  margin-top: 0.4rem;
+  padding-inline: 1.2rem;
+}
+
+/* ---------------- popup contents ---------------- */
+
+.coinList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.3rem;
+}
+.coinRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  border: 0;
+  border-radius: 12px;
+  padding: 0.6rem 0.7rem;
+  background: none;
+  color: var(--p1-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+.coinRow:hover {
+  background: var(--p1-sunk);
+}
+.coinOn {
+  background: var(--p1-sunk);
+}
+.coinRow:focus-visible {
+  outline: 3px solid var(--p1-accent);
+  outline-offset: -3px;
+}
+.coinName {
+  display: grid;
+}
+.coinName b {
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+.coinName small {
+  font-size: 0.72rem;
+  color: var(--p1-dim);
+}
+
+.terms {
+  margin: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+.terms > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.terms dt {
+  font-size: 0.8rem;
+  color: var(--p1-dim);
+}
+.terms dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.foot {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--p1-head-dim);
+  text-align: center;
+}
+
+/* Tap targets, on a screen made entirely of them. */
+@media (pointer: coarse) {
+  .tab,
+  .pick,
+  .theme,
+  .coinRow {
+    min-height: 44px;
+  }
+}
+
+@media (max-height: 580px) {
+  /* The global short-screen tier shrinks `h1.sticker`, and this headline is not
+     one — it is the app's face, not the story's sticker type — so it needs its
+     own line here or it stays full size while everything around it gives. */
+  .h1 {
+    font-size: clamp(1.05rem, min(4vw, 4.4dvh), 1.6rem);
+  }
+  .foot {
+    font-size: 0.66rem;
+  }
+  .card {
+    padding: 0.8rem;
+  }
+  .amount {
+    font-size: 1.1rem;
+  }
+  .big {
+    font-size: 1.1rem;
+  }
+  .note {
+    margin-top: 0.6rem;
+    font-size: 0.7rem;
+  }
+  .primary {
+    margin-top: 0.7rem;
+    padding: 0.6rem 1rem;
+  }
+  .summary {
+    gap: 0.35rem;
+  }
+}
+
+/* An iPhone SE with its browser bars up: 460px, and this card is the tallest
+   thing on the site after the story artwork. Everything that is spacing gives;
+   nothing that is a tap target does. */
+@media (max-height: 500px) {
+  .h1 {
+    font-size: clamp(0.95rem, min(3.6vw, 4dvh), 1.4rem);
+  }
+  .card {
+    padding: 0.65rem;
+  }
+  .field {
+    margin-top: 0.25rem;
+    padding: 0.35rem 0.35rem 0.35rem 0.7rem;
+  }
+  .amount {
+    font-size: 1rem;
+  }
+  .summary {
+    gap: 0.2rem;
+  }
+  .summary dt,
+  .summary dd {
+    font-size: 0.72rem;
+  }
+  .big {
+    font-size: 1rem;
+  }
+  .big small {
+    font-size: 0.62rem;
+  }
+  .note {
+    margin-top: 0.45rem;
+    font-size: 0.66rem;
+    line-height: 1.4;
+  }
+  .primary {
+    margin-top: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.82rem;
+  }
+  .foot {
+    font-size: 0.62rem;
+  }
+}
