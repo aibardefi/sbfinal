@@ -1,0 +1,98 @@
+/* Transaction progress. Sits under the primary button and inside the review
+   dialog, so it is styled to be readable on both the card and the popup panel —
+   both are `--p1-paper`, which is why one rule covers it. */
+
+.wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.6rem;
+  margin-top: 0.7rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--p1-ink) 7%, transparent);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.wrap[data-phase="error"] {
+  background: color-mix(in srgb, var(--p1-warn) 14%, transparent);
+  color: var(--p1-warn);
+}
+
+.wrap[data-phase="done"] {
+  background: color-mix(in srgb, var(--p1-accent) 22%, transparent);
+  color: var(--p1-on-accent);
+}
+
+.line {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  flex: 1 1 12rem;
+  font-weight: 600;
+}
+
+.tail {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-left: auto;
+}
+
+.link,
+.dismiss {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.link:focus-visible,
+.dismiss:focus-visible {
+  outline: 3px solid var(--p1-accent);
+  outline-offset: 2px;
+}
+
+.spin {
+  flex: none;
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-top-color: currentColor;
+  animation: spin 720ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* The site honours this everywhere else; a spinner is exactly the kind of
+   endless motion the setting exists for. The ring stays as a static mark so the
+   line does not lose its "something is happening" cue entirely. */
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+    border-top-color: color-mix(in srgb, currentColor 30%, transparent);
+    border-left-color: currentColor;
+  }
+}
+
+@media (max-height: 500px) {
+  .wrap {
+    margin-top: 0.45rem;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.68rem;
+  }
+}

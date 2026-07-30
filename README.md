@@ -12,10 +12,20 @@ numbers to get wrong.
 
 The first screen is not. It states the 80% limit, the 90% liquidation threshold
 and that liquidation takes everything, because those are the terms and a page
-that shows a borrow form without them is worse than one that shows nothing. It
-carries no wallet code at all: `LIVE` is `false` in `ProtocolSection.tsx` and the
-CSP's `connect-src 'self'` means nothing on the page can reach a chain even if it
-tried. `/design/` explains what arming it would take.
+that shows a borrow form without them is worse than one that shows nothing.
+
+**It is wired to the contract and it can sign.** `LIVE` is `true` in
+`ProtocolSection.tsx`, and the screen reads `CBLending` at
+`0x13BCbCb4F2F42951A5BBcb481B0496554eEC9774` on Robinhood Chain (4663) and opens,
+repays, tops up and unwinds real positions through an injected wallet.
+`/design/` is the handover note for it.
+
+Two things about that deployment are worth knowing before you touch it. Its
+manifest carries `mocks: true`, and its lent token answers `symbol()` with `WN`
+("Wewen") — the page says `$CB` because that is the decision on file, and
+`Market.cbSymbol` in `src/lib/protocol.ts` carries what the chain actually
+reports. The collateral roster is whatever `collateralTokens()` returns, which at
+the time of writing is one coin, `CASHCAT`.
 
 ## Running it
 
@@ -47,13 +57,35 @@ file silently unsets the domain.
 
 ## Security posture
 
-No network calls, no third-party scripts, no analytics, no cookies or storage,
-and no wallet or signing code of any kind. The only external hosts referenced
-anywhere in the built bundle are `x.com`, `t.me` and `app.cykablyat.vip`, all
-plain links. A Content-Security-Policy in `src/app/layout.tsx` keeps it that way.
+No third-party scripts, no analytics, no cookies and nothing in storage. The
+site talks to exactly one host that is not itself:
+`https://rpc.mainnet.chain.robinhood.com`, named in `connect-src` in both
+`src/app/layout.tsx` and `public/_headers`. Everything else external —
+`x.com`, `t.me`, `app.cykablyat.vip`, the block explorer — is a plain link.
 
-The real risk to a site like this is not its code — it is the domain. Keep
-registrar 2FA and the transfer lock on.
+The page **does** now carry signing code, so the policy is doing real work
+rather than describing a page that had nothing to protect:
+
+- `connect-src` is `'self'` plus that one named origin. Never a wildcard, never
+  a widened `default-src`. `npm run check:csp` asserts this in both copies and
+  fails on drift — the meta tag and the header are written separately and the
+  browser takes the intersection, so widening one alone breaks only production.
+- `frame-ancestors 'none'` in `public/_headers` is the rule that stops a signing
+  UI being framed. A `<meta>` CSP cannot carry it, which is why Cloudflare
+  serves this site and GitHub Pages does not.
+- Approvals are for the exact amount being spent, never unlimited.
+- Every write is simulated against current state before it reaches the wallet,
+  so the contract's own revert is shown as a sentence instead of being paid for.
+
+`LIVE = false` in `ProtocolSection.tsx` is a real kill switch: it removes the
+wallet, the confirm button and every claim that something can be sent, leaving
+the read-only screen. It is not a label change — it used to be, and that was a
+bug.
+
+The real risk to a site like this is still not its code — it is the domain. Keep
+registrar 2FA and the transfer lock on. Now it is also the admin key:
+`DEFAULT_ADMIN_ROLE` on the proxy can replace the implementation with arbitrary
+code, and therefore controls every token the contract holds.
 
 ## Cloudflare Pages — how it was set up
 

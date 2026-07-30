@@ -1,0 +1,73 @@
+/* The wallet, in the top row. Sized off .tab so the two sides of that row read
+   as one control strip rather than two unrelated widgets. */
+
+.connect,
+.chip,
+.wrong {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 0;
+  border-radius: 99px;
+  padding: 0.38rem 0.8rem;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.connect {
+  background: var(--p1-accent);
+  color: var(--p1-on-accent);
+}
+.connect:disabled {
+  background: color-mix(in srgb, var(--p1-ink) 8%, transparent);
+  color: var(--p1-dim);
+  cursor: progress;
+}
+
+.chip {
+  background: color-mix(in srgb, var(--p1-ink) 8%, transparent);
+  color: var(--p1-ink);
+}
+
+/* Amber, matching .problem on the card: the same colour means the same thing —
+   "this is not going to work yet" — wherever it appears on the screen. */
+.wrong {
+  background: color-mix(in srgb, var(--p1-warn) 16%, transparent);
+  color: var(--p1-warn);
+}
+
+/* Connected. A dot rather than the word, because the address beside it already
+   says an account is present and two statements of one fact is noise. */
+.live {
+  width: 0.44rem;
+  height: 0.44rem;
+  border-radius: 50%;
+  background: var(--p1-accent);
+}
+
+.connect:focus-visible,
+.chip:focus-visible,
+.wrong:focus-visible {
+  outline: 3px solid var(--p1-ink);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .connect,
+  .chip,
+  .wrong {
+    min-height: 44px;
+  }
+}
+
+@media (max-height: 500px) {
+  .connect,
+  .chip,
+  .wrong {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.68rem;
+  }
+}

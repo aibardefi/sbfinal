@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Poppins } from "next/font/google";
+import { RPC_ORIGIN } from "@/lib/rpc";
 import "./globals.css";
 
 const sb = Geist({
@@ -103,7 +104,14 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data:",
   "font-src 'self'",
-  "connect-src 'self'",
+  // The borrow screen reads the lending contract over JSON-RPC, so this is no
+  // longer 'self' alone. It is one named origin, built from the same constant
+  // the client dials — never a wildcard and never a widened default-src, which
+  // would look like a one-word change and remove the protection entirely.
+  //
+  // The wallet needs nothing here: an injected EIP-1193 provider is same-page
+  // JavaScript, and the signing traffic is the extension's, not the page's.
+  `connect-src 'self' ${RPC_ORIGIN}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'none'",

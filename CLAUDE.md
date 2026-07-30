@@ -26,9 +26,11 @@ non-production branch to its own URL and leaves the domain alone.
 | Response headers | `public/_headers` — Cloudflare reads this at deploy |
 | Artwork budget | `--art` on `.stage` in `globals.css`; each section converts it |
 | Borrow screen | `src/components/ProtocolSection.tsx` + `protocol/`; `LIVE` arms it |
+| Chain layer | `src/lib/` — `chain` `rpc` `abi` `protocol` `wallet` `tx`; viem, no wagmi |
 | Thresholds | `src/lib/health.ts` — 80 / 90, and every mark is computed from them |
-| Handover | `public/design/` — what wiring a contract to page 1 needs |
+| Handover | `public/design/` — what page 1 is pointed at and what not to change |
 | Device audit | `npm run audit` — 39 viewports x 9 screens; see "Checks" below |
+| CSP check | `npm run check:csp` — the meta and header policies must agree |
 
 ## Checks that have caught real bugs here
 
@@ -86,6 +88,18 @@ Cloudflare purge and a settings change — wrong order, and it cost an hour.
 
 **Say what you did not verify.** `cykablyat.vip` is unreachable from the agent
 sandbox (proxy 403). Local checks are not live checks; report the difference.
+The chain, unlike the website, *is* reachable: `curl` the RPC and read the
+contract before believing a manifest. Doing that is how we learned chain 4663 is
+mainnet, that only one collateral token is whitelisted where the page listed
+six, and that the lent token calls itself `WN`.
+
+**Page 1 can spend money now.** The borrow screen signs real transactions
+against `CBLending` on chain 4663. Two rules follow. Anything that changes an
+amount is arithmetic on `bigint` — a `uint256` through a double silently loses
+its low digits, which is why `exactAmount` exists beside `formatAmount` and why
+"Max" uses the former. And every write simulates first, so the contract's own
+revert reaches the visitor as a sentence instead of a paid-for failure; do not
+replace that with a client-side guess at the limit.
 
 ## Facts that are settled
 

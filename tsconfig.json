@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    /* ES2020 for BigInt literals. Token amounts are uint256 and cannot go
+       through a double without losing the low digits, so every amount on the
+       borrow screen is a bigint and the `0n` literal has to compile. ES2020 is
+       also the floor viem itself targets. */
+    "target": "ES2020",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,

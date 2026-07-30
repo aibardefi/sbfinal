@@ -84,21 +84,45 @@ footer { margin-top: 4rem; padding-top: 1.4rem; border-top: 1px solid var(--line
 <body>
 <div class="wrap">
 
-<h1>Wiring a contract to cykablyat.vip</h1>
+<h1>The contract behind cykablyat.vip</h1>
 <p class="sub">
-  The borrow screen is built and live as the first page of the site. It has no
-  wallet code in it — the page cannot reach a blockchain at all yet. This is what
-  it needs in order to, what it already assumes, and how it gets switched on.
+  The borrow screen is the first page of the site and it is wired to
+  <code>CBLending</code> on Robinhood Chain. It reads the chain with no wallet
+  attached, and it signs when one is connected. This is what it is pointed at,
+  what it assumes, what must not be changed, and how it gets switched off.
 </p>
 
-<h2>1. What the page needs</h2>
-<p>Four things. Nothing else is required to arm it.</p>
-<ol class="need">
-  <li><b>Contract address</b><small>The deployed lending contract.</small></li>
-  <li><b>ABI</b><small>The compiled interface, as JSON.</small></li>
-  <li><b>Chain ID</b><small>Pinned on every write, so a wallet on the wrong network cannot send.</small></li>
-  <li><b>RPC origins</b><small>The exact hostnames the page may talk to. See section 4 — this one is not a formality.</small></li>
-</ol>
+<h2>1. What it is pointed at</h2>
+<p>
+  All four live in <code>src/lib/chain.ts</code> and <code>src/lib/rpc.ts</code>.
+  The proxy address is the one to call — never the implementation, whose storage
+  is empty by design.
+</p>
+<div class="scroller">
+<table>
+  <tr><th>Thing</th><th>Value</th></tr>
+  <tr><td>Chain</td><td>Robinhood Chain mainnet, id <b>4663</b></td></tr>
+  <tr><td>Lending proxy</td><td>0x13BCbCb4F2F42951A5BBcb481B0496554eEC9774</td></tr>
+  <tr><td>$CB token</td><td>0x35C84a03960C5684Eb803264eA7dE6f0a159cdFc</td></tr>
+  <tr><td>RPC origin</td><td>https://rpc.mainnet.chain.robinhood.com</td></tr>
+</table>
+</div>
+<div class="panel">
+  <p>
+    <span class="tag no">Read this</span> The deployment manifest carries
+    <code>mocks: true</code>, and the lent token answers <code>symbol()</code>
+    with <b>WN</b> (&ldquo;Wewen&rdquo;). The screen says <b>$CB</b> because that
+    is the decision on file — see <code>BORROWED</code> in
+    <code>src/components/protocol/tokens.ts</code>, and
+    <code>Market.cbSymbol</code> for what the chain actually reports.
+  </p>
+  <p>
+    The ABI is <b>not</b> the compiled artifact. It is hand-written and
+    <code>as const</code> in <code>src/lib/abi.ts</code>, which is what lets viem
+    type the arguments — and it carries every custom error, because a revert can
+    only be turned into a sentence if its error is in the ABI it was given.
+  </p>
+</div>
 
 <h2>2. What the page already assumes</h2>
 <p>
@@ -133,10 +157,10 @@ footer { margin-top: 4rem; padding-top: 1.4rem; border-top: 1px solid var(--line
   "the most you can borrow" is a number that actually goes through.
 </p>
 
-<h2>3. Two behaviours that must not be changed</h2>
+<h2>3. Three behaviours that must not be changed</h2>
 <p>
-  Both are already correct in the page. They are written down because both are
-  easy to "tidy up" into something wrong.
+  All three are implemented and correct. They are written down because all three
+  are easy to "tidy up" into something wrong.
 </p>
 <div class="panel">
   <h3 style="margin-top:0">Adding collateral and repaying are never blocked</h3>
@@ -145,7 +169,21 @@ footer { margin-top: 4rem; padding-top: 1.4rem; border-top: 1px solid var(--line
     apply to adding collateral or to repaying — those two only ever improve a
     position, so they are allowed at any ratio, including when the position is
     already past 80%. Gating all four together looks tidy and breaks the one
-    action that saves someone who is about to be liquidated.
+    action that saves someone who is about to be liquidated. The four buttons
+    live in <code>src/components/protocol/Positions.tsx</code> and none of them
+    is disabled on health.
+  </p>
+</div>
+<div class="panel">
+  <h3 style="margin-top:0">Every write simulates before it signs</h3>
+  <p style="margin-bottom:0">
+    <code>simulateContract</code> runs the call against current state and throws
+    the contract's own error, which <code>describeError</code> turns into a
+    sentence — so "that works out at 80.4%, past the 80% limit" appears before
+    the wallet popup rather than as a failed transaction somebody already paid
+    gas for. Do not replace it with a client-side guess at the limit: that would
+    be a second risk rule beside <code>healthOf()</code>, which is the next
+    thing on this list.
   </p>
 </div>
 <div class="panel">
@@ -159,16 +197,24 @@ footer { margin-top: 4rem; padding-top: 1.4rem; border-top: 1px solid var(--line
   </p>
 </div>
 
-<h2>4. Switching it on</h2>
-<p>Three edits, all in this repository.</p>
-<div class="scroller">
-<table>
-  <tr><th>File</th><th>Change</th></tr>
-  <tr><td>src/components/ProtocolSection.tsx</td><td><code>LIVE</code> from <code>false</code> to <code>true</code></td></tr>
-  <tr><td>public/_headers</td><td><code>connect-src</code> gains the RPC origins</td></tr>
-  <tr><td>src/app/layout.tsx</td><td>the same change, in the meta tag</td></tr>
-</table>
-</div>
+<h2>4. Switching it off, and the one line to never widen</h2>
+<p>
+  <code>LIVE</code> in <code>src/components/ProtocolSection.tsx</code> is a real
+  kill switch. Set it to <code>false</code> and the wallet chip, the confirm
+  button and every path that can send a transaction disappear, along with every
+  sentence claiming one can be sent; the screen keeps reading the chain and stays
+  honest about being inert. It used to change two strings and leave a "not live
+  yet" footer under a "Review borrow" button — if you are tempted to make it
+  cheaper again, that is what cheaper looked like.
+</p>
+<p>
+  The policy is written twice, and the browser enforces the <b>intersection</b>:
+  <code>connect-src</code> in <code>src/app/layout.tsx</code> (built from
+  <code>RPC_ORIGIN</code>) and in <code>public/_headers</code> (plain text, which
+  no build step touches). Widen one alone and every local check passes while the
+  deployed site cannot reach the chain. <code>npm run check:csp</code> compares
+  them and fails on drift.
+</p>
 <div class="panel">
   <p style="margin-top:0">
     <span class="tag no">not this</span>
@@ -177,14 +223,16 @@ footer { margin-top: 4rem; padding-top: 1.4rem; border-top: 1px solid var(--line
   </p>
   <p style="margin-bottom:0">
     <span class="tag yes">this</span>
-    <code>connect-src 'self' https://rpc.example https://rpc2.example</code> —
+    <code>connect-src 'self' https://rpc.mainnet.chain.robinhood.com</code> —
     named origins only.
   </p>
 </div>
 <p>
-  That single line is what currently makes "a script on this page cannot ask for
-  your wallet" a fact rather than a hope. Widening it to everything removes the
-  protection entirely while looking like a one-word change.
+  That single line is what keeps "a script on this page cannot ask for your
+  wallet" a fact rather than a hope. Widening it to everything removes the
+  protection entirely while looking like a one-word change. The other half is
+  <code>frame-ancestors 'none'</code>, which only <code>public/_headers</code>
+  can carry — it is what stops this signing UI being framed.
 </p>
 
 <h2>5. Where things are</h2>
@@ -194,17 +242,26 @@ footer { margin-top: 4rem; padding-top: 1.4rem; border-top: 1px solid var(--line
   <tr><td>src/components/ProtocolSection.tsx</td><td>the screen, the tabs, the popups' contents</td></tr>
   <tr><td>src/components/protocol/Ruler.tsx</td><td>the LTV ruler, shared by the form and every position</td></tr>
   <tr><td>src/components/protocol/Modal.tsx</td><td>popup shell — focus trap, inert background, scroll lock</td></tr>
-  <tr><td>src/components/protocol/tokens.ts</td><td>the accepted collateral list</td></tr>
+  <tr><td>src/components/protocol/Positions.tsx</td><td>open loans — repay, add, withdraw, borrow more</td></tr>
+  <tr><td>src/components/protocol/tokens.ts</td><td>coin colours only. The roster is <code>collateralTokens()</code>.</td></tr>
   <tr><td>src/lib/health.ts</td><td>the thresholds. Change them here, nowhere else.</td></tr>
+  <tr><td>src/lib/chain.ts</td><td>chain, deployment addresses, read-only client</td></tr>
+  <tr><td>src/lib/rpc.ts</td><td>the RPC origin, shared by the client and the CSP</td></tr>
+  <tr><td>src/lib/abi.ts</td><td>hand-written ABI, including every custom error</td></tr>
+  <tr><td>src/lib/protocol.ts</td><td>reads, the borrow arithmetic, reverts as sentences</td></tr>
+  <tr><td>src/lib/wallet.ts</td><td>EIP-1193 connect, network guard, account changes</td></tr>
+  <tr><td>src/lib/tx.ts</td><td>approve-then-write, simulate before sign, receipts</td></tr>
   <tr><td>scripts/device-audit.mjs</td><td><code>npm run audit</code> — every screen against 39 viewports</td></tr>
+  <tr><td>scripts/check-csp.mjs</td><td><code>npm run check:csp</code> — the two policies agree</td></tr>
 </table>
 </div>
 
 <footer>
   <p>
     The page is the first screen of <a href="/">cykablyat.vip</a>. Everything on
-    it is explorable now — pick a coin, move the ruler, open the popups — and
-    nothing on it can send anything.
+    it is explorable without a wallet — the coin list, the inventory and the
+    prices are read from the contract either way — and with one connected, it
+    signs.
   </p>
 </footer>
 

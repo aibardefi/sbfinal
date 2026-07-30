@@ -1,38 +1,53 @@
 "use client";
 
-import { useCallback, useId, useState } from "react";
+import { useCallback, useId, useMemo, useState } from "react";
+import type { Address } from "viem";
 import { Modal } from "./protocol/Modal";
+import { Positions } from "./protocol/Positions";
 import { Ruler } from "./protocol/Ruler";
-import { BORROWED, COLLATERAL, type Token } from "./protocol/tokens";
+import { TxStatus } from "./protocol/TxStatus";
+import { WalletChip } from "./protocol/WalletChip";
+import { BORROWED } from "./protocol/tokens";
+import { lendingAbi } from "@/lib/abi";
+import { DEPLOYMENT, publicClient } from "@/lib/chain";
 import { LIQ_LTV, MAX_LTV, UI_MAX_LTV, healthLabel, healthOf } from "@/lib/health";
+import {
+  borrowableCB,
+  exactAmount,
+  formatAmount,
+  parseAmount,
+  useMarket,
+  usePositions,
+  usePrices,
+  useTokenBalance,
+} from "@/lib/protocol";
+import { approvalStep, useTx, type Step } from "@/lib/tx";
+import { useWallet } from "@/lib/wallet";
+import { EXPLORER_ORIGIN } from "@/lib/rpc";
 import { useEntrance } from "@/lib/useEntrance";
 import s from "./ProtocolSection.module.css";
 import t from "./protocol/theme.module.css";
 
 /**
- * The one switch that arms this screen.
+ * The kill switch, and it is a real one.
  *
- * False means there is no wallet code on the page at all — not disabled code,
- * none — and the site's `connect-src 'self'` keeps it that way at the policy
- * level too. The form is fully explorable: pick a coin, set a ratio, watch the
- * numbers move. What it will not do is claim it sent anything.
+ * It used to change two strings and nothing else, while the footer went on
+ * saying "not live" underneath a button labelled "Review borrow" — so the one
+ * word that was supposed to arm the screen produced a screen that contradicted
+ * itself. Everything that can send a transaction is now behind this, and so is
+ * every sentence that claims nothing can be sent. Flip it to false and the
+ * screen is honestly inert again: no wallet, no confirm, no claim.
  *
- * The site already uses this convention twice: `JoinSection` holds
- * `CONTRACT = null` and renders "Coming soon", and `HeroSection` holds
- * `BUY_URL = "#"` and answers a click with "soon."
- *
- * Turning it on is one word here plus widening `connect-src` in `_headers` and
- * `layout.tsx` to the named RPC origins — never to `*`.
+ * Reads are deliberately outside it. The collateral roster, the inventory and
+ * the prices come off chain either way, because a page that invents a coin list
+ * is wrong whether or not it can sign.
  */
-const LIVE = false;
+const LIVE = true;
 
 type Tab = "borrow" | "positions";
 type Theme = "light" | "dark";
 
-/** Commas while you read, none while you type — the caret jumps otherwise. */
-function group(n: number) {
-  return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
-}
+const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
 export function ProtocolSection() {
   const ref = useEntrance<HTMLElement>();
@@ -40,25 +55,113 @@ export function ProtocolSection() {
 
   const [tab, setTab] = useState<Tab>("borrow");
   const [theme, setTheme] = useState<Theme>("light");
-  const [coin, setCoin] = useState<Token>(COLLATERAL[0]);
-  const [amount, setAmount] = useState("1000");
+  const [chosen, setChosen] = useState<Address>();
+  const [amount, setAmount] = useState("");
   const [ltv, setLtv] = useState(50);
   const [picking, setPicking] = useState(false);
   const [explaining, setExplaining] = useState(false);
   const [reviewing, setReviewing] = useState(false);
 
+  const wallet = useWallet();
+  const market = useMarket();
+  const positions = usePositions(LIVE ? wallet.account : undefined);
+  const tx = useTx();
+
+  const collateral = market.data?.collateral ?? [];
+  /* Default to the first coin the contract will still open a position against,
+     not simply the first in the list: a disabled coin at index 0 would greet
+     every visitor with a form that cannot be submitted. */
+  const coin =
+    collateral.find((c) => c.address === chosen) ?? collateral.find((c) => c.enabled) ?? collateral[0];
+
+  const prices = usePrices(coin, market.data?.cbDecimals);
+  const balance = useTokenBalance(LIVE ? coin?.address : undefined, wallet.account);
+
+  const cbDecimals = market.data?.cbDecimals ?? 18;
+  const lockedWei = coin ? parseAmount(amount, coin.decimals) : 0n;
+  const borrowWei = useMemo(
+    () =>
+      coin && prices.data
+        ? borrowableCB(lockedWei, Math.round(ltv) * 100, prices.data, coin.decimals, cbDecimals)
+        : 0n,
+    [coin, prices.data, lockedWei, ltv, cbDecimals]
+  );
+
   const health = healthOf(ltv);
-  const locked = Number(amount.replace(/,/g, "")) || 0;
-  /* Deliberately a share of value, not a token count. There is no oracle on this
-     page and inventing a price to fill the field would be inventing a fact. When
-     a contract is wired to this screen the same row shows the real figure. */
-  const borrowShare = Math.round(ltv);
 
   const reset = useCallback(() => {
     setPicking(false);
     setExplaining(false);
     setReviewing(false);
   }, []);
+
+  // --- what stands between this form and a signature -----------------------
+
+  const enoughInventory = market.data ? borrowWei <= market.data.available : true;
+  const overBalance = balance !== undefined && lockedWei > balance;
+  const underMinimum = !!coin && lockedWei > 0n && lockedWei < coin.minCollateral;
+
+  const blocker =
+    !market.data
+      ? undefined
+      : market.data.paused
+        ? "New borrowing is paused right now. Repaying and adding collateral still work."
+        : coin && !coin.enabled
+          ? `${coin.symbol} is not being accepted for new loans at the moment.`
+          : overBalance
+            ? `That is more ${coin?.symbol ?? ""} than this wallet holds.`
+            : underMinimum
+              ? `The contract sets a minimum of ${formatAmount(coin!.minCollateral, coin!.decimals)} ${coin!.symbol} to open with.`
+              : !enoughInventory
+                ? `The desk only has ${formatAmount(market.data.available, cbDecimals)} ${BORROWED} left to lend.`
+                : undefined;
+
+  const ready = !!coin && !!prices.data && lockedWei > 0n && borrowWei > 0n && !blocker;
+
+  const cta = !LIVE
+    ? { label: "See what this would do", onClick: () => setReviewing(true), disabled: !ready }
+    : !wallet.ready || market.loading
+      ? { label: "Reading the chain…", onClick: undefined, disabled: true }
+      : !wallet.hasProvider
+        ? { label: "No wallet found in this browser", onClick: undefined, disabled: true }
+        : !wallet.account
+          ? { label: "Connect wallet", onClick: wallet.connect, disabled: wallet.connecting }
+          : wallet.wrongNetwork
+            ? { label: "Switch to Robinhood Chain", onClick: wallet.switchNetwork, disabled: false }
+            : { label: "Review borrow", onClick: () => setReviewing(true), disabled: !ready };
+
+  // --- the write ------------------------------------------------------------
+
+  const confirm = async () => {
+    if (!LIVE || !wallet.walletClient || !wallet.account || !coin || !ready) return;
+    const client = wallet.walletClient;
+    const account = wallet.account;
+
+    const steps: Step[] = [
+      ...(await approvalStep(client, account, coin.address, coin.symbol, lockedWei)),
+      {
+        label: "Opening the loan",
+        run: async () => {
+          const { request } = await publicClient.simulateContract({
+            account,
+            address: DEPLOYMENT.lending,
+            abi: lendingAbi,
+            functionName: "openPosition",
+            args: [coin.address, lockedWei, borrowWei],
+          });
+          return client.writeContract(request);
+        },
+      },
+    ];
+
+    if (await tx.send(steps)) {
+      setAmount("");
+      market.refresh();
+      positions.refresh();
+    }
+  };
+
+  const afterSuccess = tx.state.phase === "done";
 
   return (
     <section className={`stage ${t.tokens} ${s.stage}`} data-p1-theme={theme} ref={ref}>
@@ -81,31 +184,34 @@ export function ProtocolSection() {
           ))}
         </div>
 
-        <button
-          type="button"
-          className={s.theme}
-          onClick={() => setTheme((v) => (v === "light" ? "dark" : "light"))}
-          aria-label={theme === "light" ? "Switch to dark" : "Switch to light"}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor">
-            {theme === "light" ? (
-              <path
-                d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"
-                strokeWidth="2"
-                strokeLinejoin="round"
-              />
-            ) : (
-              <>
-                <circle cx="12" cy="12" r="4.2" strokeWidth="2" />
+        <div className={s.topRight}>
+          {LIVE ? <WalletChip wallet={wallet} /> : null}
+          <button
+            type="button"
+            className={s.theme}
+            onClick={() => setTheme((v) => (v === "light" ? "dark" : "light"))}
+            aria-label={theme === "light" ? "Switch to dark" : "Switch to light"}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor">
+              {theme === "light" ? (
                 <path
-                  d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"
+                  d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"
                   strokeWidth="2"
-                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
-              </>
-            )}
-          </svg>
-        </button>
+              ) : (
+                <>
+                  <circle cx="12" cy="12" r="4.2" strokeWidth="2" />
+                  <path
+                    d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </>
+              )}
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div className="head" data-ent="up" data-ent-delay="90">
@@ -129,16 +235,21 @@ export function ProtocolSection() {
                      caret to the end on every reformat and refuses a lone dot. */
                   type="text"
                   inputMode="decimal"
+                  placeholder="0"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value.replace(/[^0-9.,]/g, ""))}
-                  onBlur={() => setAmount(locked ? group(locked) : "")}
                   aria-describedby={`${amountId}-note`}
                 />
-                <button type="button" className={s.pick} onClick={() => setPicking(true)}>
-                  <span className={s.dot} style={{ background: coin.bg, color: coin.on }}>
-                    {coin.sym.slice(0, 1)}
+                <button
+                  type="button"
+                  className={s.pick}
+                  onClick={() => setPicking(true)}
+                  disabled={collateral.length === 0}
+                >
+                  <span className={s.dot} style={{ background: coin?.bg, color: coin?.on }}>
+                    {coin?.symbol.slice(0, 1) ?? "?"}
                   </span>
-                  {coin.sym}
+                  {coin?.symbol ?? "—"}
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path
                       d="M7 10l5 5 5-5"
@@ -151,20 +262,35 @@ export function ProtocolSection() {
                 </button>
               </div>
 
+              {LIVE && balance !== undefined && coin ? (
+                <p className={s.balance}>
+                  Wallet: {formatAmount(balance, coin.decimals)} {coin.symbol}
+                  <button
+                    type="button"
+                    className={s.max}
+                    onClick={() => setAmount(exactAmount(balance, coin.decimals))}
+                  >
+                    Max
+                  </button>
+                </p>
+              ) : null}
+
               <Ruler ltv={ltv} onChange={setLtv} interactive label="How much to borrow" />
 
               <dl className={s.summary}>
                 <div>
                   <dt>Borrow</dt>
                   <dd className={s.big} data-health={health}>
-                    {borrowShare}%
-                    <small>of its value, in {BORROWED}</small>
+                    {prices.data ? formatAmount(borrowWei, cbDecimals) : "—"}
+                    <small>
+                      {BORROWED} · {Math.round(ltv)}% of its value
+                    </small>
                   </dd>
                 </div>
                 <div>
                   <dt>Loan to value</dt>
                   <dd data-health={health}>
-                    {borrowShare}% · {healthLabel(health)}
+                    {Math.round(ltv)}% · {healthLabel(health)}
                   </dd>
                 </div>
                 <div>
@@ -174,41 +300,61 @@ export function ProtocolSection() {
               </dl>
 
               <p className={s.note} id={`${amountId}-note`}>
-                Most you can borrow is {MAX_LTV}%. Past {LIQ_LTV}% your collateral is
-                sold in full and you keep nothing.{" "}
+                Most you can borrow is {MAX_LTV}%. Past {LIQ_LTV}% your collateral is sold in full
+                and you keep nothing.{" "}
                 <button type="button" className={s.link} onClick={() => setExplaining(true)}>
                   How liquidation works
                 </button>
               </p>
 
+              {market.error ? <p className={s.problem}>{market.error}</p> : null}
+              {prices.error ? <p className={s.problem}>{prices.error}</p> : null}
+              {blocker ? <p className={s.problem}>{blocker}</p> : null}
+
               <button
                 type="button"
                 className={s.primary}
-                onClick={() => setReviewing(true)}
-                data-live={LIVE}
+                onClick={cta.onClick}
+                disabled={cta.disabled}
               >
-                {LIVE ? "Review borrow" : "See what this would do"}
+                {cta.label}
               </button>
+
+              <TxStatus state={tx.state} onDismiss={tx.reset} />
             </>
           ) : (
-            <div className={s.empty}>
-              <p className={s.emptyTitle}>No positions yet</p>
-              <p className={s.emptyBody}>
-                Nothing is connected to this page yet, so there is nothing to show. When a
-                contract is wired up, every loan you open appears here with its own ruler
-                on this same scale.
-              </p>
-              <button type="button" className={s.ghost} onClick={() => setTab("borrow")}>
-                Back to borrowing
-              </button>
-            </div>
+            <Positions
+              market={market.data}
+              wallet={wallet}
+              positions={positions.data}
+              loading={positions.loading}
+              error={positions.error}
+              onChanged={() => {
+                positions.refresh();
+                market.refresh();
+              }}
+            />
           )}
         </div>
       </div>
 
       <div className="bottom">
         <p className={s.foot}>
-          Not live yet — no wallet, no contract, nothing to sign.
+          {LIVE ? (
+            <>
+              Robinhood Chain ·{" "}
+              <a
+                className={s.footLink}
+                href={`${EXPLORER_ORIGIN}/address/${DEPLOYMENT.lending}`}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                {short(DEPLOYMENT.lending)}
+              </a>
+            </>
+          ) : (
+            <>Not live yet — no wallet, no contract, nothing to sign.</>
+          )}
         </p>
         <div className="cue">
           <span>Scroll ↓</span>
@@ -217,37 +363,40 @@ export function ProtocolSection() {
 
       {/* ---------------- popups ---------------- */}
 
-      <Modal
-        theme={theme}
-        open={picking}
-        onClose={() => setPicking(false)}
-        title="Choose collateral"
-      >
-        <ul className={s.coinList}>
-          {COLLATERAL.map((c) => (
-            <li key={c.sym}>
-              <button
-                type="button"
-                className={`${s.coinRow} ${c.sym === coin.sym ? s.coinOn : ""}`}
-                onClick={() => {
-                  setCoin(c);
-                  setPicking(false);
-                }}
-              >
-                <span className={s.dot} style={{ background: c.bg, color: c.on }}>
-                  {c.sym.slice(0, 1)}
-                </span>
-                <span className={s.coinName}>
-                  <b>{c.sym}</b>
-                  <small>{c.name}</small>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+      <Modal theme={theme} open={picking} onClose={() => setPicking(false)} title="Choose collateral">
+        {collateral.length === 0 ? (
+          <p className={s.note}>
+            {market.loading
+              ? "Reading the collateral list from the contract…"
+              : "The contract is not accepting any collateral at the moment."}
+          </p>
+        ) : (
+          <ul className={s.coinList}>
+            {collateral.map((c) => (
+              <li key={c.address}>
+                <button
+                  type="button"
+                  className={`${s.coinRow} ${c.address === coin?.address ? s.coinOn : ""}`}
+                  onClick={() => {
+                    setChosen(c.address);
+                    setPicking(false);
+                  }}
+                >
+                  <span className={s.dot} style={{ background: c.bg, color: c.on }}>
+                    {c.symbol.slice(0, 1)}
+                  </span>
+                  <span className={s.coinName}>
+                    <b>{c.symbol}</b>
+                    <small>{c.enabled ? c.name : `${c.name} — closed to new loans`}</small>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
         <p className={s.note}>
-          Robinhood Chain memecoins. The list is set by the contract, so it can change
-          without this page changing.
+          Robinhood Chain memecoins. This list is read from the contract, so it changes when the
+          contract does, without this page changing.
         </p>
       </Modal>
 
@@ -272,26 +421,62 @@ export function ProtocolSection() {
           </div>
         </dl>
         <p className={s.note}>
-          This is harsher than most lending. There is no partial liquidation and no
-          grace: once the ratio touches {LIQ_LTV}%, the whole position is sold to clear
-          the debt. Adding collateral or repaying is allowed at any time, including when
-          you are already past the {MAX_LTV}% limit — those two only ever improve your
-          position, so they are never blocked.
+          This is harsher than most lending. There is no partial liquidation and no grace: once the
+          ratio touches {LIQ_LTV}%, the whole position is sold to clear the debt, and whatever it
+          fetches above the debt goes to the keeper who cleared it, not to you. Adding collateral or
+          repaying is allowed at any time, including when you are already past the {MAX_LTV}% limit —
+          those two only ever improve your position, so they are never blocked.
         </p>
       </Modal>
 
       <Modal
         theme={theme}
         open={reviewing}
-        onClose={() => setReviewing(false)}
+        onClose={() => {
+          setReviewing(false);
+          if (afterSuccess) tx.reset();
+        }}
         title={LIVE ? "Review your loan" : "What this would do"}
         footer={
           <>
-            <p className={s.note}>
-              Nothing was sent. There is no wallet on this page and no contract behind
-              it yet.
-            </p>
-            <button type="button" className={s.ghost} onClick={() => setReviewing(false)}>
+            {LIVE ? (
+              afterSuccess ? (
+                <button
+                  type="button"
+                  className={s.primary}
+                  onClick={() => {
+                    setReviewing(false);
+                    tx.reset();
+                    setTab("positions");
+                  }}
+                >
+                  See your position
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={s.primary}
+                  onClick={confirm}
+                  disabled={tx.state.phase === "signing" || tx.state.phase === "pending" || !ready}
+                >
+                  {tx.state.phase === "signing" || tx.state.phase === "pending"
+                    ? "Working…"
+                    : "Confirm in wallet"}
+                </button>
+              )
+            ) : (
+              <p className={s.note}>
+                Nothing was sent. There is no wallet on this page and no contract behind it yet.
+              </p>
+            )}
+            <button
+              type="button"
+              className={s.ghost}
+              onClick={() => {
+                setReviewing(false);
+                if (afterSuccess) tx.reset();
+              }}
+            >
               Close
             </button>
           </>
@@ -301,19 +486,19 @@ export function ProtocolSection() {
           <div>
             <dt>You lock</dt>
             <dd>
-              {group(locked)} {coin.sym}
+              {coin ? formatAmount(lockedWei, coin.decimals) : "—"} {coin?.symbol ?? ""}
             </dd>
           </div>
           <div>
             <dt>You borrow</dt>
             <dd>
-              {borrowShare}% of its value in {BORROWED}
+              {formatAmount(borrowWei, cbDecimals)} {BORROWED}
             </dd>
           </div>
           <div>
             <dt>Loan to value</dt>
             <dd data-health={health}>
-              {borrowShare}% · {healthLabel(health)}
+              {Math.round(ltv)}% · {healthLabel(health)}
             </dd>
           </div>
           <div>
@@ -323,11 +508,12 @@ export function ProtocolSection() {
         </dl>
         <Ruler ltv={ltv} />
         <p className={s.note}>
-          The ruler is drawn 0 to 100 here and on every position, so the {MAX_LTV} and{" "}
-          {LIQ_LTV} marks are always in the same place. The most this page will let you
-          reach is {UI_MAX_LTV}% rather than a round {MAX_LTV}% — the contract rounds
-          against the borrower, and a loan set to exactly {MAX_LTV}% would be refused.
+          Priced from the contract&rsquo;s own TWAP oracle at the moment you opened this dialog, and
+          checked against the contract before it reaches your wallet. The most this page will let you
+          reach is {UI_MAX_LTV}% rather than a round {MAX_LTV}% — the contract rounds against the
+          borrower, and a loan set to exactly {MAX_LTV}% would be refused.
         </p>
+        {LIVE ? <TxStatus state={tx.state} onDismiss={tx.reset} /> : null}
       </Modal>
     </section>
   );

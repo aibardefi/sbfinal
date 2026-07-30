@@ -12,7 +12,14 @@
 
 /*
   # Same policy as the meta tag, plus the two directives a meta tag cannot carry.
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
+  #
+  # connect-src carries the Robinhood Chain RPC origin because the borrow screen
+  # reads the lending contract. This file is plain text to Cloudflare — no build
+  # step touches it — so it is the one copy that cannot be derived from
+  # src/lib/rpc.ts. `npm run check:csp` compares the two, because them drifting
+  # apart fails in the worst possible way: the meta policy permits the call, this
+  # header blocks it, and only the deployed site is broken.
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://rpc.mainnet.chain.robinhood.com; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
   # X-Frame-Options is redundant next to frame-ancestors for a current browser,
   # and is here for the older ones that only understand this.
   X-Frame-Options: DENY

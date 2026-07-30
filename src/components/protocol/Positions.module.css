@@ -1,0 +1,293 @@
+/* Open loans.
+
+   The list scrolls inside the card rather than growing it: every section on this
+   site is a `min-height: 100dvh` snap panel, and a card that grows with the
+   number of positions is a card that pushes its own bottom off a short screen —
+   which `npm run audit` would catch, but only after someone with four loans
+   found it first. */
+
+.list {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: min(46dvh, 22rem);
+  overflow-y: auto;
+  /* Room for the focus ring on the last row's buttons. */
+  padding-right: 0.2rem;
+}
+
+.row {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 14px;
+  background: var(--p1-sunk);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.dot {
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.sym {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--p1-ink);
+}
+
+.id {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--p1-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Health is written as well as coloured, here as everywhere else on the screen,
+   so the state survives being unable to tell the colours apart. */
+.state {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.state[data-health="safe"] {
+  color: var(--p1-ink);
+}
+.state[data-health="warn"] {
+  color: var(--p1-warn);
+}
+.state[data-health="danger"] {
+  color: var(--p1-danger);
+}
+
+.figs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.2rem;
+  margin: 0;
+}
+.figs div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+.figs dt {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--p1-dim);
+}
+.figs dd {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--p1-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------- actions ---------------- */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.action {
+  border: 0;
+  border-radius: 99px;
+  padding: 0.3rem 0.62rem;
+  background: color-mix(in srgb, var(--p1-ink) 8%, transparent);
+  color: var(--p1-ink);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Repay and Add read as the ordinary thing to do; Withdraw and Borrow are the
+   two the 80% cap applies to, and they are quieter. Never disabled on health —
+   the contract decides that, and its refusal carries the real figure. */
+.action[data-safe="false"] {
+  color: var(--p1-dim);
+}
+
+.actionOn {
+  background: var(--p1-accent);
+  color: var(--p1-on-accent);
+}
+
+.action:focus-visible {
+  outline: 3px solid var(--p1-ink);
+  outline-offset: 2px;
+}
+
+.form {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.45rem 0.4rem 0.65rem;
+  border-radius: 12px;
+  background: var(--p1-paper);
+}
+
+.amount {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--p1-ink);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.amount:focus-visible {
+  outline: none;
+}
+.field:focus-within {
+  outline: 3px solid var(--p1-accent);
+  outline-offset: 1px;
+}
+
+.unit {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--p1-dim);
+}
+
+.max {
+  border: 0;
+  border-radius: 99px;
+  padding: 0.12rem 0.45rem;
+  background: color-mix(in srgb, var(--p1-ink) 10%, transparent);
+  color: var(--p1-ink);
+  font: inherit;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.confirm {
+  border: 0;
+  border-radius: 12px;
+  padding: 0.55rem 1rem;
+  background: var(--p1-accent);
+  color: var(--p1-on-accent);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.confirm:disabled {
+  background: color-mix(in srgb, var(--p1-ink) 8%, transparent);
+  color: var(--p1-dim);
+  cursor: not-allowed;
+}
+.confirm:focus-visible,
+.max:focus-visible {
+  outline: 3px solid var(--p1-ink);
+  outline-offset: 2px;
+}
+
+/* ---------------- empty and error states ---------------- */
+
+.empty {
+  display: grid;
+  gap: 0.6rem;
+  justify-items: center;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--p1-ink);
+}
+
+.emptyBody {
+  margin: 0;
+  max-width: 30ch;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--p1-dim);
+}
+
+.ghost {
+  border: 0;
+  border-radius: 12px;
+  padding: 0.6rem 1.1rem;
+  background: var(--p1-sunk);
+  color: var(--p1-ink);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ghost:focus-visible {
+  outline: 3px solid var(--p1-accent);
+  outline-offset: 2px;
+}
+
+.muted {
+  margin: 0;
+  padding: 1rem 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--p1-dim);
+}
+
+.problem {
+  margin: 0;
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--p1-warn) 14%, transparent);
+  color: var(--p1-warn);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+@media (pointer: coarse) {
+  .action,
+  .confirm,
+  .ghost {
+    min-height: 44px;
+  }
+}
+
+@media (max-height: 500px) {
+  .list {
+    max-height: 40dvh;
+    gap: 0.4rem;
+  }
+  .row {
+    padding: 0.5rem 0.55rem;
+    gap: 0.35rem;
+  }
+  .emptyBody {
+    font-size: 0.72rem;
+  }
+}
