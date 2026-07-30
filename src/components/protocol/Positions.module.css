@@ -12,10 +12,29 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  max-height: min(46dvh, 22rem);
+  max-height: min(50dvh, 26rem);
   overflow-y: auto;
-  /* Room for the focus ring on the last row's buttons. */
-  padding-right: 0.2rem;
+  /* Reserves the scrollbar's width whether or not it is showing, so a row does
+     not sit under it and the list does not jump sideways when a third position
+     tips it into scrolling. Replaces a hand-guessed padding-right. */
+  scrollbar-gutter: stable;
+}
+
+/* Grid and flex children default to `min-width: auto`, which means they refuse
+   to shrink below their own content. One long row — a wide symbol beside
+   "31.00% · Healthy" — therefore pushed the whole list wider than the card,
+   which turned `overflow-y: auto` into a box that scrolled *both* ways: the
+   status and the Max button were cut off on the right, and the horizontal
+   scrollbar ate a line of the height the list was short of in the first place.
+   Every box from here down is allowed to be narrower than its contents.
+   Wrapping does the rest. */
+.list,
+.row,
+.head,
+.figs,
+.form,
+.field {
+  min-width: 0;
 }
 
 .row {
@@ -29,7 +48,8 @@
 .head {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.45rem;
 }
 
 .dot {
@@ -56,9 +76,13 @@
 }
 
 /* Health is written as well as coloured, here as everywhere else on the screen,
-   so the state survives being unable to tell the colours apart. */
+   so the state survives being unable to tell the colours apart. Which is exactly
+   why it must not be the thing that gets clipped: `nowrap` keeps "At risk" whole
+   and the wrapping head above drops it to its own line rather than cutting it in
+   half. Truncating this one would leave a coloured number with no word on it. */
 .state {
   margin-left: auto;
+  white-space: nowrap;
   font-size: 0.72rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -76,13 +100,17 @@
 .figs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.2rem 1.2rem;
+  /* Was 1.2rem. A debt like "51,052.8504 $CB" beside a collateral amount is the
+     widest line in the row, and the gap was the difference between the two
+     sitting side by side and the second one wrapping under. */
+  gap: 0.2rem 0.9rem;
   margin: 0;
 }
 .figs div {
   display: flex;
   align-items: baseline;
   gap: 0.35rem;
+  min-width: 0;
 }
 .figs dt {
   font-size: 0.68rem;
@@ -97,6 +125,9 @@
   font-weight: 700;
   color: var(--p1-ink);
   font-variant-numeric: tabular-nums;
+  /* Long enough figures break rather than push the row wide. `anywhere` and not
+     `break-word`: these are digits and separators with no spaces to break at. */
+  overflow-wrap: anywhere;
 }
 
 /* ---------------- actions ---------------- */
@@ -169,13 +200,19 @@
   outline-offset: 1px;
 }
 
+/* Both of these are `flex: none` so the input is what gives when the row is
+   tight. Left to shrink, the unit and the Max button were the two things cut off
+   at the right-hand edge — the label saying which token the number is in, and
+   the control that fills it. The field can afford to be narrow; those cannot. */
 .unit {
+  flex: none;
   font-size: 0.72rem;
   font-weight: 700;
   color: var(--p1-dim);
 }
 
 .max {
+  flex: none;
   border: 0;
   border-radius: 99px;
   padding: 0.12rem 0.45rem;
