@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { Address } from "viem";
 import { Modal } from "./protocol/Modal";
 import { Positions } from "./protocol/Positions";
@@ -24,6 +24,7 @@ import {
 import { approvalStep, useTx, type Step } from "@/lib/tx";
 import { useWallet } from "@/lib/wallet";
 import { EXPLORER_ORIGIN } from "@/lib/rpc";
+import { BUY_URL } from "@/lib/links";
 import { useEntrance } from "@/lib/useEntrance";
 import s from "./ProtocolSection.module.css";
 import t from "./protocol/theme.module.css";
@@ -110,6 +111,21 @@ export function ProtocolSection() {
     setReviewing(false);
   }, []);
 
+  /* The buy link is a placeholder until there is a pool, and a placeholder that
+     silently jumps to the top of the page is worse than one that says why. Same
+     answer the hero gives, in the shape this bar has room for. */
+  const [soon, setSoon] = useState(false);
+  const soonTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(soonTimer.current), []);
+  const buyReady = BUY_URL !== "#";
+  const handleBuy = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (e.currentTarget.getAttribute("href") !== "#") return;
+    e.preventDefault();
+    setSoon(true);
+    window.clearTimeout(soonTimer.current);
+    soonTimer.current = window.setTimeout(() => setSoon(false), 1800);
+  }, []);
+
   // --- what stands between this form and a signature -----------------------
 
   const enoughInventory = market.data ? borrowWei <= market.data.available : true;
@@ -180,8 +196,11 @@ export function ProtocolSection() {
 
   return (
     <section className={`stage ${t.tokens} ${s.stage}`} data-p1-theme={theme} ref={ref}>
-      <div className="top" data-ent="fade" data-ent-delay="0">
-        <div className={s.tabs} role="tablist" aria-label="Borrow or positions">
+      <div className={`top ${s.bar}`} data-ent="fade" data-ent-delay="0">
+        <div className={s.barLeft}>
+          <span className={s.brand}>{BORROWED}</span>
+
+          <div className={s.tabs} role="tablist" aria-label="Borrow or positions">
           {(["borrow", "positions"] as const).map((id) => (
             <button
               key={id}
@@ -197,7 +216,24 @@ export function ProtocolSection() {
               {id === "borrow" ? "Borrow" : "Positions"}
             </button>
           ))}
+          </div>
         </div>
+
+        {/* Centre cell of a 1fr–auto–1fr grid, so the pill sits on the middle of
+            the screen rather than midway between whatever happens to flank it.
+            The prototype uses two auto-margin spacers, which centre it between
+            its neighbours — with a wallet chip on one side and a brand plus tabs
+            on the other, those are never the same width and it lands visibly
+            off-centre. */}
+        <a
+          className={s.buy}
+          href={BUY_URL}
+          onClick={handleBuy}
+          {...(buyReady ? { target: "_blank", rel: "noreferrer noopener" } : {})}
+        >
+          {soon ? "soon." : `Buy ${BORROWED}`}
+          {buyReady ? <span className={s.vh}> opens a new tab</span> : null}
+        </a>
 
         <div className={s.topRight}>
           {LIVE ? <WalletChip wallet={wallet} /> : null}
@@ -231,8 +267,11 @@ export function ProtocolSection() {
 
       <div className="head" data-ent="up" data-ent-delay="90">
         <h1 className={s.h1}>
-          Borrow <span className={s.token}>{BORROWED}</span> against your memes.
+          Lock memes.
+          <br />
+          Borrow <span className={s.token}>{BORROWED}</span>.
         </h1>
+        <p className={s.terms}>0% interest · no fees</p>
       </div>
 
       <div className={`middle ${s.middle}`} data-ent="up" data-ent-delay="240">
@@ -290,18 +329,34 @@ export function ProtocolSection() {
                 </p>
               ) : null}
 
+              {/* Lock ↓ Borrow, as the design draws it. What used to be the
+                  first row of the summary is a field of its own: it is the
+                  other half of the trade, not a consequence of it. Read-only —
+                  the ruler is what drives it. */}
+              <div className={s.arrow} aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path
+                    d="M12 5v14M6 13l6 6 6-6"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+
+              <div className={s.rowLabel}>Borrow</div>
+              <div className={`${s.field} ${s.borrowField}`}>
+                <p className={s.share} data-health={health}>
+                  {prices.data ? formatAmount(borrowWei, cbDecimals) : "—"}
+                  <small>
+                    {BORROWED} · {Math.round(ltv)}% of its value
+                  </small>
+                </p>
+              </div>
+
               <Ruler ltv={ltv} onChange={setLtv} interactive label="How much to borrow" />
 
               <dl className={s.summary}>
-                <div>
-                  <dt>Borrow</dt>
-                  <dd className={s.big} data-health={health}>
-                    {prices.data ? formatAmount(borrowWei, cbDecimals) : "—"}
-                    <small>
-                      {BORROWED} · {Math.round(ltv)}% of its value
-                    </small>
-                  </dd>
-                </div>
                 <div>
                   <dt>Loan to value</dt>
                   <dd data-health={health}>
@@ -316,10 +371,7 @@ export function ProtocolSection() {
 
               <p className={s.note} id={`${amountId}-note`}>
                 Most you can borrow is {MAX_LTV}%. Past {LIQ_LTV}% your collateral is sold in full
-                and you keep nothing.{" "}
-                <button type="button" className={s.link} onClick={() => setExplaining(true)}>
-                  How liquidation works
-                </button>
+                and you keep nothing.
               </p>
 
               {market.error ? <p className={s.problem}>{market.error}</p> : null}
@@ -353,10 +405,17 @@ export function ProtocolSection() {
         </div>
       </div>
 
+      {/* The design's footer: the liquidation terms on one side, what you are
+          talking to on the other. The liquidation link lives here rather than
+          inline in the card, which is where the approved screen puts it — it is
+          reference, not part of filling the form in. */}
       <div className="bottom">
-        <p className={s.foot}>
+        <div className={s.foot}>
+          <button type="button" className={s.footBtn} onClick={() => setExplaining(true)}>
+            Liquidation
+          </button>
           {LIVE ? (
-            <>
+            <span>
               Robinhood Chain ·{" "}
               <a
                 className={s.footLink}
@@ -366,11 +425,11 @@ export function ProtocolSection() {
               >
                 {short(DEPLOYMENT.lending)}
               </a>
-            </>
+            </span>
           ) : (
-            <>Not live yet — no wallet, no contract, nothing to sign.</>
+            <span>Not live yet — no wallet, no contract, nothing to sign.</span>
           )}
-        </p>
+        </div>
         <div className="cue">
           <span>Scroll ↓</span>
         </div>

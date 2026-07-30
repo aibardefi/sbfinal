@@ -1,5 +1,7 @@
 .wrap {
-  padding: 0.9rem 0 1.35rem;
+  /* The bottom half carries the scale labels, which hang below the track. Less
+     than this and "80 limit" sits on the row underneath. */
+  padding: 0.9rem 0 1.6rem;
 }
 
 /* A ruler in a position row is a picture, not a control.
@@ -90,11 +92,46 @@
   top: calc(100% + 5px);
   left: 50%;
   transform: translateX(-50%);
-  font-size: 0.64rem;
+  /* Without this the two words wrap to a second line and land on whatever is
+     underneath — the labels are narrower than the words they hold. */
+  white-space: nowrap;
+  font-size: 0.66rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
   color: var(--p1-dim);
   font-variant-numeric: tabular-nums;
+}
+
+/* Lighter than the numbers, deliberately. The marks are 10% of the track apart —
+   about 40px inside the card — and at the numbers' weight the two labels are
+   wide enough to touch. The words are the gloss; the numbers are the fact, and
+   below 400px only the numbers survive. */
+.mark span i {
+  font-style: normal;
+  font-weight: 500;
+}
+@media (max-width: 400px) {
+  .mark span i {
+    display: none;
+  }
+}
+
+.zero {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--p1-dim);
+  font-variant-numeric: tabular-nums;
+}
+.live .zero {
+  top: calc(100% - 14px + 5px);
+}
+/* A read-only ruler in a position row is short on space and its numbers are
+   already beside it in the table. */
+.compact .zero,
+.compact .mark span i {
+  display: none;
 }
 .mark[data-kind="liq"] span {
   color: var(--p1-danger);

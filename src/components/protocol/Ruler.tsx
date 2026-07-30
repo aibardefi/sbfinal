@@ -111,12 +111,24 @@ export function Ruler({
         }
       >
         <div className={s.fill} style={{ width: `${pct}%` }} />
+        {/* The left end of the scale. It carries no mark — there is nothing at
+            zero to warn about — but without it the first label a reader meets is
+            80 and the ruler looks like it starts there. */}
+        <div className={s.zero} aria-hidden="true">
+          0
+        </div>
         {/* Placed from the constants, so the contract owns where they sit. */}
         <div className={s.mark} style={{ left: `${MAX_LTV}%` }} data-kind="cap">
-          <span>{MAX_LTV}</span>
+          <span>
+            {MAX_LTV}
+            <i> limit</i>
+          </span>
         </div>
         <div className={s.mark} style={{ left: `${LIQ_LTV}%` }} data-kind="liq">
-          <span>{LIQ_LTV}</span>
+          <span>
+            {LIQ_LTV}
+            <i> liq</i>
+          </span>
         </div>
         {interactive ? <div className={s.knob} style={{ left: `${pct}%` }} /> : null}
       </div>

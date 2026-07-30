@@ -6,20 +6,16 @@ import { Mascot } from "./Mascot";
 import { COINS, CoinGlyph, type Coin } from "./coins";
 import { useEntrance, prefersReducedMotion } from "@/lib/useEntrance";
 import { useAutoRearm } from "@/lib/useAutoRearm";
+import { BORROW_URL, BUY_URL } from "@/lib/links";
 import s from "./HeroSection.module.css";
 
 const MAX = 10;
 const PER = 4200; // $CB borrowed per coin
 
-/**
- * Where the two calls to action point. Buy is still a placeholder until the
- * pool is live — `handleCta` catches "#" so a visitor gets told rather than
- * being bounced to the top of the page. Borrow now goes to the lending app,
- * in the same tab: it is a move between two of our own properties, not a link
- * off-site.
- */
-const BUY_URL = "#";
-const BORROW_URL = "https://app.cykablyat.vip";
+/* Both live in `@/lib/links` now — the borrow screen carries a Buy $CB button
+   too, and the token address must not land in one place and not the other.
+   `handleCta` still catches the "#" placeholder so a visitor gets told rather
+   than being bounced to the top of the page. */
 
 /** What he says, and when. Deadpan escalation. */
 const LINES: Record<number, string> = {
