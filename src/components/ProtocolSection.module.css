@@ -4,6 +4,11 @@
    the popups render into. See that file for why it is not declared here. */
 
 .stage {
+  /* Three rows, not the shell's four. The chain and wallet moved up into the top
+     bar, so the row that used to hold them is gone — and the shared grid places
+     children by order, which would otherwise drop `.middle` into an `auto` row
+     and collapse the card. */
+  grid-template-rows: auto 1fr auto;
   /* Opaque, so it covers the radial ground gradient the shell paints under every
      section rather than blending with it. */
   background: var(--p1-ground);
@@ -13,14 +18,54 @@
 
 /* ---------------- top bar ---------------- */
 
+/* Three zones on one line: identity and navigation, the call to action, the
+   connection. `minmax(0, 1fr)` on the outer two rather than `1fr` — a bare `1fr`
+   has an automatic minimum of min-content, so a long address on the right would
+   push the whole bar wider than the screen instead of shrinking.
+
+   The centre column is `auto`, so Buy sits at the true centre of the bar and not
+   merely in the middle of the space left over. */
 .bar {
+  /* The shell's `.top` is a flex container, so without this the bar is a flex
+     item at content width and the `1fr` columns have no free space to share —
+     the three zones bunch up on the left and neither the centring nor the
+     right-alignment does anything. */
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.6rem;
+}
+.barLeft {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  flex-wrap: wrap;
+  min-width: 0;
+}
+.barRight {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  min-width: 0;
 }
 .sp {
   margin-left: auto;
+}
+
+/* Below this the three zones cannot share a line without the address colliding
+   with the tabs. They wrap instead, keeping their reading order: navigation,
+   then the action, then the connection. */
+@media (max-width: 46rem) {
+  .bar {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .barRight {
+    margin-left: auto;
+  }
 }
 
 .mark {
@@ -107,14 +152,8 @@
   outline-offset: 2px;
 }
 
-/* ---------------- chain row ---------------- */
+/* ---------------- connection, in the bar's right zone ---------------- */
 
-.chainRow {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-}
 .chip {
   display: inline-flex;
   align-items: center;

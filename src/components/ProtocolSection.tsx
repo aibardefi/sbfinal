@@ -272,31 +272,36 @@ export function ProtocolSection() {
 
   return (
     <section className={`stage ${t.tokens} ${s.stage}`} data-p1-theme={theme} ref={ref}>
-      {/* ---------------- top bar ---------------- */}
+      {/* ---------------- top bar ----------------
+          One line, three zones: identity and navigation left, the call to action
+          centred, the connection right. The chain and the wallet belong together
+          and belong at the far end — they are the state of the session, not a
+          part of the navigation, and they used to sit on a second row where they
+          read as a heading for the page rather than as status. */}
       <div className="top" data-ent="fade" data-ent-delay="0">
         <div className={s.bar}>
-          <span className={s.mark}>{BORROWED}</span>
+          <div className={s.barLeft}>
+            <span className={s.mark}>{BORROWED}</span>
 
-          <div className={s.tabs} role="tablist" aria-label="Borrow or positions">
-            {(["borrow", "positions"] as const).map((id) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-selected={tab === id}
-                className={s.tab}
-                onClick={() => {
-                  setTab(id);
-                  setPicking(false);
-                }}
-              >
-                {id === "borrow" ? "Borrow" : "Positions"}
-                {id === "positions" && openCount > 0 ? <span className={s.pip}>{openCount}</span> : null}
-              </button>
-            ))}
+            <div className={s.tabs} role="tablist" aria-label="Borrow or positions">
+              {(["borrow", "positions"] as const).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === id}
+                  className={s.tab}
+                  onClick={() => {
+                    setTab(id);
+                    setPicking(false);
+                  }}
+                >
+                  {id === "borrow" ? "Borrow" : "Positions"}
+                  {id === "positions" && openCount > 0 ? <span className={s.pip}>{openCount}</span> : null}
+                </button>
+              ))}
+            </div>
           </div>
-
-          <span className={s.sp} />
 
           {/* A card-coloured pill on the ground, so it reads as a button without
               competing with the primary action or the active tab. */}
@@ -313,42 +318,39 @@ export function ProtocolSection() {
           >
             {soon ? "soon." : `Buy ${BORROWED}`}
           </a>
-        </div>
-      </div>
 
-      {/* ---------------- chain row ---------------- */}
-      <div className="head" data-ent="fade" data-ent-delay="90">
-        <div className={s.chainRow}>
-          <span className={s.chip} data-bad={wallet.wrongNetwork || undefined}>
-            <span className={s.dot} aria-hidden="true" />
-            Robinhood Chain
-          </span>
-          {shortAccount ? <span className={s.addr}>{shortAccount}</span> : null}
-          <button
-            type="button"
-            className={s.iconBtn}
-            onClick={() => setTheme((v) => (v === "light" ? "dark" : "light"))}
-            aria-label={theme === "light" ? "Switch to dark" : "Switch to light"}
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor">
-              {theme === "light" ? (
-                <path
-                  d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                />
-              ) : (
-                <>
-                  <circle cx="12" cy="12" r="4.2" strokeWidth="2" />
+          <div className={s.barRight}>
+            <span className={s.chip} data-bad={wallet.wrongNetwork || undefined}>
+              <span className={s.dot} aria-hidden="true" />
+              Robinhood Chain
+            </span>
+            {shortAccount ? <span className={s.addr}>{shortAccount}</span> : null}
+            <button
+              type="button"
+              className={s.iconBtn}
+              onClick={() => setTheme((v) => (v === "light" ? "dark" : "light"))}
+              aria-label={theme === "light" ? "Switch to dark" : "Switch to light"}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor">
+                {theme === "light" ? (
                   <path
-                    d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"
+                    d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"
                     strokeWidth="2"
-                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
-                </>
-              )}
-            </svg>
-          </button>
+                ) : (
+                  <>
+                    <circle cx="12" cy="12" r="4.2" strokeWidth="2" />
+                    <path
+                      d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </>
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
