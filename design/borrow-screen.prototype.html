@@ -1,0 +1,1405 @@
+<title>$CB — page 1</title>
+
+<style>
+@font-face { font-family:"Poppins"; font-weight:400; font-style:normal; font-display:block;
+  src:url(data:font/woff2;base64,__POP400__) format("woff2"); }
+@font-face { font-family:"Poppins"; font-weight:600; font-style:normal; font-display:block;
+  src:url(data:font/woff2;base64,__POP600__) format("woff2"); }
+@font-face { font-family:"Poppins"; font-weight:700; font-style:normal; font-display:block;
+  src:url(data:font/woff2;base64,__POP700__) format("woff2"); }
+@font-face { font-family:"Poppins"; font-weight:800; font-style:normal; font-display:block;
+  src:url(data:font/woff2;base64,__POP800__) format("woff2"); }
+
+/* ==========================================================================
+   Light "Lilac", dark "Neon Night". Three text pairs, not one: ink/dim is
+   text on the card, head/head-dim is text on the ground, display is the
+   headline. On a lilac ground those want genuinely different values.
+   ========================================================================== */
+:root {
+  /* Cream, taken from the story pages' own --ground in globals.css, so
+     page 1 sits on the same paper as screens 2-10. Was #b298e7 lilac. */
+  --ground:#efece5; --paper:#f7f3fd; --sunk:#e9dffb;
+  --ink:#1e1435; --dim:#4b3b6b;
+  --head:#1e1435; --head-dim:#3b2c58;
+  --display:#052b1f;
+  --accent:#4dffbc; --on-accent:#052b1f; --accent2:#052b1f;
+
+  /* Status. Only ever the ruler fill and the LTV number. */
+  --warn:#b35c00; --danger:#a51f12;
+  --line:color-mix(in srgb, var(--ink) 12%, transparent);
+  --veil:color-mix(in srgb, #1e1435 62%, transparent);
+  --r:0.7rem; --r-lg:1rem;
+  --swift:cubic-bezier(0.2,0.8,0.2,1);
+  --spring:cubic-bezier(0.34,1.56,0.64,1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:#0d1117; --paper:#161d26; --sunk:#111821;
+    --ink:#e6f9ff; --dim:#8aa5b3;
+    --head:#e6f9ff; --head-dim:#8aa5b3;
+    --display:#42eaff;
+    --accent:#42eaff; --on-accent:#07222b; --accent2:#ff7900;
+    --warn:#ff9433; --danger:#ff6b5a;
+    --line:color-mix(in srgb, var(--ink) 16%, transparent);
+    --veil:color-mix(in srgb, #04070b 78%, transparent);
+  }
+}
+:root[data-theme="dark"] {
+  --ground:#0d1117; --paper:#161d26; --sunk:#111821;
+  --ink:#e6f9ff; --dim:#8aa5b3;
+  --head:#e6f9ff; --head-dim:#8aa5b3;
+  --display:#42eaff;
+  --accent:#42eaff; --on-accent:#07222b; --accent2:#ff7900;
+  --warn:#ff9433; --danger:#ff6b5a;
+  --line:color-mix(in srgb, var(--ink) 16%, transparent);
+  --veil:color-mix(in srgb, #04070b 78%, transparent);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Poppins", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.num{font-variant-numeric:tabular-nums}
+.lbl{font-size:0.64rem;font-weight:600;letter-spacing:0.11em;text-transform:uppercase;color:var(--dim)}
+.lbl em{font-style:normal;color:var(--accent2);display:none}
+.lbl em.on{display:inline}
+
+/* ---------------- the page: one viewport, no page scroll ---------------- */
+.app{
+  /* Bounded, not just a minimum. With min-height the 1fr row grew to whatever
+     the card needed and the whole screen ran past the viewport — 818px tall on
+     a 568px iPhone SE, with a quarter of it unreachable behind mandatory
+     scroll-snap. Fixing the height makes the 1fr row honest, so .middle's own
+     overflow-y takes the strain instead of the page. */
+  height:100dvh; max-height:100dvh;
+  display:grid; grid-template-rows:auto 1fr auto;
+  gap:clamp(0.6rem,1.8vh,1.2rem);
+  /* The bottom padding clears the fixed test panel, which is three rows tall
+     since it gained its "not part of the site" banner. At 2.8rem it was
+     covering the footer, so the liquidation link could not be clicked. On the
+     real site the panel does not exist and this drops back to the inset. */
+  padding:max(0.9rem,env(safe-area-inset-top)) clamp(0.9rem,3vw,1.6rem)
+          calc(5.4rem + max(0.6rem,env(safe-area-inset-bottom)));
+  max-width:1120px; margin:0 auto;
+}
+.bar{display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap}
+.bar .sp{margin-left:auto}
+.mark{font-weight:800;font-size:1.2rem;letter-spacing:-0.02em;color:var(--accent2)}
+
+.tabs{display:inline-flex;gap:0.15rem}
+.tabs button{
+  font:inherit;font-weight:600;font-size:0.82rem;
+  display:inline-flex;align-items:center;gap:0.35rem;
+  padding:0.34rem 0.7rem;border:0;border-radius:var(--r);
+  background:transparent;color:var(--head-dim);cursor:pointer;
+  transition:background 130ms ease,color 130ms ease;
+}
+.tabs button:hover{color:var(--head)}
+.tabs button[aria-selected="true"]{background:var(--head);color:var(--ground)}
+.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pip{
+  display:inline-grid;place-items:center;min-width:1.05rem;height:1.05rem;padding:0 0.22rem;
+  border-radius:999px;background:color-mix(in srgb,var(--head) 22%,transparent);
+  font-size:0.64rem;font-weight:700;font-variant-numeric:tabular-nums;
+}
+.tabs button[aria-selected="true"] .pip{background:color-mix(in srgb,var(--ground) 30%,transparent)}
+.pip.hot,.tabs button[aria-selected="true"] .pip.hot{background:var(--danger);color:#fff}
+
+.chip{display:inline-flex;align-items:center;gap:0.4rem;font-size:0.74rem;font-weight:500;color:var(--head-dim);white-space:nowrap}
+.chip .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.chip.bad .dot{background:var(--danger)}
+
+/* ---------------- buttons: flat, no border, no shadow ---------------- */
+.btn{
+  font:inherit;font-weight:600;font-size:0.82rem;
+  color:var(--ink);background:transparent;border:0;border-radius:var(--r);
+  padding:0.5rem 0.85rem;cursor:pointer;
+  transition:background 130ms ease,opacity 130ms ease;
+}
+.btn:hover:not(:disabled){background:var(--sunk)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+.btn.primary{background:var(--accent);color:var(--on-accent);font-weight:700}
+.btn.primary:hover:not(:disabled){background:var(--accent);filter:brightness(1.08)}
+.btn.danger{background:var(--danger);color:#fff;font-weight:700}
+.btn.big{font-size:0.95rem;padding:0.8rem 1.3rem}
+.btn.wide{width:100%}
+.btn.sm{font-size:0.72rem;padding:0.3rem 0.55rem}
+.btn.ghost{color:var(--dim)}
+.btn.ghost:hover{background:transparent;color:var(--ink);text-decoration:underline}
+.btn.onground{color:var(--head-dim)}
+.btn.onground:hover{background:transparent;color:var(--head);text-decoration:underline}
+
+/* Buy $CB. A card-coloured pill on the ground, so it reads as a button without
+   competing with the primary action or the active tab. */
+.btn.buy{
+  display:inline-flex;align-items:center;gap:0.35rem;
+  background:var(--paper);color:var(--accent2);
+  font-weight:700;font-size:0.78rem;padding:0.4rem 0.75rem;
+  text-decoration:none;white-space:nowrap;
+}
+.btn.buy:hover{background:var(--paper);filter:brightness(1.05);text-decoration:none}
+.btn.buy:active{transform:translateY(1px)}
+
+/* Visually hidden, still read aloud — the arrow alone does not say where the
+   link goes or that it opens a new tab. */
+.vh{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip-path:inset(50%);white-space:nowrap;border:0}
+
+.icon-btn{
+  width:32px;height:32px;display:grid;place-items:center;
+  background:transparent;border:0;border-radius:var(--r);
+  cursor:pointer;color:var(--head-dim);transition:color 130ms ease,background 130ms ease;
+}
+.icon-btn:hover{color:var(--head);background:color-mix(in srgb,var(--head) 10%,transparent)}
+.icon-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.icon-btn svg{width:17px;height:17px;display:block}
+
+/* ---------------- middle ---------------- */
+.middle{min-height:0;display:grid;place-items:center;overflow-y:auto;padding:0.2rem 0}
+.deal{width:min(27rem,100%);display:grid;gap:0.9rem}
+.pitch{text-align:center;display:grid;gap:0.35rem}
+.pitch h1{
+  margin:0;font-size:clamp(1.15rem,3.6vw,1.5rem);font-weight:800;
+  line-height:1.08;letter-spacing:-0.01em;text-transform:uppercase;
+  text-wrap:balance;color:var(--display);
+}
+.pitch h1 em{font-style:normal;color:var(--accent2)}
+.pitch .terms{font-size:0.75rem;font-weight:500;color:var(--head-dim)}
+
+/* borderless card: paper on ground does the separating */
+.card{background:var(--paper);border-radius:var(--r-lg);padding:0.9rem;display:grid;gap:0.6rem}
+
+.field{background:var(--sunk);border-radius:var(--r);padding:0.6rem 0.8rem;display:grid;gap:0.3rem}
+.field.err{background:color-mix(in srgb,var(--danger) 12%,var(--sunk))}
+.field .top{display:flex;align-items:center;gap:0.5rem}
+.field .top .sp{margin-left:auto}
+.entry{display:flex;align-items:center;gap:0.6rem}
+.entry input{
+  font:inherit;font-variant-numeric:tabular-nums;font-weight:600;
+  font-size:1.35rem;letter-spacing:-0.02em;
+  background:transparent;border:0;color:var(--ink);width:100%;min-width:0;padding:0;
+}
+.entry input:focus{outline:none}
+.field .under{display:flex;align-items:center;gap:0.5rem;font-size:0.72rem;font-weight:500;color:var(--dim)}
+.field .under .sp{margin-left:auto}
+
+.token-btn{
+  display:inline-flex;align-items:center;gap:0.3rem;
+  background:var(--paper);border:0;border-radius:var(--r);
+  padding:0.3rem 0.55rem;font:inherit;font-weight:700;font-size:0.8rem;
+  color:var(--ink);cursor:pointer;white-space:nowrap;
+}
+.token-btn:hover{filter:brightness(0.97)}
+.token-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.token-btn.static{cursor:default;background:transparent;color:var(--dim)}
+
+.pcts{display:flex;gap:0.1rem}
+.pct{
+  font:inherit;font-size:0.7rem;font-weight:600;color:var(--dim);
+  background:transparent;border:0;border-radius:0.4rem;padding:0.18rem 0.38rem;cursor:pointer;
+}
+.pct:hover{background:var(--paper);color:var(--ink)}
+.pct:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+.arrow{justify-self:center;width:24px;height:24px;display:grid;place-items:center;color:var(--dim);margin:-0.55rem 0}
+.arrow svg{width:14px;height:14px}
+
+/* ---------------- the ruler: also the borrow control ---------------- */
+.ruler{display:grid;gap:0.3rem}
+.track{
+  position:relative;height:10px;background:var(--sunk);
+  border-radius:999px;overflow:hidden;
+}
+.card .track{background:color-mix(in srgb,var(--ink) 10%,var(--sunk))}
+.track.drag{height:14px;overflow:visible;cursor:ew-resize;touch-action:none}
+.track.drag:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:999px}
+.fill{
+  position:absolute;inset:0 auto 0 0;width:calc(var(--ltv)*1%);
+  background:var(--tone);border-radius:999px 0 0 999px;
+  transition:width 320ms var(--swift),background 200ms ease;
+}
+.track.drag .fill{transition:background 200ms ease}
+.notch{position:absolute;top:0;bottom:0;width:2px;background:color-mix(in srgb,var(--ink) 45%,transparent)}
+.track.drag .notch{top:-2px;bottom:-2px}
+.notch.max{left:80%}
+.notch.liq{left:90%}
+.knob{
+  position:absolute;top:50%;left:calc(var(--ltv)*1%);
+  width:20px;height:20px;border-radius:50%;
+  background:var(--paper);border:3px solid var(--tone);
+  transform:translate(-50%,-50%);pointer-events:none;
+  box-shadow:0 2px 6px color-mix(in srgb,var(--ink) 30%,transparent);
+}
+/* 0.62rem is 9.9px, which is below the size a phone renders legibly. */
+.scale{position:relative;height:0.8rem;font-size:0.7rem;font-weight:500;color:var(--dim)}
+.scale span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.scale i{font-style:normal}
+.scale .s0{left:0;transform:none}
+.scale .s80{left:80%}
+.scale .s90{left:90%}
+.legend{display:flex;gap:0.9rem;justify-content:flex-end;font-size:0.66rem;font-weight:500;color:var(--dim);margin-top:-0.3rem}
+
+.tone-safe{--tone:var(--accent)}
+.tone-warn{--tone:var(--warn)}
+.tone-danger{--tone:var(--danger)}
+
+/* ---------------- readouts ---------------- */
+.readout{display:grid;gap:0.35rem}
+.rd{display:flex;align-items:baseline;gap:0.6rem;font-size:0.8rem}
+.rd .k{color:var(--dim);font-weight:500}
+.rd .v{margin-left:auto;font-weight:600;font-variant-numeric:tabular-nums}
+.delta{display:flex;align-items:center;gap:0.4rem;margin-left:auto;font-weight:600;font-variant-numeric:tabular-nums;font-size:0.8rem}
+.delta .was{color:var(--dim)}
+.delta svg{width:11px;height:11px;color:var(--dim);flex:none}
+
+.note{font-size:0.76rem;font-weight:500;line-height:1.45;color:var(--dim);
+  border-left:2px solid var(--warn);padding-left:0.6rem}
+.note.hot{border-left-color:var(--danger);color:var(--ink);font-weight:600}
+.note.calm{border-left-color:var(--line)}
+.note.ok{border-left-color:var(--accent)}
+.note.warn{border-left-color:var(--warn);color:var(--ink)}
+.note b{font-weight:700;color:var(--ink)}
+
+/* ---------------- foot ---------------- */
+.foot{display:flex;align-items:center;gap:0.5rem 1rem;flex-wrap:wrap;justify-content:center;
+  font-size:0.72rem;font-weight:500;color:var(--head-dim)}
+.foot .addr{font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:0.35rem}
+
+/* ---------------- popups ---------------- */
+.veil{position:fixed;inset:0;background:var(--veil);display:grid;place-items:center;
+  padding:1rem;z-index:60;animation:veilIn 160ms ease both}
+@keyframes veilIn{from{opacity:0}to{opacity:1}}
+.modal{
+  width:min(27rem,100%);max-height:min(88dvh,46rem);overflow-y:auto;
+  background:var(--paper);border-radius:var(--r-lg);
+  box-shadow:0 24px 60px color-mix(in srgb,#000 40%,transparent);
+  animation:popIn 260ms var(--spring) both;
+}
+.modal.wide{width:min(42rem,100%)}
+@keyframes popIn{from{opacity:0;transform:translateY(12px) scale(0.96)}to{opacity:1;transform:none}}
+.mhead{display:flex;align-items:center;gap:0.7rem;padding:0.85rem 1rem;
+  position:sticky;top:0;z-index:2;background:var(--paper)}
+.mhead h3{margin:0;font-size:0.95rem;font-weight:700}
+.mhead .sp{margin-left:auto}
+.mhead .icon-btn{color:var(--dim)}
+.mhead .icon-btn:hover{color:var(--ink);background:var(--sunk)}
+.mbody{padding:0 1rem 1rem;display:grid;gap:0.8rem}
+.mfoot{padding:0.85rem 1rem;display:grid;gap:0.45rem}
+
+/* ---------------- tables ---------------- */
+.sheet{width:min(54rem,100%);background:var(--paper);border-radius:var(--r-lg);overflow:hidden}
+.rowhead,.prow{
+  display:grid;
+  grid-template-columns:3rem minmax(6.5rem,1fr) minmax(6.5rem,1fr) 3.9rem minmax(7rem,1.3fr) auto;
+  align-items:center;gap:0.7rem;padding:0.6rem 1rem;
+}
+.rowhead{border-bottom:1px solid var(--line)}
+.prow+.prow{border-top:1px solid var(--line)}
+.prow:hover{background:var(--sunk)}
+.stack{display:grid;gap:0.05rem}
+.stack .big{font-size:0.86rem;font-weight:600}
+.stack .sub{font-size:0.72rem;color:var(--dim);font-weight:500}
+.pid{font-size:0.86rem;color:var(--dim);font-variant-numeric:tabular-nums}
+.pltv{font-size:0.98rem;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+/* Open / Finished. Inside the sheet so it sits on paper, not on the ground. */
+.pshead{padding:0.55rem 1rem;border-bottom:1px solid var(--line)}
+.subtabs{display:inline-flex;gap:0.15rem;background:var(--sunk);border-radius:var(--r);padding:0.2rem}
+.subtabs button{font:inherit;font-weight:600;font-size:0.76rem;padding:0.3rem 0.6rem;border:0;
+  border-radius:calc(var(--r) - 0.2rem);background:transparent;color:var(--dim);cursor:pointer;
+  display:inline-flex;align-items:center;gap:0.3rem}
+.subtabs button[aria-selected="true"]{background:var(--paper);color:var(--ink)}
+.subtabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-1px}
+.subtabs .pip{background:color-mix(in srgb,var(--ink) 14%,transparent)}
+
+.tally{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:0.6rem 1rem;
+  border-top:1px solid var(--line);font-size:0.74rem;font-weight:500;color:var(--dim)}
+.tally .sp{margin-left:auto}
+
+/* history rows */
+.hrow{display:grid;grid-template-columns:3rem 1fr auto auto;align-items:center;gap:0.7rem;padding:0.7rem 1rem}
+.hrow+.hrow{border-top:1px solid var(--line)}
+.tagd{font-size:0.66rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
+  padding:0.15rem 0.45rem;border-radius:0.35rem}
+.tagd.closed{background:color-mix(in srgb,var(--accent) 30%,transparent);color:var(--ink)}
+.tagd.liq{background:color-mix(in srgb,var(--danger) 22%,transparent);color:var(--danger)}
+
+/* ---------------- misc ---------------- */
+.seg{display:grid;grid-auto-flow:column;gap:0.15rem;background:var(--sunk);border-radius:var(--r);padding:0.2rem}
+.seg button{font:inherit;font-weight:600;font-size:0.76rem;padding:0.42rem 0.3rem;border:0;
+  border-radius:calc(var(--r) - 0.2rem);background:transparent;color:var(--dim);cursor:pointer}
+.seg button[aria-selected="true"]{background:var(--paper);color:var(--ink)}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:-1px}
+
+.tokens{display:grid;gap:0.2rem}
+.tok{display:flex;align-items:center;gap:0.7rem;width:100%;padding:0.6rem 0.7rem;
+  background:transparent;border:0;border-radius:var(--r);font:inherit;text-align:left;
+  color:var(--ink);cursor:pointer;transition:background 120ms ease}
+.tok:hover:not(:disabled){background:var(--sunk)}
+.tok:disabled{opacity:0.45;cursor:not-allowed}
+.tok:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.tok .sym{font-weight:700;font-size:0.86rem}
+.tok .nm{font-size:0.72rem;color:var(--dim);font-weight:500}
+.tok .bal{margin-left:auto;text-align:right}
+.tok .bal .n{font-weight:600;font-variant-numeric:tabular-nums;font-size:0.8rem}
+
+.steps{display:flex;align-items:center;gap:0.45rem;font-size:0.72rem;font-weight:500;color:var(--dim)}
+.steps .s{display:inline-flex;align-items:center;gap:0.3rem}
+.steps .n{width:17px;height:17px;border-radius:50%;background:var(--sunk);
+  display:grid;place-items:center;font-size:0.6rem;font-weight:700}
+.steps .s.done .n{background:var(--accent);color:var(--on-accent)}
+.steps .s.now .n{background:var(--ink);color:var(--paper)}
+.steps .s.now{color:var(--ink);font-weight:700}
+.steps .s.bad .n{background:var(--danger);color:#fff}
+.steps svg{width:10px;height:10px;flex:none}
+
+.center{display:grid;place-items:center;text-align:center;gap:0.8rem;padding:1.5rem 0.5rem}
+.center h2{margin:0;font-size:clamp(1.05rem,3.4vw,1.35rem);font-weight:800;text-transform:uppercase;
+  letter-spacing:-0.01em;text-wrap:balance;color:var(--display)}
+.center.oncard h2{color:var(--ink)}
+.center p{margin:0;color:var(--dim);font-weight:500;max-width:40ch;font-size:0.82rem;line-height:1.5}
+.spinner{width:38px;height:38px;border:3px solid var(--line);border-top-color:var(--ink);
+  border-radius:50%;animation:spin 900ms linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.badge{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;
+  animation:popIn 380ms var(--spring) both}
+.badge.ok{background:var(--accent);color:var(--on-accent)}
+.badge.no{background:var(--danger);color:#fff}
+.badge svg{width:24px;height:24px}
+.hash{font-variant-numeric:tabular-nums;font-size:0.74rem;font-weight:500;color:var(--dim);
+  display:inline-flex;align-items:center;gap:0.3rem}
+a.hash:hover,a.link:hover{color:var(--ink)}
+a.link{color:var(--dim);text-decoration:underline;font-weight:500}
+
+/* Test panel. Deliberately styled as tooling rather than UI — a dashed
+   outline and a stated label, because in review it was being read as part of
+   the page. None of this ships. */
+.preview{
+  position:fixed;left:50%;bottom:0.5rem;transform:translateX(-50%);
+  display:flex;align-items:center;gap:0.4rem 0.6rem;flex-wrap:wrap;justify-content:center;
+  padding:0.4rem 0.65rem;max-width:calc(100vw - 1rem);
+  background:var(--paper);border:1px dashed color-mix(in srgb,var(--ink) 35%,transparent);
+  border-radius:0.8rem;
+  box-shadow:0 4px 18px color-mix(in srgb,#000 28%,transparent);
+  z-index:40;font-size:0.65rem;
+}
+.preview .banner{
+  flex-basis:100%;text-align:center;font-weight:700;font-size:0.6rem;
+  letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);
+}
+.preview .g{display:flex;align-items:center;gap:0.12rem}
+.preview .t{font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--dim);padding-right:0.2rem}
+.preview button{font:inherit;font-weight:600;padding:0.22rem 0.45rem;border:0;border-radius:999px;
+  background:transparent;color:var(--dim);cursor:pointer}
+.preview button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.preview button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.preview .hide{color:var(--dim);text-decoration:underline}
+
+.show-preview{
+  display:none;position:fixed;left:50%;bottom:0.5rem;transform:translateX(-50%);
+  font:inherit;font-size:0.65rem;font-weight:600;padding:0.3rem 0.7rem;
+  background:var(--paper);color:var(--dim);
+  border:1px dashed color-mix(in srgb,var(--ink) 35%,transparent);border-radius:0.8rem;
+  cursor:pointer;z-index:40;
+}
+
+@media (max-width:760px){
+  .rowhead{display:none}
+  .prow{grid-template-columns:1fr auto;
+    grid-template-areas:"id ltv" "coll act" "debt act" "ruler ruler";
+    gap:0.25rem 0.7rem;padding:0.8rem 0.9rem}
+  .prow>.pid{grid-area:id}.prow>.coll{grid-area:coll}.prow>.debt{grid-area:debt}
+  .prow>.pltv{grid-area:ltv}.prow>.rcell{grid-area:ruler;margin-top:0.4rem}
+  .prow>.act{grid-area:act;align-self:center}
+  .hrow{grid-template-columns:1fr auto}
+  .seg{grid-auto-flow:row;grid-template-columns:1fr 1fr}
+}
+/* ---------------- phones ----------------
+   Anything you tap has to be reachable with a thumb. 31px tab pills and 32px
+   icon buttons are fine with a mouse and too small on glass, so on a coarse
+   pointer everything actionable gets a 40px minimum without changing how it
+   looks — the padding grows, the type does not. */
+@media (pointer: coarse){
+  .tabs button{min-height:40px}
+  .show-preview{min-height:34px}
+  .btn.buy,.icon-btn{min-height:40px;min-width:40px}
+  .pct{min-height:34px;padding-inline:0.55rem}
+  .token-btn{min-height:36px}
+  .foot .btn,.foot .icon-btn{min-height:32px;min-width:32px}
+}
+
+/* Short screens — every iPhone below the 14 Pro Max and most Androids. The card
+   is the only thing here that can be shortened without losing a control, so it
+   loses its padding and its intro rather than any of its fields. */
+/* The test panel starts collapsed to its pill on phones, so the screen only has
+   to clear that — not six wrapped rows of switches. Keyed on width alone: the
+   tallest phones are 932 and 998 and were missing this. */
+@media (max-width:560px){
+  .app{padding-bottom:calc(2.6rem + max(0.6rem,env(safe-area-inset-bottom)))}
+}
+@media (max-width:560px) and (max-height:820px){
+  .app{gap:0.5rem}
+  .card{padding:0.65rem;gap:0.42rem}
+  .field{padding:0.45rem 0.65rem;gap:0.2rem}
+  .entry input{font-size:1.15rem}
+  .readout{gap:0.22rem}
+  .rd,.delta{font-size:0.76rem}
+  .note{font-size:0.72rem;line-height:1.35}
+  .deal{gap:0.55rem}
+}
+@media (max-width:560px) and (max-height:700px){
+  /* The headline repeats what the card already says, so on the shortest screens
+     it goes rather than squeezing the form it introduces. */
+  .pitch{display:none}
+  .bar{gap:0.4rem 0.5rem}
+}
+
+/* The shortest screens still in use — iPhone SE 1st gen and the 320x568 class.
+   Everything here is spacing and type scale; no field, control or number is
+   removed, so the borrow button lands on screen without the card scrolling. */
+@media (max-width:560px) and (max-height:620px){
+  .app{gap:0.35rem;padding-top:max(0.6rem,env(safe-area-inset-top))}
+  .readout{gap:0.15rem}
+  .rd,.delta{font-size:0.72rem}
+  .field .under{font-size:0.68rem}
+  .card{padding:0.5rem;gap:0.3rem}
+  .field{padding:0.35rem 0.55rem;gap:0.12rem}
+  .entry input{font-size:1.05rem}
+  .arrow{margin:-0.7rem 0}
+  .note{font-size:0.68rem;line-height:1.3;padding-left:0.5rem}
+  .btn.big{font-size:0.86rem;padding:0.62rem 1rem}
+  /* The scale under the track already carries 80 and 90. */
+  .legend{display:none}
+}
+
+/* Narrow, regardless of height. The 80 and 90 marks are 10% of the track apart —
+   about 29px at 320px wide — so their words ran into each other. The numbers
+   alone still read against the notches, and the legend under the card carries
+   the meaning. */
+@media (max-width:400px){
+  .scale i{display:none}
+  /* The wallet address is in the footer too, and carrying it up here as well is
+     what wrapped the bar onto a fourth row. */
+  .bar .chip.num{display:none}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;
+    transition-duration:0.01ms!important}
+}
+</style>
+
+<div id="app"></div>
+<div id="modal-root"></div>
+<div class="preview" id="preview"></div>
+<button class="show-preview" id="show-preview" type="button">Test panel</button>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ================================================================
+     Contract constants. MAX_LTV / LIQ_LTV mirror CBLending.sol's
+     8000 / 9000 bps via sbprotocol/app/src/health.ts.
+     ================================================================ */
+  var MAX_LTV = 80, LIQ_LTV = 90;
+  var CONTRACT = "0x9a3f4c17e8b25d0a6f18c4e73b9d2054af6e11c8";
+  var EXPLORER = "https://explorer.robinhood.example/tx/";
+  var DEX = "https://app.uniswap.org/swap";
+
+  function healthOf(l){ return l >= LIQ_LTV ? "danger" : l >= MAX_LTV ? "warn" : "safe"; }
+
+  /* Risk graded by how far the collateral can fall before liquidation, not by
+     LTV directly. Everything under 80 is "allowed", but 10% LTV and 79% LTV are
+     not remotely the same bet, and a single flat warning said they were. */
+  /* The words carry the grading; colour does not repeat it. Only High gets a
+     colour, because it is the only one asking you to do something. */
+  function riskOf(drop){
+    if (drop >= 50) return { label:"Low risk", cls:" calm" };
+    if (drop >= 25) return { label:"Moderate risk", cls:" calm" };
+    return { label:"High risk", cls:" hot" };
+  }
+
+  /* What the ruler and the LTV number are coloured by. Deliberately NOT
+     healthOf: the borrow ruler stops at 80, so a scale keyed to 80/90 can
+     never change colour and the bar sits mint the whole way up — which reads
+     as "nothing is happening" exactly while the risk doubles. Two states
+     only, matching the risk line: normal, and High. */
+  function toneOf(ltv){ return dropFor(ltv) < 25 ? "danger" : "safe"; }
+  function dropFor(ltv){ return ltv > 0 ? (1 - ltv / LIQ_LTV) * 100 : 100; }
+
+  var CB_PRICE = 9239 / 18272;
+  var TOKENS = [
+    { sym:"CDIH",  name:"Cash Dog in Hood", price:15398/12500, bal:41208 },
+    { sym:"CCAT",  name:"Cash Cat",         price:11008/64000, bal:128400 },
+    { sym:"LJOHN", name:"Little John",      price:10221/1940,  bal:6120 },
+    { sym:"TEND",  name:"TENDIES",          price:9446/8200,   bal:22900 },
+    { sym:"YOLO",  name:"YOLO",             price:0.4172,      bal:310500 }
+  ];
+
+  var POSITIONS = [
+    { id:17, tok:"CDIH",  coll:12500, debt:18272 },
+    { id:22, tok:"TEND",  coll:8200,  debt:13455 },
+    { id:23, tok:"LJOHN", coll:1940,  debt:17410 },
+    { id:31, tok:"CCAT",  coll:64000, debt:1760 }
+  ];
+
+  /* Closed and liquidated loans. Without this a liquidated position simply
+     vanishes and the borrower finds out by noticing it is gone. */
+  var HISTORY = [
+    { id:12, tok:"CDIH",  coll:9000,  debt:8100,  kind:"closed",
+      when:"14 Jul 2026", tx:"0x71b2a49f", note:"Repaid in full" },
+    { id:8,  tok:"YOLO",  coll:22000, debt:7340,  kind:"liq", ltv:90.4, back:1180,
+      when:"9 Jul 2026",  tx:"0x3ce80d17", note:"YOLO fell 19% in an hour" },
+    { id:5,  tok:"CCAT",  coll:40000, debt:2200,  kind:"closed",
+      when:"2 Jul 2026",  tx:"0x0f47ab93", note:"Repaid in full" }
+  ];
+
+  var POOL_FULL = 1284900, POOL_LOW = 4200;
+
+  /* `pin` is the amount you decided on; the ruler moves the other one. LTV is
+     a ratio, so dragging it can only change one side — which side depends on
+     whether you came here saying "I'm locking this much" or "I want this much
+     $CB". Whichever field you typed in last is the one held. */
+  var deal = { tok:"CDIH", dep:"12500", bor:"18272", pin:"dep" };
+  var state = {
+    theme:null, tab:"Borrow", posView:"open",
+    wallet:"connected",   /* none | wrong | connected */
+    holdings:"has",       /* has | none */
+    pool:"full",          /* full | low */
+    outcome:"ok"          /* ok | rejected | reverted */
+  };
+
+  /* ---------------- helpers ---------------- */
+  function tokenOf(s){ for (var i=0;i<TOKENS.length;i++) if (TOKENS[i].sym===s) return TOKENS[i]; return TOKENS[0]; }
+  function balOf(t){ return state.holdings === "none" ? 0 : t.bal; }
+  function pool(){ return state.pool === "low" ? POOL_LOW : POOL_FULL; }
+  function connected(){ return state.wallet === "connected"; }
+
+  function collUsd(p){ return p.coll * tokenOf(p.tok).price; }
+  function debtUsd(p){ return p.debt * CB_PRICE; }
+  function ltvOf(p){ var c = collUsd(p); return c > 0 ? (debtUsd(p)/c)*100 : 0; }
+
+  function money(n){ return "$ " + n.toLocaleString("en-US",{maximumFractionDigits:0}); }
+  function amt(n,dp){ return n.toLocaleString("en-US",{minimumFractionDigits:dp||0,maximumFractionDigits:dp||0}); }
+  function pct(n){ return n.toFixed(1) + "%"; }
+  function parseNum(s){ var v = parseFloat(String(s).replace(/[^0-9.]/g,"")); return isNaN(v) ? 0 : v; }
+
+  function el(h){ var t=document.createElement("template"); t.innerHTML=h.trim(); return t.content.firstElementChild; }
+  function esc(s){ return String(s).replace(/[&<>"']/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+  var I = {
+    down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>',
+    right:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>',
+    check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
+    x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+    close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+    sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v2.2M12 20.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M1.5 12h2.2M20.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>',
+    moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 15.4A8.7 8.7 0 018.6 3.6a8.8 8.8 0 103.4 17 8.7 8.7 0 008.4-5.2z"/></svg>',
+    copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>'
+  };
+
+  /* The ruler, built in exactly one place so its geometry is identical
+     everywhere — that is what makes the 80 and 90 marks comparable. */
+  function ruler(ltv, opts){
+    opts = opts || {};
+    var v = Math.max(0, Math.min(100, ltv));
+    return '<div class="ruler tone-' + toneOf(ltv) + '">' +
+      '<div class="track' + (opts.drag ? " drag" : "") + '" style="--ltv:' + v + '"' +
+        (opts.drag
+          ? ' role="slider" tabindex="0" aria-label="Loan to value"'
+            + ' aria-valuemin="0" aria-valuemax="' + MAX_LTV + '" aria-valuenow="' + ltv.toFixed(1) + '"'
+          : ' role="img" aria-label="Loan to value ' + pct(ltv) + '"') + '>' +
+        '<div class="fill"></div>' +
+        '<div class="notch max"></div><div class="notch liq"></div>' +
+        (opts.drag ? '<div class="knob"></div>' : "") +
+      "</div>" +
+      /* The two marks are labelled here rather than on a separate legend row
+         below the card — one row of type instead of two saying the same thing.
+         Short words only: "80 borrow limit" and "90 liquidation" collided
+         under about 400px. */
+      (opts.scale
+        ? '<div class="scale"><span class="s0">0</span><span class="s80">' + MAX_LTV +
+          '<i> limit</i></span><span class="s90">' + LIQ_LTV + "<i> liq</i></span></div>"
+        : "") +
+    "</div>";
+  }
+
+  /* ---------------- theme ---------------- */
+  function theme(){ return state.theme || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); }
+  function toggleTheme(){
+    state.theme = theme() === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", state.theme);
+    render();
+  }
+
+  /* ---------------- modal plumbing ---------------- */
+  var lastFocus = null;
+  function closeModal(){
+    document.getElementById("modal-root").innerHTML = "";
+    document.body.style.overflow = "";
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+    lastFocus = null;
+  }
+  function openModal(node, opts){
+    opts = opts || {};
+    if (!document.querySelector(".veil")) lastFocus = document.activeElement;
+    var root = document.getElementById("modal-root");
+    root.innerHTML = "";
+    var veil = el('<div class="veil"></div>');
+    if (opts.locked) veil.dataset.locked = "1";
+    veil.appendChild(node);
+    veil.addEventListener("mousedown", function(e){ if (e.target === veil && !opts.locked) closeModal(); });
+    root.appendChild(veil);
+    /* Body scroll locks while a popup is open. On the real site the root
+       carries mandatory scroll-snap and would otherwise slide the next
+       screen up behind the overlay. */
+    document.body.style.overflow = "hidden";
+    var f = node.querySelector("input,button,[tabindex]");
+    if (f) f.focus();
+    return node;
+  }
+  document.addEventListener("keydown", function(e){
+    if (e.key !== "Escape") return;
+    var v = document.querySelector(".veil");
+    if (v && !v.dataset.locked) closeModal();
+  });
+
+  function shell(title, body, foot, wide){
+    var m = el('<div class="modal' + (wide ? " wide" : "") + '" role="dialog" aria-modal="true" aria-label="' + esc(title) + '">' +
+      '<div class="mhead"><h3>' + esc(title) + '</h3><span class="sp"></span>' +
+      '<button class="icon-btn" type="button" data-close aria-label="Close">' + I.close + "</button></div>" +
+      '<div class="mbody">' + body + "</div>" +
+      (foot ? '<div class="mfoot">' + foot + "</div>" : "") + "</div>");
+    m.querySelector("[data-close]").addEventListener("click", closeModal);
+    return m;
+  }
+
+  /* ================================================================
+     BORROW — the page itself
+     ================================================================ */
+  function math(){
+    var t = tokenOf(deal.tok);
+    var d = parseNum(deal.dep), b = parseNum(deal.bor);
+    var cUsd = d * t.price, bUsd = b * CB_PRICE;
+    /* Max is the 80% limit and nothing else. What the treasury holds is not
+       disclosed here — if a borrow exceeds it, that is caught on submit and
+       explained in its own popup. */
+    var byLtv = (cUsd * MAX_LTV) / 100 / CB_PRICE;
+    return { t:t, dep:d, bor:b, cUsd:cUsd, bUsd:bUsd,
+             ltv: cUsd > 0 ? (bUsd/cUsd)*100 : 0, byLtv:byLtv };
+  }
+
+  function problem(){
+    var m = math();
+    if (!connected()) return null;
+    if (state.wallet === "wrong") return null;
+    if (state.holdings === "none") return null;
+    if (m.dep > balOf(m.t)) return { field:"dep", msg:"You have " + amt(balOf(m.t)) + " " + m.t.sym + "." };
+    if (m.bor > m.byLtv && m.byLtv > 0)
+      return { field:"bor", msg:"Over the " + MAX_LTV + "% limit. Most you can borrow is " + amt(Math.floor(m.byLtv)) + " CB." };
+    return null;
+  }
+
+  function borrowPanel(){
+    var m = math();
+
+    /* Wrong chain and "you hold none of these" used to replace the whole card.
+       Both are now handled in place — the chain in the primary button, the
+       holdings at the token dropdown — so the screen never rearranges itself
+       under you. */
+    var action = state.wallet === "wrong"
+      ? '<button class="btn primary big wide" type="button" data-switch>Switch to Robinhood Chain</button>'
+      : !connected()
+        ? '<button class="btn primary big wide" type="button" data-connect>Connect wallet</button>'
+        : '<button class="btn primary big wide" type="button" data-go>Approve &amp; borrow</button>';
+
+    return '<div class="deal">' +
+      '<div class="pitch">' +
+        "<h1>Lock memes.<br />Borrow <em>$CB</em>.</h1>" +
+        '<span class="terms">0% interest · no fees</span>' +
+      "</div>" +
+      '<div class="card">' +
+        '<div class="field" data-fdep>' +
+          '<div class="top"><span class="lbl">Lock<em data-held="dep"> · held</em></span><span class="sp"></span>' +
+            '<button class="token-btn" type="button" data-pick>' + esc(m.t.sym) + " &#9662;</button></div>" +
+          '<div class="entry"><input type="text" inputmode="decimal" data-dep aria-label="Amount to lock" /></div>' +
+          '<div class="under"><span data-depusd></span><span class="sp"></span>' +
+            '<span class="pcts">' +
+              '<button class="pct" type="button" data-p="25">25%</button>' +
+              '<button class="pct" type="button" data-p="50">50%</button>' +
+              '<button class="pct" type="button" data-p="75">75%</button>' +
+              '<button class="pct" type="button" data-p="100">Max</button>' +
+            "</span></div>" +
+        "</div>" +
+        '<div data-nocoin></div>' +
+        '<div class="arrow">' + I.down + "</div>" +
+        '<div class="field" data-fbor>' +
+          '<div class="top"><span class="lbl">Borrow<em data-held="bor"> · held</em></span><span class="sp"></span>' +
+            '<span class="token-btn static">$CB</span></div>' +
+          '<div class="entry"><input type="text" inputmode="decimal" data-bor aria-label="Amount to borrow" /></div>' +
+          '<div class="under"><span data-borusd></span><span class="sp"></span><span data-cap></span></div>' +
+        "</div>" +
+        '<div data-rwrap>' + ruler(m.ltv, { scale:true, drag:true }) + "</div>" +
+        '<div class="readout">' +
+          '<div class="rd"><span class="k">LTV</span><span class="v" data-ltv></span></div>' +
+          '<div class="rd"><span class="k">Repay</span><span class="v" data-repay></span></div>' +
+        "</div>" +
+        '<div data-msg></div>' +
+        action +
+      "</div>" +
+    "</div>";
+  }
+
+  function syncDeal(root){
+    var m = math(), p = problem();
+    var depIn = root.querySelector("[data-dep]"), borIn = root.querySelector("[data-bor]");
+    if (!depIn) return;
+
+    root.querySelector("[data-depusd]").textContent = money(m.cUsd);
+    root.querySelector("[data-borusd]").textContent = money(m.bUsd);
+    root.querySelector("[data-cap]").textContent = "Max " + amt(Math.floor(m.byLtv)) + " CB";
+    /* Repaint the ruler in place rather than rebuilding its markup. Replacing
+       innerHTML here destroyed the very element the pointer was captured on,
+       so a drag stopped registering after the first move and the borrow amount
+       froze partway. */
+    paintRuler(root, m.ltv);
+
+    var ltvEl = root.querySelector("[data-ltv]");
+    ltvEl.textContent = pct(m.ltv);
+    ltvEl.style.color = m.ltv > 0 ? "var(--" + toneOf(m.ltv) + ")" : "";
+    root.querySelector("[data-repay]").textContent = amt(m.bor) + " CB";
+
+    /* Said at the dropdown rather than by replacing the card: which token you
+       have none of, what else is accepted, and where to get some. */
+    var accepted = TOKENS.map(function(t){ return t.sym; }).join(" · ");
+    root.querySelector("[data-nocoin]").innerHTML =
+      connected() && balOf(m.t) <= 0
+        ? '<div class="note calm">No ' + esc(m.t.sym) + " in your wallet. We accept " +
+          accepted + '. <a class="link" href="' + DEX +
+          '" target="_blank" rel="noreferrer noopener">Get some &#8599;</a></div>'
+        : "";
+
+    root.querySelector("[data-fdep]").classList.toggle("err", !!p && p.field === "dep");
+    root.querySelector("[data-fbor]").classList.toggle("err", !!p && p.field === "bor");
+
+    /* Say which side the ruler will hold, so the other one moving is not
+       a surprise. */
+    root.querySelectorAll("[data-held]").forEach(function(e){
+      e.classList.toggle("on", e.dataset.held === deal.pin);
+    });
+
+    var drop = m.ltv > 0 ? (1 - m.ltv/LIQ_LTV) * 100 : 0;
+    root.querySelector("[data-msg]").innerHTML = p
+      ? '<div class="note hot">' + esc(p.msg) + "</div>"
+      : m.ltv > 0
+        ? (function(){
+            var r = riskOf(drop);
+            return '<div class="note' + r.cls + '"><b>' + r.label + "</b> · &#8722;" +
+              drop.toFixed(0) + "% " + esc(m.t.sym) + " liquidates you.</div>";
+          })()
+        : "";
+
+    var go = root.querySelector("[data-go]");
+    if (go) go.disabled = !!p || m.dep <= 0 || m.bor <= 0;
+  }
+
+  function paintRuler(root, ltv){
+    var r = root.querySelector("[data-rwrap] .ruler");
+    if (!r) return;
+    r.className = "ruler tone-" + toneOf(ltv);
+    var tr = r.querySelector(".track");
+    tr.style.setProperty("--ltv", Math.max(0, Math.min(100, ltv)));
+    tr.setAttribute("aria-valuenow", ltv.toFixed(1));
+  }
+
+  /* Drag the ruler to set the borrow amount. The meaningful axis here is LTV,
+     not "% of my balance", so the readout doubles as the control. Hard stop at
+     the borrow limit — past it the transaction would revert. */
+  /* Set the LTV to v by moving whichever side is not held.
+     Holding collateral  → solve for the borrow amount.
+     Holding borrow      → solve for the collateral needed, capped by what is
+                           actually in the wallet; once that cap binds there is
+                           no collateral left to add, so the borrow gives way
+                           instead rather than the ruler silently sticking. */
+  function setLtv(v){
+    var m = math();
+    if (deal.pin === "bor") {
+      if (m.bUsd <= 0) return;
+      v = Math.max(1, Math.min(MAX_LTV, v));
+      var needTok = (m.bUsd / (v / 100)) / m.t.price;
+      var capped = Math.min(needTok, balOf(m.t));
+      deal.dep = String(Math.ceil(capped));
+      if (needTok > balOf(m.t)) {
+        var maxUsd = balOf(m.t) * m.t.price;
+        deal.bor = String(Math.floor((maxUsd * v) / 100 / CB_PRICE));
+      }
+    } else {
+      if (m.cUsd <= 0) return;
+      v = Math.max(0, Math.min(MAX_LTV, v));
+      deal.bor = String(Math.floor((m.cUsd * v) / 100 / CB_PRICE));
+    }
+  }
+
+  function paintInputs(root){
+    var d = root.querySelector("[data-dep]"), b = root.querySelector("[data-bor]");
+    if (d) d.value = deal.dep ? amt(parseNum(deal.dep)) : "";
+    if (b) b.value = deal.bor ? amt(parseNum(deal.bor)) : "";
+  }
+
+  function wireRuler(root){
+    var track = root.querySelector(".track.drag");
+    if (!track) return;
+    function setFrom(clientX){
+      var r = track.getBoundingClientRect();
+      setLtv(((clientX - r.left) / r.width) * 100);
+      paintInputs(root);
+      syncDeal(root);
+    }
+    track.addEventListener("pointerdown", function(e){
+      track.setPointerCapture(e.pointerId);
+      setFrom(e.clientX);
+      track.onpointermove = function(ev){ setFrom(ev.clientX); };
+    });
+    track.addEventListener("pointerup", function(){ track.onpointermove = null; });
+    track.addEventListener("keydown", function(e){
+      var step = e.shiftKey ? 5 : 1, v = math().ltv;
+      if (e.key === "ArrowRight" || e.key === "ArrowUp") v += step;
+      else if (e.key === "ArrowLeft" || e.key === "ArrowDown") v -= step;
+      else if (e.key === "Home") v = 0;
+      else if (e.key === "End") v = MAX_LTV;
+      else return;
+      e.preventDefault();
+      setLtv(v);
+      paintInputs(root);
+      syncDeal(root);
+      var t2 = root.querySelector(".track.drag");
+      if (t2) t2.focus();
+    });
+  }
+
+  /* ================================================================
+     POSITIONS
+     ================================================================ */
+  /* Finished loans are a sub-view of Positions, not a third top-level tab —
+     they are the same subject at a different point in its life. */
+  function subtabs(){
+    var n = connected() ? POSITIONS.length : 0;
+    return '<div class="pshead"><div class="subtabs" role="tablist" aria-label="Which loans">' +
+      '<button role="tab" type="button" data-pv="open" aria-selected="' + (state.posView === "open") +
+        '">Open' + (n ? '<span class="pip">' + n + "</span>" : "") + "</button>" +
+      '<button role="tab" type="button" data-pv="history" aria-selected="' + (state.posView === "history") +
+        '">Finished<span class="pip">' + HISTORY.length + "</span></button>" +
+    "</div></div>";
+  }
+
+  function positionsPanel(){
+    if (!connected()) return emptySheet("Connect your wallet", "Your loans appear here.");
+    if (state.posView === "history")
+      return '<div class="sheet">' + subtabs() + historyRows() + "</div>";
+    if (!POSITIONS.length)
+      return '<div class="sheet">' + subtabs() +
+        '<div class="center oncard"><h2>No loans yet</h2>' +
+        "<p>Lock a memecoin to borrow $CB.</p>" +
+        '<button class="btn primary" type="button" data-toborrow>Start borrowing</button></div></div>';
+
+    var tc = 0, td = 0;
+    POSITIONS.forEach(function(p){ tc += collUsd(p); td += debtUsd(p); });
+
+    return '<div class="sheet">' + subtabs() +
+      '<div class="rowhead"><span class="lbl">Id</span><span class="lbl">Locked</span>' +
+        '<span class="lbl">Debt</span><span class="lbl" style="text-align:right">LTV</span>' +
+        '<span class="lbl">0 &#8212; ' + MAX_LTV + " &#8212; " + LIQ_LTV + "</span><span></span></div>" +
+      POSITIONS.map(function(p){
+        var t = tokenOf(p.tok), l = ltvOf(p), h = healthOf(l);
+        return '<div class="prow">' +
+          '<span class="pid">#' + p.id + "</span>" +
+          '<span class="coll stack"><span class="big num">' + amt(p.coll) + " " + esc(t.sym) +
+            '</span><span class="sub num">' + money(collUsd(p)) + "</span></span>" +
+          '<span class="debt stack"><span class="big num">' + amt(p.debt) + ' CB</span>' +
+            '<span class="sub num">' + money(debtUsd(p)) + "</span></span>" +
+          '<span class="pltv" style="color:var(--' + toneOf(l) + ')">' + pct(l) + "</span>" +
+          '<span class="rcell">' + ruler(l, {}) + "</span>" +
+          '<span class="act"><button class="btn sm' + (h === "safe" ? "" : " primary") +
+            '" type="button" data-manage="' + p.id + '">' + (h === "safe" ? "Manage" : "Repay now") + "</button></span>" +
+        "</div>";
+      }).join("") +
+      '<div class="tally"><span class="num">' + POSITIONS.length + " open</span>" +
+        '<span class="num">' + money(tc) + " locked</span>" +
+        '<span class="num">' + money(td) + " debt</span>" +
+        '<span class="sp"></span>' +
+        '<button class="btn sm" type="button" data-toborrow>Borrow again</button></div>' +
+    "</div>";
+  }
+
+  function emptySheet(h, p){
+    return '<div class="sheet"><div class="center oncard"><h2>' + esc(h) + "</h2><p>" + esc(p) + "</p>" +
+      '<button class="btn primary" type="button" data-toborrow>Start borrowing</button></div></div>';
+  }
+
+  /* ================================================================
+     HISTORY — closed and liquidated loans
+     ================================================================ */
+  function historyRows(){
+    var lost = HISTORY.filter(function(h){ return h.kind === "liq"; });
+    return HISTORY.map(function(h){
+        var t = tokenOf(h.tok);
+        return '<div class="hrow">' +
+          '<span class="pid">#' + h.id + "</span>" +
+          '<span class="stack"><span class="big">' +
+            (h.kind === "liq"
+              /* The contract returns the surplus to the borrower, so this is a
+                 sale that cleared the debt — not a total loss. */
+              ? "Sold " + amt(h.coll) + " " + esc(t.sym) +
+                (h.back ? " · " + amt(h.back) + " CB returned" : "")
+              : "Unlocked " + amt(h.coll) + " " + esc(t.sym)) + "</span>" +
+            '<span class="sub">' + esc(h.when) + " · " + esc(h.note) +
+            (h.kind === "liq" ? " · hit " + pct(h.ltv) : "") + "</span></span>" +
+          '<span class="tagd ' + (h.kind === "liq" ? "liq\">liquidated" : "closed\">closed") + "</span>" +
+          '<a class="hash" href="' + EXPLORER + h.tx + '" target="_blank" rel="noreferrer noopener">' +
+            esc(h.tx) + "&#8230; &#8599;</a>" +
+        "</div>";
+      }).join("") +
+      '<div class="tally"><span>' + HISTORY.length + " finished · " + lost.length +
+        " liquidated</span><span class=\"sp\"></span>" +
+        '<button class="btn sm" type="button" data-liq>Liquidation</button></div>';
+  }
+
+  /* ================================================================
+     POPUPS
+     ================================================================ */
+  function pickerModal(){
+    var rows = TOKENS.map(function(t){
+      var b = balOf(t);
+      return '<button class="tok" type="button" data-sym="' + esc(t.sym) + '"' + (b <= 0 ? " disabled" : "") + ">" +
+        '<span><span class="sym">' + esc(t.sym) + '</span><br /><span class="nm">' + esc(t.name) + "</span></span>" +
+        '<span class="bal"><span class="n">' + amt(b) + '</span><br /><span class="nm">' +
+          (b > 0 ? money(b * t.price) : "you hold none") + "</span></span></button>";
+    }).join("");
+    var m = shell("Lock which memecoin?", '<div class="tokens">' + rows + "</div>",
+      state.holdings === "none"
+        ? '<a class="btn primary wide" href="' + DEX + '" target="_blank" rel="noreferrer noopener">Get one</a>'
+        : "");
+    m.querySelectorAll("[data-sym]").forEach(function(b){
+      b.addEventListener("click", function(){ deal.tok = b.dataset.sym; closeModal(); render(); });
+    });
+    openModal(m);
+  }
+
+  function manageModal(pos){
+    var mode = "Repay";
+    var m = shell("Position #" + pos.id,
+      '<div class="seg" role="tablist" aria-label="Action">' +
+        ["Add","Withdraw","Borrow","Repay"].map(function(x){
+          return '<button role="tab" type="button" data-mode="' + x + '" aria-selected="' + (x === mode) + '">' + x + "</button>";
+        }).join("") + "</div>" +
+      '<div class="field">' +
+        '<div class="top"><span class="lbl" data-ml></span><span class="sp"></span>' +
+          '<span class="token-btn static" data-unit></span></div>' +
+        '<div class="entry"><input type="text" inputmode="decimal" data-val aria-label="Amount" /></div>' +
+        '<div class="under"><span data-vusd></span><span class="sp"></span>' +
+          '<span class="pcts">' +
+            '<button class="pct" type="button" data-mp="25">25%</button>' +
+            '<button class="pct" type="button" data-mp="50">50%</button>' +
+            '<button class="pct" type="button" data-mp="75">75%</button>' +
+            '<button class="pct" type="button" data-mp="100">Max</button>' +
+          "</span></div>" +
+      "</div>" +
+      '<span class="lbl">After this</span>' +
+      '<div data-rwrap></div>' +
+      '<div class="readout">' +
+        '<div class="rd"><span class="k">Loan to value</span><span class="delta" data-d1></span></div>' +
+        '<div class="rd"><span class="k">Locked</span><span class="delta" data-d2></span></div>' +
+        '<div class="rd"><span class="k">Debt</span><span class="delta" data-d3></span></div>' +
+      "</div>" +
+      '<div data-msg></div>',
+      '<button class="btn primary big wide" type="button" data-go></button>');
+
+    var input = m.querySelector("[data-val]");
+
+    function proj(){
+      var t = tokenOf(pos.tok), v = parseNum(input.value);
+      var coll = pos.coll, debt = pos.debt;
+      if (mode === "Add") coll += v;
+      else if (mode === "Withdraw") coll = Math.max(0, coll - v);
+      else if (mode === "Borrow") debt += v;
+      else debt = Math.max(0, debt - v);
+      var c = coll * t.price;
+      return { coll:coll, debt:debt, t:t, v:v, ltv: c > 0 ? ((debt*CB_PRICE)/c)*100 : 0 };
+    }
+    function pair(a,b,same){
+      return same ? '<span class="was">' + a + "</span>"
+                  : '<span class="was">' + a + "</span>" + I.right + "<span>" + b + "</span>";
+    }
+    function maxFor(){
+      var t = tokenOf(pos.tok);
+      if (mode === "Repay") return pos.debt;
+      if (mode === "Add") return balOf(t);
+      if (mode === "Withdraw") return Math.max(0, pos.coll - (pos.debt*CB_PRICE)/(MAX_LTV/100)/t.price);
+      return Math.max(0, (pos.coll*t.price*MAX_LTV)/100/CB_PRICE - pos.debt);
+    }
+    function sync(){
+      var t = tokenOf(pos.tok), p = proj(), isColl = mode === "Add" || mode === "Withdraw";
+      m.querySelector("[data-ml]").textContent =
+        mode;
+      m.querySelector("[data-unit]").textContent = isColl ? t.sym : "$CB";
+      m.querySelector("[data-vusd]").textContent = money(p.v * (isColl ? t.price : CB_PRICE));
+      m.querySelector("[data-rwrap]").innerHTML = ruler(p.ltv, { scale:true });
+      m.querySelector("[data-d1]").innerHTML = pair(pct(ltvOf(pos)), pct(p.ltv), Math.abs(p.ltv - ltvOf(pos)) < 0.05);
+      m.querySelector("[data-d2]").innerHTML = pair(amt(pos.coll)+" "+t.sym, amt(p.coll)+" "+t.sym, p.coll === pos.coll);
+      m.querySelector("[data-d3]").innerHTML = pair(amt(pos.debt)+" CB", amt(p.debt)+" CB", p.debt === pos.debt);
+
+      var over = p.ltv > MAX_LTV;
+      var overMax = p.v > maxFor() + 0.5;
+      var closes = p.debt === 0 && mode === "Repay" && p.v > 0;
+      m.querySelector("[data-msg]").innerHTML =
+        over ? '<div class="note hot">Past the ' + MAX_LTV + "% limit — this would revert.</div>"
+        : overMax ? '<div class="note hot">Most you can ' + mode.toLowerCase() + " here is " +
+            amt(Math.floor(maxFor())) + " " + (isColl ? esc(t.sym) : "CB") + ".</div>"
+        : closes ? '<div class="note calm">Clears the debt. ' + amt(pos.coll) + " " + esc(t.sym) +
+            " returns. #" + pos.id + " closes.</div>"
+        : "";
+
+      var go = m.querySelector("[data-go]");
+      go.textContent = closes ? "Repay in full & close #" + pos.id
+        : mode + (p.v > 0 ? " " + amt(p.v) + " " + (isColl ? t.sym : "CB") : "");
+      go.disabled = over || overMax || p.v <= 0;
+    }
+
+    m.querySelectorAll("[data-mode]").forEach(function(b){
+      b.addEventListener("click", function(){
+        mode = b.dataset.mode;
+        m.querySelectorAll("[data-mode]").forEach(function(x){ x.setAttribute("aria-selected", String(x === b)); });
+        input.value = mode === "Repay" ? amt(pos.debt) : "";
+        sync();
+      });
+    });
+    m.querySelectorAll("[data-mp]").forEach(function(b){
+      b.addEventListener("click", function(){
+        input.value = amt(Math.floor(maxFor() * (parseInt(b.dataset.mp,10)/100)));
+        sync();
+      });
+    });
+    input.addEventListener("input", sync);
+    input.addEventListener("blur", function(){ if (input.value) input.value = amt(parseNum(input.value)); });
+    m.querySelector("[data-go]").addEventListener("click", function(){
+      var p = proj();
+      var extra = p.debt - pos.debt;
+      if (extra > pool()) return treasuryModal(extra);
+      reviewModal({ tok:pos.tok, coll:p.coll, debt:p.debt, ltv:p.ltv, existing:pos.id });
+    });
+
+    input.value = amt(pos.debt);
+    openModal(m);
+    sync();
+  }
+
+  /* ---- review → pending → confirmed / failed ---- */
+  /* stage = index of the current step; bad marks that step as failed rather
+     than in-progress. steps(3) means all three are behind you. */
+  function steps(stage, bad){
+    var s = ["Review","Sign","Done"];
+    return '<div class="steps">' + s.map(function(label,i){
+      var cls = i < stage ? "done" : i === stage ? (bad ? "bad" : "now") : "";
+      var mark = i < stage ? "&#10003;" : bad && i === stage ? "&#10005;" : String(i+1);
+      return '<span class="s ' + cls + '"><span class="n">' + mark + "</span>" + label + "</span>";
+    }).join(I.right) + "</div>";
+  }
+
+  function reviewModal(d){
+    var t = tokenOf(d.tok);
+    var m = shell(d.existing ? "Update position #" + d.existing : "Confirm your loan",
+      steps(0) +
+      '<div class="readout">' +
+        '<div class="rd"><span class="k">Lock</span><span class="v">' + amt(d.coll) + " " + esc(t.sym) + "</span></div>" +
+        '<div class="rd"><span class="k">Receive</span><span class="v">' + amt(d.debt) + " CB</span></div>" +
+        '<div class="rd"><span class="k">Opening LTV</span><span class="v">' + pct(d.ltv) + "</span></div>" +
+        '<div class="rd"><span class="k">Repay</span><span class="v">' + amt(d.debt) + " CB</span></div>" +
+        '<div class="rd"><span class="k">Interest</span><span class="v">0.00%</span></div>' +
+      "</div>" +
+      ruler(d.ltv, { scale:true }) +
+      '<div class="note hot">Past ' + LIQ_LTV + "% your " + esc(t.sym) +
+        " is sold to clear the debt. The rest comes back to you.</div>" +
+      '<div class="note calm">Price is a 60s average at execution.</div>',
+      '<button class="btn primary big wide" type="button" data-sign>Confirm in wallet</button>' +
+      '<button class="btn ghost wide sm" type="button" data-back>Back</button>');
+    m.querySelector("[data-back]").addEventListener("click", closeModal);
+    m.querySelector("[data-sign]").addEventListener("click", function(){ pendingModal(d); });
+    openModal(m);
+  }
+
+  function pendingModal(d){
+    var m = shell("Waiting for your wallet",
+      steps(1) +
+      '<div class="center oncard"><div class="spinner" role="status" aria-label="Waiting"></div>' +
+      "<h2>Opening position</h2>" +
+      "<p>Second of two signatures.</p>" +
+      '<a class="hash" href="' + EXPLORER + '0x4c9e8d21" target="_blank" rel="noreferrer noopener">0x4c9e&#8230;8d21 &#8599;</a></div>');
+    openModal(m, { locked:true });
+    setTimeout(function(){
+      if (state.outcome === "ok") confirmedModal(d);
+      else failedModal(d, state.outcome);
+    }, 1700);
+  }
+
+  function confirmedModal(d){
+    var t = tokenOf(d.tok), id = d.existing || 42;
+    var m = shell("Confirmed in block 8,421,097",
+      steps(3) +
+      '<div class="center oncard"><div class="badge ok">' + I.check + "</div>" +
+      "<h2>Position #" + id + (d.existing ? " updated" : " opened") + "</h2>" +
+      "<p>" + amt(d.debt) + " CB sent. Repay the same to unlock " + amt(d.coll) + " " + esc(t.sym) + ".</p>" +
+      '<a class="hash" href="' + EXPLORER + '0x4c9e8d21" target="_blank" rel="noreferrer noopener">0x4c9e&#8230;8d21 &#8599;</a></div>',
+      '<button class="btn primary big wide" type="button" data-done>Done</button>' +
+      '<a class="btn ghost wide sm" href="' + DEX + '" target="_blank" rel="noreferrer noopener" style="text-align:center">Buy $CB</a>');
+    m.querySelector("[data-done]").addEventListener("click", function(){
+      closeModal(); state.posView = "open"; setTab("Positions");
+    });
+    openModal(m);
+  }
+
+  function failedModal(d, why){
+    var rejected = why === "rejected";
+    var m = shell(rejected ? "You cancelled it" : "Transaction failed",
+      steps(2, true) +
+      '<div class="center oncard"><div class="badge no">' + I.x + "</div>" +
+      "<h2>" + (rejected ? "Nothing happened" : "It reverted") + "</h2>" +
+      "<p>" + (rejected
+        ? "Nothing was locked or borrowed."
+        : "Price moved past your limit. Nothing locked, no fee taken.")
+      + "</p>" +
+      (rejected ? "" :
+        '<a class="hash" href="' + EXPLORER + '0x4c9e8d21" target="_blank" rel="noreferrer noopener">0x4c9e&#8230;8d21 &#8599;</a>') +
+      "</div>",
+      '<button class="btn primary big wide" type="button" data-retry>Try again</button>' +
+      '<button class="btn ghost wide sm" type="button" data-close2>Close</button>');
+    m.querySelector("[data-retry]").addEventListener("click", function(){ reviewModal(d); });
+    m.querySelector("[data-close2]").addEventListener("click", closeModal);
+    openModal(m);
+  }
+
+  /* Borrower-facing only. The "Run a liquidator" panel that used to sit behind
+     this is gone: liquidating is the team's job, not something to recruit
+     strangers for. What stays is what happens *to* the borrower, which is
+     true no matter who triggers it. */
+  /* The only place the treasury figure appears. Reached by trying to borrow
+     more than there is, never printed on the form. */
+  function treasuryModal(want){
+    /* Two numbers and a way out. The explanation that used to sit under this
+       said nothing the numbers and the button did not already say. */
+    openModal(shell("Not enough $CB",
+      '<div class="note hot">You asked for ' + amt(want) + " CB. Only " +
+        amt(pool()) + " CB available.</div>",
+      '<button class="btn primary big wide" type="button" data-fit>Borrow ' + amt(pool()) + " CB instead</button>" +
+      '<button class="btn ghost wide sm" type="button" data-close2>Close</button>'
+    ));
+    var m = document.querySelector(".modal");
+    m.querySelector("[data-close2]").addEventListener("click", closeModal);
+    m.querySelector("[data-fit]").addEventListener("click", function(){
+      deal.bor = String(pool());
+      deal.pin = "bor";
+      closeModal();
+      render();
+    });
+  }
+
+  function liquidationModal(){
+    openModal(shell("How liquidation works",
+      ruler(LIQ_LTV, { scale:true }) +
+      '<div class="note hot">Past ' + LIQ_LTV + "% your collateral is sold. " +
+        "The debt is paid, the rest comes back to you, and you keep the $CB. " +
+        "All or nothing. No warning.</div>" +
+      '<div class="readout">' +
+        '<div class="rd"><span class="k">Borrow limit</span><span class="v">' + MAX_LTV + ".00%</span></div>" +
+        '<div class="rd"><span class="k">Liquidation</span><span class="v">' + LIQ_LTV + ".00%</span></div>" +
+        '<div class="rd"><span class="k">Interest &amp; fees</span><span class="v">0.00%</span></div>' +
+        '<div class="rd"><span class="k">Price</span><span class="v">60s average</span></div>' +
+      "</div>" +
+      '<p style="margin:0;font-size:0.78rem;font-weight:500;color:var(--dim);line-height:1.5">' +
+        "Loans never pool. Keep your LTV low — add collateral or repay.</p>"));
+  }
+
+  /* ================================================================
+     RENDER
+     ================================================================ */
+  function screen(){
+    var worst = 0;
+    POSITIONS.forEach(function(p){ worst = Math.max(worst, ltvOf(p)); });
+    var n = connected() ? POSITIONS.length : 0;
+
+    var bar = '<div class="bar"><span class="mark">$CB</span>' +
+      '<div class="tabs" role="tablist" aria-label="Sections">' +
+        '<button role="tab" type="button" data-tab="Borrow" aria-selected="' + (state.tab === "Borrow") + '">Borrow</button>' +
+        '<button role="tab" type="button" data-tab="Positions" aria-selected="' + (state.tab === "Positions") + '">Positions' +
+          (n ? '<span class="pip' + (worst >= MAX_LTV ? " hot" : "") + '">' + n + "</span>" : "") + "</button>" +
+      "</div>" +
+      /* Centred between the tabs and the chain, with two spacers doing the
+         work. The screen-reader text stays even though the arrow is gone —
+         nothing else tells a non-visual user this leaves the site. */
+      '<span class="sp"></span>' +
+      '<a class="btn buy" href="' + DEX + '" target="_blank" rel="noreferrer noopener">' +
+        "Buy $CB" +
+        '<span class="vh"> on Uniswap, opens a new tab</span></a>' +
+      '<span class="sp"></span>' +
+      (state.wallet === "wrong"
+        ? '<span class="chip bad"><span class="dot"></span>Wrong network</span>'
+        : '<span class="chip"><span class="dot"></span>Robinhood Chain</span>') +
+      (connected() ? '<span class="chip num">0x8f2&#8230;41ac</span>' : "") +
+      '<button class="icon-btn" type="button" data-theme aria-label="' +
+        (theme() === "dark" ? "Switch to light" : "Switch to dark") + '">' +
+        (theme() === "dark" ? I.sun : I.moon) + "</button></div>";
+
+    var panel = state.tab === "Borrow" ? borrowPanel() : positionsPanel();
+
+    return bar + '<div class="middle">' + panel + "</div>" +
+      '<div class="foot">' +
+        '<button class="btn onground sm" type="button" data-liq>Liquidation</button>' +
+        '<span class="addr">' + esc(CONTRACT.slice(0,8)) + "&#8230;" + esc(CONTRACT.slice(-4)) +
+          '<button class="icon-btn" type="button" data-copy aria-label="Copy contract address" style="width:22px;height:22px">' +
+          I.copy + "</button></span>" +
+      "</div>";
+  }
+
+  function render(){
+    var app = document.getElementById("app");
+    app.innerHTML = '<div class="app">' + screen() + "</div>";
+
+    app.querySelector("[data-theme]").addEventListener("click", toggleTheme);
+    /* There can be two — the footer link and the one in the history tally.
+       querySelector wired only the first, leaving the second dead. */
+    app.querySelectorAll("[data-liq]").forEach(function(b){
+      b.addEventListener("click", liquidationModal);
+    });
+    app.querySelectorAll("[data-tab]").forEach(function(b){
+      b.addEventListener("click", function(){ setTab(b.dataset.tab); });
+    });
+    app.querySelectorAll("[data-pv]").forEach(function(b){
+      b.addEventListener("click", function(){ state.posView = b.dataset.pv; render(); });
+    });
+    app.querySelectorAll("[data-toborrow]").forEach(function(b){
+      b.addEventListener("click", function(){ setTab("Borrow"); });
+    });
+    app.querySelectorAll("[data-manage]").forEach(function(b){
+      b.addEventListener("click", function(){
+        var id = parseInt(b.dataset.manage,10);
+        for (var i=0;i<POSITIONS.length;i++) if (POSITIONS[i].id === id) return manageModal(POSITIONS[i]);
+      });
+    });
+    var cp = app.querySelector("[data-copy]");
+    if (cp) cp.addEventListener("click", function(){
+      if (navigator.clipboard) navigator.clipboard.writeText(CONTRACT);
+      cp.innerHTML = I.check;
+      setTimeout(function(){ cp.innerHTML = I.copy; }, 1200);
+    });
+
+    var sw = app.querySelector("[data-switch]");
+    if (sw) sw.addEventListener("click", function(){ state.wallet = "connected"; syncPreview(); render(); });
+
+    app.querySelectorAll("[data-pick]").forEach(function(b){ b.addEventListener("click", pickerModal); });
+
+    if (state.tab !== "Borrow") return;
+
+    var depIn = app.querySelector("[data-dep]"), borIn = app.querySelector("[data-bor]");
+    if (!depIn) return;
+
+    /* Text inputs, not number inputs, so amounts can carry thousands
+       separators. Reformatted on blur rather than on every keystroke,
+       which would fight the caret. */
+    depIn.value = deal.dep ? amt(parseNum(deal.dep)) : "";
+    borIn.value = deal.bor ? amt(parseNum(deal.bor)) : "";
+    /* Typing in a field is how you say "this is the number I want" — so it
+       becomes the held side and the ruler moves the other one from then on. */
+    depIn.addEventListener("input", function(){ deal.dep = depIn.value; deal.pin = "dep"; syncDeal(app); });
+    borIn.addEventListener("input", function(){ deal.bor = borIn.value; deal.pin = "bor"; syncDeal(app); });
+    depIn.addEventListener("blur", function(){ if (depIn.value) depIn.value = amt(parseNum(depIn.value)); });
+    borIn.addEventListener("blur", function(){ if (borIn.value) borIn.value = amt(parseNum(borIn.value)); });
+
+    app.querySelectorAll("[data-p]").forEach(function(b){
+      b.addEventListener("click", function(){
+        var frac = parseInt(b.dataset.p,10) / 100;
+        deal.dep = String(Math.floor(balOf(tokenOf(deal.tok)) * frac));
+        deal.pin = "dep";
+        depIn.value = amt(parseNum(deal.dep));
+        syncDeal(app);
+      });
+    });
+
+    /* Wired once per render, against the ruler markup that borrowPanel emitted;
+       syncDeal only repaints it after this. */
+    wireRuler(app);
+
+    var go = app.querySelector("[data-go]");
+    if (go) go.addEventListener("click", function(){
+      var m = math();
+      if (m.bor > pool()) return treasuryModal(m.bor);
+      reviewModal({ tok:deal.tok, coll:m.dep, debt:m.bor, ltv:m.ltv });
+    });
+    var cn = app.querySelector("[data-connect]");
+    if (cn) cn.addEventListener("click", function(){ state.wallet = "connected"; syncPreview(); render(); });
+
+    syncDeal(app);
+  }
+
+  function setTab(t){ state.tab = t; render(); }
+
+  /* ================================================================
+     PREVIEW BAR — review scaffolding. Not part of the design; it exists
+     so every state can be reached without a wallet or a chain.
+     ================================================================ */
+  var GROUPS = [
+    { key:"wallet",   label:"Wallet",  opts:[["connected","Connected"],["none","No wallet"],["wrong","Wrong chain"]] },
+    { key:"holdings", label:"Holds",   opts:[["has","Has coins"],["none","No coins"]] },
+    { key:"pool",     label:"Pool",    opts:[["full","Full"],["low","Nearly empty"]] },
+    { key:"outcome",  label:"Next tx", opts:[["ok","Succeeds"],["rejected","Rejected"],["reverted","Reverts"]] }
+  ];
+
+  function buildPreview(){
+    var host = document.getElementById("preview");
+    host.innerHTML =
+      '<span class="banner">Test panel — not part of the site</span>' +
+      GROUPS.map(function(g){
+        return '<span class="g"><span class="t">' + g.label + "</span>" +
+          g.opts.map(function(o){
+            return '<button type="button" data-g="' + g.key + '" data-v="' + o[0] + '">' + o[1] + "</button>";
+          }).join("") + "</span>";
+      }).join("") +
+      '<button class="hide" type="button" data-hide aria-label="Hide test panel">Hide</button>';
+
+    host.querySelectorAll("button[data-g]").forEach(function(b){
+      b.addEventListener("click", function(){
+        state[b.dataset.g] = b.dataset.v;
+        if (b.dataset.g === "holdings" && b.dataset.v === "none") state.tab = "Borrow";
+        syncPreview();
+        render();
+      });
+    });
+    host.querySelector("[data-hide]").addEventListener("click", function(){
+      host.style.display = "none";
+      document.getElementById("show-preview").style.display = "block";
+    });
+    document.getElementById("show-preview").addEventListener("click", function(){
+      host.style.display = "flex";
+      this.style.display = "none";
+    });
+    syncPreview();
+    /* On a phone the panel wraps to six rows and covers a third of the screen —
+       on a 320x568 it hid the borrow button entirely, which makes it useless for
+       the review it exists to serve. So it starts collapsed to its pill there and
+       opens on demand. Nothing about this ships. */
+    if (innerWidth < 900) {
+      host.style.display = "none";
+      document.getElementById("show-preview").style.display = "block";
+    }
+  }
+  function syncPreview(){
+    document.querySelectorAll("#preview button").forEach(function(b){
+      b.setAttribute("aria-pressed", String(state[b.dataset.g] === b.dataset.v));
+    });
+  }
+
+  buildPreview();
+  render();
+})();
+</script>
