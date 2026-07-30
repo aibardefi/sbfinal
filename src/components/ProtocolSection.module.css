@@ -16,7 +16,10 @@
   gap: 0.25rem;
   padding: 0.2rem;
   border-radius: 99px;
-  background: color-mix(in srgb, var(--p1-paper) 34%, transparent);
+  /* A tint of the ink, not of the paper. The ground is cream and the paper is a
+     near-white violet, so a translucent paper here was invisible against it —
+     the selected tab had nothing to sit inside. */
+  background: color-mix(in srgb, var(--p1-ink) 8%, transparent);
 }
 
 .tab {
@@ -49,7 +52,7 @@
   place-items: center;
   border: 0;
   border-radius: 10px;
-  background: color-mix(in srgb, var(--p1-paper) 34%, transparent);
+  background: color-mix(in srgb, var(--p1-ink) 8%, transparent);
   color: var(--p1-head);
   cursor: pointer;
 }

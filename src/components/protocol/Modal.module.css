@@ -7,7 +7,7 @@
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: color-mix(in srgb, var(--p1-ground) 72%, #000);
+  background: var(--p1-veil);
   animation: scrimIn 180ms ease both;
 }
 
