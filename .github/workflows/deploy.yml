@@ -50,20 +50,36 @@ jobs:
       # with "Create Pages site failed. Resource not accessible by integration".
       # Pages is switched on once by hand, in Settings -> Pages -> Source:
       # GitHub Actions.
-      # 24, to match the machine the lockfile is written on — and it is npm that
-      # matters here, not node. Node 22 ships npm 10, node 24 ships npm 11, and
-      # the two disagree about where the wasm builds' transitive dependencies
-      # belong: npm 11 records @emnapi/core and @emnapi/runtime only nested under
-      # @unrs/resolver-binding-wasm32-wasi, while npm 10 also wants them hoisted
-      # for @tailwindcss/oxide-wasm32-wasi and calls the lockfile out of sync.
-      #
-      # `npm ci` then fails with "Missing: @emnapi/runtime from lock file" —
-      # in CI only, on a lockfile that installs cleanly by hand. Reproduced both
-      # ways before changing this: npm@10 fails on it, npm@11 does not.
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
+
+      # The npm that wrote package-lock.json, not whichever one node happens to
+      # bundle this month.
+      #
+      # `npm ci` refuses a lockfile it disagrees with, and npm majors disagree
+      # about where the wasm builds' transitive dependencies belong: npm 11
+      # records @emnapi/core and @emnapi/runtime only nested under
+      # @unrs/resolver-binding-wasm32-wasi, while npm 10 and npm 12 both also
+      # want them hoisted for @tailwindcss/oxide-wasm32-wasi, do not find them,
+      # and fail with "Missing: @emnapi/runtime@1.11.3 from lock file". The
+      # lockfile is not broken — it installs cleanly on the machine that wrote
+      # it, and reproducing this locally showed npm@10 failing and npm@11.6.1
+      # exiting 0 on the identical file.
+      #
+      # Pinning node alone does not settle it, because the bundled npm moves
+      # underneath it: node 22 shipped npm 10, node 24 shipped npm 11, and node
+      # 24 now ships npm 12. So the npm is pinned directly and this is the only
+      # place the version lives.
+      #
+      # The way off this pin is to regenerate the lockfile with npm 12, which
+      # needs node >= 24.15 locally — the dev machine is on 24.10, which is why
+      # it was not simply done here.
+      - name: Pin npm to the version that wrote the lockfile
+        run: |
+          npm i -g npm@11.6.1
+          npm --version
 
       - run: npm ci
 
