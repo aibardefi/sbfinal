@@ -36,15 +36,21 @@ jobs:
       # the repository variable SITE_DOMAIN to take the domain back.
       DOMAIN: ${{ vars.SITE_DOMAIN }}
 
+    # Action majors are pinned and have to be moved by hand. The v4/v3 set these
+    # were on bundled Node 20, which the runners stopped honouring — they force
+    # such actions onto Node 24, and the ones that are not ready for it fail
+    # there rather than warn. Bumped together on purpose: upload-pages-artifact
+    # and deploy-pages are a matched pair and a mixed set of majors between them
+    # is its own failure.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # No actions/configure-pages step: its enablement option needs a token
       # with repository-admin rights, which GITHUB_TOKEN is not, so it fails
       # with "Create Pages site failed. Resource not accessible by integration".
       # Pages is switched on once by hand, in Settings -> Pages -> Source:
       # GitHub Actions.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -87,7 +93,7 @@ jobs:
             echo "publishing at the project page path (SITE_DOMAIN unset)"
           fi
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: out
 
@@ -99,4 +105,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
