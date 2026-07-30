@@ -11,7 +11,7 @@ import {
 } from "viem";
 import { erc20Abi, lendingAbi } from "./abi";
 import { DEPLOYMENT, publicClient } from "./chain";
-import { coinColour } from "@/components/protocol/tokens";
+import { coinColour, rosterEntry, rosterIndex } from "@/components/protocol/tokens";
 import { MAX_LTV } from "./health";
 
 /**
@@ -28,7 +28,10 @@ import { MAX_LTV } from "./health";
 
 export type CollateralToken = {
   address: Address;
+  /** The roster's ticker where there is one, otherwise the token's own. */
   symbol: string;
+  /** What `symbol()` actually returned. Recorded, not displayed. */
+  onChainSymbol: string;
   name: string;
   decimals: number;
   /** Gates opening and borrowing only. A disabled token still appears, because
@@ -97,22 +100,34 @@ export async function loadMarket(): Promise<Market> {
       .catch(() => "???"),
   ]);
 
-  const collateral = await Promise.all(
-    tokens.map(async (address): Promise<CollateralToken> => {
-      const [meta, cfg] = await Promise.all([
-        readMetadata(address),
-        publicClient.readContract({ ...lending, functionName: "collateralConfigs", args: [address] }),
-      ]);
-      const [, , enabled, minCollateralAmount] = cfg;
-      return {
-        address,
-        ...meta,
-        enabled,
-        minCollateral: minCollateralAmount,
-        ...coinColour(meta.symbol),
-      };
-    })
-  );
+  const collateral = (
+    await Promise.all(
+      tokens.map(async (address): Promise<CollateralToken> => {
+        const [meta, cfg] = await Promise.all([
+          readMetadata(address),
+          publicClient.readContract({ ...lending, functionName: "collateralConfigs", args: [address] }),
+        ]);
+        const [, , enabled, minCollateralAmount] = cfg;
+        const listed = rosterEntry(meta.symbol);
+        return {
+          address,
+          ...meta,
+          /* The roster wins over the token where the design has an opinion, for
+             the ticker as well as the name. On this deployment the chain says
+             LITTLEJOHN, CashDog, TENDIES and YOLO; the design says JOHN,
+             CASHDOG, Tendies and Yolo. The address is the identity — the ticker
+             is copy, and the chain is not where copy is decided. */
+          symbol: listed?.sym ?? meta.symbol,
+          name: listed?.name ?? meta.name,
+          /** What the token itself answers, kept for the record. */
+          onChainSymbol: meta.symbol,
+          enabled,
+          minCollateral: minCollateralAmount,
+          ...coinColour(meta.symbol),
+        };
+      })
+    )
+  ).sort((a, b) => rosterIndex(a.symbol) - rosterIndex(b.symbol));
 
   return {
     cbDecimals: Number(cbDecimals),

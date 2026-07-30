@@ -7,7 +7,7 @@ import { Positions } from "./protocol/Positions";
 import { Ruler } from "./protocol/Ruler";
 import { TxStatus } from "./protocol/TxStatus";
 import { WalletChip } from "./protocol/WalletChip";
-import { BORROWED } from "./protocol/tokens";
+import { BORROWED, ROSTER, rosterEntry } from "./protocol/tokens";
 import { lendingAbi } from "@/lib/abi";
 import { DEPLOYMENT, publicClient } from "@/lib/chain";
 import { LIQ_LTV, MAX_LTV, UI_MAX_LTV, healthLabel, healthOf } from "@/lib/health";
@@ -67,12 +67,27 @@ export function ProtocolSection() {
   const positions = usePositions(LIVE ? wallet.account : undefined);
   const tx = useTx();
 
-  const collateral = market.data?.collateral ?? [];
+  /* Memoised because the `?? []` would otherwise mint a new array on every
+     render while the market is still loading, which is enough to make every
+     downstream useMemo recompute forever. */
+  const collateral = useMemo(() => market.data?.collateral ?? [], [market.data]);
   /* Default to the first coin the contract will still open a position against,
      not simply the first in the list: a disabled coin at index 0 would greet
      every visitor with a form that cannot be submitted. */
   const coin =
     collateral.find((c) => c.address === chosen) ?? collateral.find((c) => c.enabled) ?? collateral[0];
+
+  /* The picker's rows: every coin on the roster in its approved order, each
+     carrying the contract's token when there is one, then anything the contract
+     lists that the roster has never heard of. */
+  const pickerRows = useMemo(() => {
+    const live = new Map(collateral.map((c) => [c.symbol.toUpperCase(), c]));
+    const rows = ROSTER.map((meta) => ({ meta, token: live.get(meta.sym) }));
+    const extra = collateral
+      .filter((c) => !rosterEntry(c.symbol))
+      .map((c) => ({ meta: { sym: c.symbol, name: c.name, bg: c.bg, on: c.on }, token: c }));
+    return [...rows, ...extra];
+  }, [collateral]);
 
   const prices = usePrices(coin, market.data?.cbDecimals);
   const balance = useTokenBalance(LIVE ? coin?.address : undefined, wallet.account);
@@ -364,30 +379,42 @@ export function ProtocolSection() {
       {/* ---------------- popups ---------------- */}
 
       <Modal theme={theme} open={picking} onClose={() => setPicking(false)} title="Choose collateral">
-        {collateral.length === 0 ? (
-          <p className={s.note}>
-            {market.loading
-              ? "Reading the collateral list from the contract…"
-              : "The contract is not accepting any collateral at the moment."}
-          </p>
+        {market.loading && collateral.length === 0 ? (
+          <p className={s.note}>Reading the collateral list from the contract…</p>
         ) : (
           <ul className={s.coinList}>
-            {collateral.map((c) => (
-              <li key={c.address}>
+            {/* The running order is the roster's, not the contract's. A row is
+                live when the contract lists that symbol and dead otherwise —
+                the design's six stay in their approved sequence either way, and
+                anything whitelisted that is not on the roster is appended below
+                with whatever it calls itself. */}
+            {pickerRows.map(({ meta, token }) => (
+              <li key={meta.sym}>
                 <button
                   type="button"
-                  className={`${s.coinRow} ${c.address === coin?.address ? s.coinOn : ""}`}
+                  className={`${s.coinRow} ${token?.address === coin?.address ? s.coinOn : ""}`}
+                  disabled={!token}
+                  /* Not `aria-disabled`: there is genuinely nothing to choose.
+                     The contract has no address for this coin, so a click could
+                     only produce InvalidPool() from somewhere further in. */
                   onClick={() => {
-                    setChosen(c.address);
+                    if (!token) return;
+                    setChosen(token.address);
                     setPicking(false);
                   }}
                 >
-                  <span className={s.dot} style={{ background: c.bg, color: c.on }}>
-                    {c.symbol.slice(0, 1)}
+                  <span className={s.dot} style={{ background: meta.bg, color: meta.on }}>
+                    {meta.sym.slice(0, 1)}
                   </span>
                   <span className={s.coinName}>
-                    <b>{c.symbol}</b>
-                    <small>{c.enabled ? c.name : `${c.name} — closed to new loans`}</small>
+                    <b>{meta.sym}</b>
+                    <small>
+                      {!token
+                        ? `${meta.name} — not listed yet`
+                        : token.enabled
+                          ? meta.name
+                          : `${meta.name} — closed to new loans`}
+                    </small>
                   </span>
                 </button>
               </li>
@@ -395,8 +422,8 @@ export function ProtocolSection() {
           </ul>
         )}
         <p className={s.note}>
-          Robinhood Chain memecoins. This list is read from the contract, so it changes when the
-          contract does, without this page changing.
+          Robinhood Chain memecoins. Which of them can be borrowed against is read from the
+          contract, so it changes when the contract does, without this page changing.
         </p>
       </Modal>
 
