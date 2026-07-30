@@ -18,3 +18,11 @@ export const BUY_URL = "#";
 
 /** The lending app, once there is one. Our own property, so: same tab. */
 export const BORROW_URL = "https://app.cykablyat.vip";
+
+/**
+ * Whether a link is a real destination or the `"#"` placeholder above.
+ *
+ * Shared so the two call sites cannot drift into two different ideas of what
+ * counts as "not wired up yet".
+ */
+export const isLive = (url: string) => url !== "#" && url.length > 0;

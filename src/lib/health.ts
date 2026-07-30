@@ -14,16 +14,53 @@
 export const MAX_LTV = 80;
 export const LIQ_LTV = 90;
 
-export type Health = "safe" | "warn" | "danger";
+/**
+ * How far the collateral can fall before the position is liquidated, as a
+ * percentage of its current price.
+ *
+ * This is the number the borrow screen is really about. An LTV of 72% sounds
+ * comfortably short of the 90% trigger, and it is not: it means a 20% dip takes
+ * everything. Stating the ratio and leaving the borrower to do that arithmetic
+ * under pressure is how a screen technically tells the truth and still misleads.
+ *
+ * A position with no debt cannot be liquidated at any price, hence 100.
+ */
+export const dropToLiquidation = (ltv: number) => (ltv > 0 ? (1 - ltv / LIQ_LTV) * 100 : 100);
 
-export function healthOf(ltv: number): Health {
-  if (ltv >= LIQ_LTV) return "danger";
-  if (ltv >= MAX_LTV) return "warn";
-  return "safe";
+export type Risk = "low" | "moderate" | "high";
+
+/**
+ * The one risk scale on this screen, measured in that headroom rather than in
+ * the ratio itself.
+ *
+ * It replaces the old 80/90 banding outright — deliberately, because two scales
+ * is the failure the handover note in `public/design/` warns about, not two
+ * *thresholds*. 80 and 90 are still here and still absolute: they are contract
+ * facts, they mark the ruler, and `UI_MAX_LTV` still caps what can be borrowed.
+ * What they no longer do is decide what colour anything is.
+ */
+export function riskOf(ltv: number): Risk {
+  const drop = dropToLiquidation(ltv);
+  if (drop >= 50) return "low";
+  if (drop >= 25) return "moderate";
+  return "high";
 }
 
-export const healthLabel = (h: Health) =>
-  h === "safe" ? "Healthy" : h === "warn" ? "At risk" : "Liquidatable";
+export const riskLabel = (r: Risk) =>
+  r === "low" ? "Low risk" : r === "moderate" ? "Moderate risk" : "High risk";
+
+/**
+ * Two tones, not three.
+ *
+ * The design's own note: a three-step colour ramp spends its middle step saying
+ * "nothing is happening" exactly while the risk doubles. So the fill is the
+ * accent until the headroom is thin, and then it is the danger colour.
+ *
+ * The word from `riskLabel` is always rendered beside it. The prototype drops
+ * that on position rows and leaves a bare coloured number, which is a state you
+ * cannot read without seeing the colour.
+ */
+export const riskTone = (r: Risk): "safe" | "danger" => (r === "high" ? "danger" : "safe");
 
 /**
  * The contract rounds three ways in its own favour — collateral value down, debt

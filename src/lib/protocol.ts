@@ -38,6 +38,9 @@ export type CollateralToken = {
       repaying and adding collateral against it must stay reachable. */
   enabled: boolean;
   minCollateral: bigint;
+  /** What one whole token is worth in WETH wei, from the contract's own TWAP.
+      Carried on the token so every row can price itself without another read. */
+  unitWeth: bigint;
   bg: string;
   on: string;
 };
@@ -54,6 +57,8 @@ export type Market = {
    * wallet.
    */
   cbSymbol: string;
+  /** What one whole $CB is worth in WETH wei. */
+  cbUnitWeth: bigint;
   available: bigint;
   paused: boolean;
   collateral: CollateralToken[];
@@ -90,7 +95,7 @@ async function readMetadata(address: Address) {
 }
 
 export async function loadMarket(): Promise<Market> {
-  const [tokens, available, paused, cbDecimals, cbSymbol] = await Promise.all([
+  const [tokens, available, paused, rawCbDecimals, cbSymbol] = await Promise.all([
     publicClient.readContract({ ...lending, functionName: "collateralTokens" }),
     publicClient.readContract({ ...lending, functionName: "availableCB" }),
     publicClient.readContract({ ...lending, functionName: "paused" }),
@@ -99,6 +104,12 @@ export async function loadMarket(): Promise<Market> {
       .readContract({ address: DEPLOYMENT.cb, abi: erc20Abi, functionName: "symbol" })
       .catch(() => "???"),
   ]);
+  const cbDecimals = Number(rawCbDecimals);
+  const cbUnitWeth = await publicClient.readContract({
+    ...lending,
+    functionName: "quoteCBInWeth",
+    args: [unit(cbDecimals)],
+  });
 
   const collateral = (
     await Promise.all(
@@ -108,6 +119,20 @@ export async function loadMarket(): Promise<Market> {
           publicClient.readContract({ ...lending, functionName: "collateralConfigs", args: [address] }),
         ]);
         const [, , enabled, minCollateralAmount] = cfg;
+        /* Priced here, once per refresh, rather than on demand per keystroke.
+           `quoteAtTick` is a mulDiv and so linear in the amount, which is what
+           makes a unit price scalable to any amount locally — the alternative
+           was an RPC round trip for every pixel of the ruler. */
+        const unitWeth = await publicClient
+          .readContract({
+            ...lending,
+            functionName: "quoteCollateralInWeth",
+            args: [address, unit(meta.decimals)],
+          })
+          // A token the oracle will not price is still listed, still repayable,
+          // and simply has no value to show. Zero is the "unknown" here and
+          // every caller treats it as such rather than as "worthless".
+          .catch(() => 0n);
         const listed = rosterEntry(meta.symbol);
         return {
           address,
@@ -123,61 +148,87 @@ export async function loadMarket(): Promise<Market> {
           onChainSymbol: meta.symbol,
           enabled,
           minCollateral: minCollateralAmount,
+          unitWeth,
           ...coinColour(meta.symbol),
         };
       })
     )
   ).sort((a, b) => rosterIndex(a.symbol) - rosterIndex(b.symbol));
 
-  return {
-    cbDecimals: Number(cbDecimals),
-    cbSymbol,
-    available,
-    paused,
-    collateral,
-  };
-}
-
-/** Value of one whole collateral token and one whole $CB, both in WETH wei. */
-export type UnitPrices = { collateral: bigint; cb: bigint };
-
-export async function loadUnitPrices(token: CollateralToken, cbDecimals: number): Promise<UnitPrices> {
-  const [collateral, cb] = await Promise.all([
-    publicClient.readContract({
-      ...lending,
-      functionName: "quoteCollateralInWeth",
-      args: [token.address, unit(token.decimals)],
-    }),
-    publicClient.readContract({ ...lending, functionName: "quoteCBInWeth", args: [unit(cbDecimals)] }),
-  ]);
-  return { collateral, cb };
+  return { cbDecimals, cbSymbol, cbUnitWeth, available, paused, collateral };
 }
 
 /**
- * How much $CB a given amount of collateral supports at a given ratio.
+ * What an amount of a token is worth, in WETH wei.
  *
- * Scaled from unit prices rather than quoting the exact amount on every drag:
- * `TwapOracle.quoteAtTick` is a `mulDiv`, so it is linear in the amount and the
- * only difference is a wei or two of integer division. That is nowhere near the
- * headroom `UI_MAX_LTV` already leaves, and it is the difference between a
- * slider that moves and one that fires an RPC call per pixel.
+ * WETH and not dollars. The contract prices everything through Uniswap TWAPs
+ * against WETH and there is no USD feed anywhere in it, so the sub-values under
+ * each field are denominated in the unit the protocol actually thinks in. The
+ * design prototype shows "$ 15,398" there; a dollar figure on this page would be
+ * a number nothing on chain could be held to.
+ */
+export const valueInWeth = (amount: bigint, decimals: number, unitWeth: bigint) =>
+  unitWeth <= 0n ? 0n : (amount * unitWeth) / unit(decimals);
+
+/**
+ * The ratio the contract would compute for a hypothetical position, as a
+ * percentage.
+ *
+ * Scaled from unit prices rather than quoting each amount: `quoteAtTick` is a
+ * `mulDiv` and so linear in the amount, which is the difference between a ruler
+ * that moves and one that fires an RPC call per pixel. Returns 0 with no debt
+ * and 0 with no collateral value — the caller has nothing to draw either way.
+ */
+export function ltvPercentFor(
+  collateralWei: bigint,
+  borrowWei: bigint,
+  token: Pick<CollateralToken, "decimals" | "unitWeth">,
+  cbDecimals: number,
+  cbUnitWeth: bigint
+): number {
+  const coll = valueInWeth(collateralWei, token.decimals, token.unitWeth);
+  const debt = valueInWeth(borrowWei, cbDecimals, cbUnitWeth);
+  if (coll <= 0n || debt <= 0n) return 0;
+  // Through Number only at the end, on a ratio that is at most a few hundred.
+  return Number((debt * 1_000_000n) / coll) / 10_000;
+}
+
+/**
+ * The two directions the ruler can push, given which field the visitor pinned.
+ *
+ * Whichever amount was typed last is held and the other one moves — because LTV
+ * is a ratio, so dragging it can only change one side, and which side depends on
+ * whether you arrived saying "I am locking this much" or "I want this much $CB".
  *
  * Both legs round in the borrower's favour by accident of the contract's own
- * rounding — collateral value is quoted down and $CB value up — so this estimate
- * sits under what the contract will compute, never over. The simulate step
- * before the write is what actually proves it.
+ * rounding — collateral value is quoted down, $CB value up — so a borrow sized
+ * here lands under what the contract computes, never over. `UI_MAX_LTV` leaves
+ * the headroom and the simulate before the write is what actually proves it.
  */
-export function borrowableCB(
+export function borrowForLtv(
   collateralWei: bigint,
-  ltvBps: number,
-  prices: UnitPrices,
-  collateralDecimals: number,
-  cbDecimals: number
+  ltv: number,
+  token: Pick<CollateralToken, "decimals" | "unitWeth">,
+  cbDecimals: number,
+  cbUnitWeth: bigint
 ): bigint {
-  if (collateralWei <= 0n || prices.cb <= 0n) return 0n;
-  const collateralValueWeth = (prices.collateral * collateralWei) / unit(collateralDecimals);
-  const targetDebtWeth = (collateralValueWeth * BigInt(ltvBps)) / 10_000n;
-  return (targetDebtWeth * unit(cbDecimals)) / prices.cb;
+  if (collateralWei <= 0n || cbUnitWeth <= 0n) return 0n;
+  const coll = valueInWeth(collateralWei, token.decimals, token.unitWeth);
+  const targetDebtWeth = (coll * BigInt(Math.round(ltv * 100))) / 10_000n;
+  return (targetDebtWeth * unit(cbDecimals)) / cbUnitWeth;
+}
+
+export function collateralForLtv(
+  borrowWei: bigint,
+  ltv: number,
+  token: Pick<CollateralToken, "decimals" | "unitWeth">,
+  cbDecimals: number,
+  cbUnitWeth: bigint
+): bigint {
+  if (borrowWei <= 0n || ltv <= 0 || token.unitWeth <= 0n) return 0n;
+  const debt = valueInWeth(borrowWei, cbDecimals, cbUnitWeth);
+  const neededCollWeth = (debt * 10_000n) / BigInt(Math.round(ltv * 100));
+  return (neededCollWeth * unit(token.decimals)) / token.unitWeth;
 }
 
 /** The inverse, for reading a position back: what its debt is worth as a ratio. */
@@ -249,43 +300,10 @@ export function useMarket(): Loaded<Market> {
   };
 }
 
-export function usePrices(token?: CollateralToken, cbDecimals?: number): Loaded<UnitPrices> {
-  const [entry, setEntry] = useState<Stamped<UnitPrices>>();
-  const [tick, setTick] = useState(0);
-  const key = token && cbDecimals !== undefined ? `${token.address}:${cbDecimals}:${tick}` : undefined;
-
-  useEffect(() => {
-    if (!key || !token || cbDecimals === undefined) return;
-    let live = true;
-    loadUnitPrices(token, cbDecimals)
-      .then((data) => live && setEntry({ key, data }))
-      // An oracle that cannot be read is not a zero price. The error is stamped
-      // like everything else, so it clears the moment the coin changes.
-      .catch(() => live && setEntry({ key, error: "Could not read the price oracle." }));
-    return () => {
-      live = false;
-    };
-  }, [key, token, cbDecimals]);
-
-  useEffect(() => {
-    const id = window.setInterval(() => setTick((t) => t + 1), 30_000);
-    return () => window.clearInterval(id);
-  }, []);
-
-  /* Unlike the market, a price is only reused across the poll — never across a
-     change of coin. `sameToken` drops the tick and keeps the address. */
-  const sameToken =
-    entry && token && cbDecimals !== undefined && entry.key.startsWith(`${token.address}:${cbDecimals}:`)
-      ? entry
-      : undefined;
-
-  return {
-    data: sameToken?.data,
-    error: sameToken?.error,
-    loading: !!key && !sameToken,
-    refresh: useCallback(() => setTick((t) => t + 1), []),
-  };
-}
+/* usePrices is gone. Unit prices now ride on the market refresh — see
+   loadMarket — because the redesigned screen prices four things at once (both
+   fields, every position row and the Max) and a per-selection hook could only
+   ever answer for the coin currently picked. One poll, one set of prices. */
 
 export function usePositions(account?: Address): Loaded<Position[]> {
   const [entry, setEntry] = useState<Stamped<Position[]>>();
@@ -406,6 +424,22 @@ export function formatAmount(value: bigint, decimals: number, max = 4) {
  * to the wei, or the loan closes owing dust and stays open.
  */
 export const exactAmount = (value: bigint, decimals: number) => formatUnits(value, decimals);
+
+/**
+ * A WETH value, for the sub-line under an amount.
+ *
+ * Significant digits rather than fixed decimals: these run from fractions of a
+ * WETH down to millionths depending on the coin, and a fixed four places renders
+ * most of this deployment's collateral as "0.0000". The unit is always written
+ * out — an unlabelled decimal next to a token amount reads as dollars, which is
+ * the one thing it is not.
+ */
+export function formatWeth(wei: bigint) {
+  const n = Number(formatUnits(wei, 18));
+  if (n === 0) return "—";
+  if (n < 0.000001) return "<0.000001 WETH";
+  return `${n.toLocaleString("en-US", { maximumSignificantDigits: 4 })} WETH`;
+}
 
 /**
  * An ERC-20 balance, for the Max buttons.

@@ -1,15 +1,15 @@
 "use client";
 
 import { useCallback, useRef } from "react";
-import { LIQ_LTV, MAX_LTV, UI_MAX_LTV, healthOf, rulerPct } from "@/lib/health";
+import { LIQ_LTV, MAX_LTV, UI_MAX_LTV, riskOf, riskTone, rulerPct } from "@/lib/health";
 import s from "./Ruler.module.css";
 
 /**
- * The loan-to-value ruler.
+ * The loan-to-value ruler, and on the borrow tab the control that sets it.
  *
  * The one rule that makes this screen readable: **every ruler is drawn on the
- * same 0→100 scale**, so the 80 cap and the 90 liquidation mark sit at the same
- * place on all of them — the borrow form and every row of the positions table
+ * same 0→100 scale**, so the 80 cap and the 90 liquidation mark sit in the same
+ * place on all of them — the borrow form and every row of the positions sheet
  * alike. That is what lets four loans be compared at a glance, and it is the
  * first thing lost in a rewrite: dividing by LIQ_LTV instead puts 80% at 89% of
  * the bar and every mark moves.
@@ -18,28 +18,30 @@ import s from "./Ruler.module.css";
  * typed into CSS, so a contract change moves them rather than silently making
  * them wrong.
  *
- * `interactive` turns it into a slider. Read-only rulers get no tab stop, no
- * hit area and no ARIA role — they are a picture of a number that is already on
- * screen beside them.
+ * Colour comes from `riskOf`, which measures headroom to liquidation rather than
+ * the ratio itself. Two tones, because a three-step ramp spends its middle step
+ * saying "nothing is happening" exactly while the risk doubles.
+ *
+ * `interactive` turns it into a slider. Read-only rulers get no tab stop, no hit
+ * area and no ARIA role — they are a picture of a number already on screen
+ * beside them. `scale={false}` drops the legend for rulers in a list, where the
+ * notches repeat on every row and the words would too.
  */
 export function Ruler({
   ltv,
   onChange,
   interactive = false,
   label,
-  compact = false,
+  scale = true,
 }: {
   ltv: number;
   onChange?: (next: number) => void;
   interactive?: boolean;
   label?: string;
-  /** Drops the clearance an interactive track needs for its grab area. For
-      read-only rulers stacked in a list, where that space is bought and never
-      used. Never set this on an interactive one. */
-  compact?: boolean;
+  scale?: boolean;
 }) {
   const track = useRef<HTMLDivElement>(null);
-  const health = healthOf(ltv);
+  const tone = riskTone(riskOf(ltv));
 
   const set = useCallback(
     (clientX: number) => {
@@ -48,8 +50,8 @@ export function Ruler({
       const raw = ((clientX - r.left) / r.width) * 100;
       // Hard stop at the UI's own maximum, which sits a hair under the
       // contract's 80 — see SAFETY_BPS. Dragging past it is not refused with an
-      // error, it simply does not go further, which is what a physical stop
-      // does and what makes the limit feel like a property of the control.
+      // error, it simply does not go further, which is what a physical stop does
+      // and what makes the limit feel like a property of the control.
       onChange(Math.max(0, Math.min(UI_MAX_LTV, Math.round(raw))));
     },
     [onChange]
@@ -74,11 +76,12 @@ export function Ruler({
   const pct = rulerPct(ltv);
 
   return (
-    <div className={`${s.wrap} ${compact && !interactive ? s.compact : ""}`}>
+    <div className={s.wrap}>
       <div
         ref={track}
-        className={`${s.track} ${interactive ? s.live : ""}`}
-        data-health={health}
+        className={`${s.track} ${interactive ? s.drag : ""}`}
+        data-tone={tone}
+        style={{ ["--ltv" as string]: pct }}
         /* A slider that reports a value outside its own range is a slider that
            lies to a screen reader. valuemax is the reachable maximum, not the
            end of the drawing. */
@@ -110,28 +113,20 @@ export function Ruler({
             : undefined
         }
       >
-        <div className={s.fill} style={{ width: `${pct}%` }} />
-        {/* The left end of the scale. It carries no mark — there is nothing at
-            zero to warn about — but without it the first label a reader meets is
-            80 and the ruler looks like it starts there. */}
-        <div className={s.zero} aria-hidden="true">
-          0
-        </div>
+        <div className={s.fill} />
         {/* Placed from the constants, so the contract owns where they sit. */}
-        <div className={s.mark} style={{ left: `${MAX_LTV}%` }} data-kind="cap">
-          <span>
-            {MAX_LTV}
-            <i> limit</i>
-          </span>
-        </div>
-        <div className={s.mark} style={{ left: `${LIQ_LTV}%` }} data-kind="liq">
-          <span>
-            {LIQ_LTV}
-            <i> liq</i>
-          </span>
-        </div>
-        {interactive ? <div className={s.knob} style={{ left: `${pct}%` }} /> : null}
+        <div className={s.notch} style={{ left: `${MAX_LTV}%` }} />
+        <div className={s.notch} style={{ left: `${LIQ_LTV}%` }} />
+        {interactive ? <div className={s.knob} /> : null}
       </div>
+
+      {scale ? (
+        <div className={s.scale} aria-hidden="true">
+          <span className={s.s0}>0</span>
+          <span style={{ left: `${MAX_LTV}%` }}>{MAX_LTV} limit</span>
+          <span style={{ left: `${LIQ_LTV}%` }}>{LIQ_LTV} liq</span>
+        </div>
+      ) : null}
     </div>
   );
 }

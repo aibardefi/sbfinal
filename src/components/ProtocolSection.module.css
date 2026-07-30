@@ -1,4 +1,6 @@
-/* The palette lives in `theme.module.css`, worn by this stage and by the portal
+/* Page 1, laid out from `design/borrow-screen.prototype.html`.
+
+   The palette lives in `theme.module.css`, worn by this stage and by the portal
    the popups render into. See that file for why it is not declared here. */
 
 .stage {
@@ -9,165 +11,164 @@
   font-family: var(--font-app), var(--display);
 }
 
-/* ---------------- top row ---------------- */
+/* ---------------- top bar ---------------- */
 
-.brand {
-  font-weight: 800;
-  font-size: 1.2rem;
-  letter-spacing: -0.02em;
-  color: var(--p1-token);
-}
-
-/* Overrides the global `.top` flex row for this section only. Three columns with
-   the outer two equal means the middle cell is the middle of the screen, whatever
-   the brand, tabs and wallet chip happen to measure. */
 .bar {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.barLeft {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  min-width: 0;
+  flex-wrap: wrap;
+}
+.sp {
+  margin-left: auto;
 }
 
-/* Below this the three columns cannot all fit and the outer two start squeezing
-   the pill. Wrapping is the better failure: the pill drops onto its own line,
-   still centred, and nothing is compressed. */
-@media (max-width: 620px) {
-  .bar {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  .barLeft {
-    flex: 1;
-  }
+.mark {
+  font-weight: 800;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+  color: var(--p1-accent2);
 }
 
-/* A card-coloured pill on the ground, so it reads as a button without competing
-   with the primary action or the active tab. */
+.tabs {
+  display: inline-flex;
+  gap: 0.15rem;
+}
+.tab {
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.34rem 0.7rem;
+  border: 0;
+  border-radius: var(--p1-r);
+  background: transparent;
+  color: var(--p1-head-dim);
+  cursor: pointer;
+  transition: background 130ms ease, color 130ms ease;
+}
+.tab:hover {
+  color: var(--p1-head);
+}
+/* The selected tab inverts — ink fill, ground text. On cream that is the
+   strongest contrast available without introducing a colour. */
+.tab[aria-selected="true"] {
+  background: var(--p1-head);
+  color: var(--p1-ground);
+}
+.tab:focus-visible {
+  outline: 2px solid var(--p1-accent);
+  outline-offset: 2px;
+}
+
+/* The open-loan count. Only rendered when there is one, so an empty badge can
+   never appear next to the word. */
+.pip {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.22rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--p1-head) 22%, transparent);
+  font-size: 0.64rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.tab[aria-selected="true"] .pip {
+  background: color-mix(in srgb, var(--p1-ground) 30%, transparent);
+}
+
+/* Buy $CB — a card-coloured pill on the ground, so it reads as a button without
+   competing with the primary action or the active tab. */
 .buy {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  border-radius: 99px;
-  padding: 0.4rem 0.8rem;
+  border-radius: var(--p1-r);
+  padding: 0.4rem 0.75rem;
   background: var(--p1-paper);
-  color: var(--p1-token);
+  color: var(--p1-accent2);
   font-weight: 700;
   font-size: 0.78rem;
   text-decoration: none;
   white-space: nowrap;
-  transition: filter 130ms ease;
 }
 .buy:hover {
   filter: brightness(1.05);
-  text-decoration: none;
 }
 .buy:active {
   transform: translateY(1px);
 }
 .buy:focus-visible {
-  outline: 3px solid var(--p1-accent);
+  outline: 2px solid var(--p1-accent);
   outline-offset: 2px;
 }
 
-/* Visually hidden, still read aloud — the pill alone does not say the link
-   leaves the site. */
-.vh {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
+/* ---------------- chain row ---------------- */
 
-.tabs {
+.chainRow {
   display: flex;
-  gap: 0.25rem;
-  padding: 0.2rem;
-  border-radius: 99px;
-  /* A tint of the ink, not of the paper. The ground is cream and the paper is a
-     near-white violet, so a translucent paper here was invisible against it —
-     the selected tab had nothing to sit inside. */
-  background: color-mix(in srgb, var(--p1-ink) 8%, transparent);
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
 }
-
-.tab {
-  border: 0;
-  border-radius: 99px;
-  padding: 0.38rem 0.9rem;
-  background: none;
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  font-weight: 500;
   color: var(--p1-head-dim);
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  transition: background 160ms ease, color 160ms ease;
+  white-space: nowrap;
 }
-.tabOn {
-  background: var(--p1-paper);
-  color: var(--p1-ink);
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--p1-accent);
 }
-.tab:focus-visible {
-  outline: 3px solid var(--p1-accent);
-  outline-offset: 2px;
+/* Wrong network. The dot alone would be a colour-only state, so the address
+   beside it disappears and the card's own button says what to do. */
+.chip[data-bad] .dot {
+  background: var(--p1-danger);
+}
+.addr {
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--p1-head-dim);
+  font-variant-numeric: tabular-nums;
 }
 
-.theme {
-  width: 34px;
-  height: 34px;
+.iconBtn {
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
+  background: transparent;
   border: 0;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--p1-ink) 8%, transparent);
-  color: var(--p1-head);
+  border-radius: var(--p1-r);
   cursor: pointer;
+  color: var(--p1-head-dim);
+  transition: color 130ms ease, background 130ms ease;
 }
-.theme svg {
-  width: 18px;
-  height: 18px;
+.iconBtn:hover {
+  color: var(--p1-head);
+  background: color-mix(in srgb, var(--p1-head) 10%, transparent);
 }
-.theme:focus-visible {
-  outline: 3px solid var(--p1-accent);
+.iconBtn:focus-visible {
+  outline: 2px solid var(--p1-accent);
   outline-offset: 2px;
 }
-
-/* ---------------- headline ---------------- */
-
-.h1 {
-  margin: 0;
-  font-family: var(--font-app), var(--display);
-  font-size: clamp(1.35rem, 4vw, 2.5rem);
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  line-height: 1.1;
-  text-transform: uppercase;
-  text-wrap: balance;
-  color: var(--p1-display);
-}
-.token {
-  color: var(--p1-token);
-}
-.terms {
-  margin: 0.4rem 0 0;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--p1-head-dim);
+.iconBtn svg {
+  width: 17px;
+  height: 17px;
+  display: block;
 }
 
-/* ---------------- the card ---------------- */
+/* ---------------- the deal ---------------- */
 
 .middle {
   --art: min(54dvh, 500px);
@@ -175,206 +176,247 @@
   align-content: center;
 }
 
-.card {
-  /* width + max-width, not `min(28rem, 100%)`. In a `min()` a percentage is
+.deal {
+  /* width + max-width, not `min(27rem, 100%)`. In a `min()` a percentage is
      treated as `auto` while a grid track is being sized, so that expression
-     hands the track a 448px minimum and the whole screen inherits it. */
+     hands the track a 432px minimum and the whole screen inherits it. */
   width: 100%;
-  max-width: 28rem;
-  padding: clamp(1rem, 3vw, 1.5rem);
-  border-radius: 20px;
-  /* Borderless. The step from ground to paper is what separates the card; a
-     border on top of that contrast is a third edge saying the same thing. */
-  background: var(--p1-paper);
-  color: var(--p1-ink);
-  box-shadow: 0 18px 40px -20px rgb(0 0 0 / 0.35);
+  max-width: 27rem;
+  display: grid;
+  gap: 0.9rem;
 }
 
-/* A note for whoever tries to size the positions list against this card.
+.pitch {
+  text-align: center;
+  display: grid;
+  gap: 0.35rem;
+}
+.h1 {
+  margin: 0;
+  font-size: clamp(1.15rem, 3.6vw, 1.5rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: var(--p1-display);
+}
+/* The one word the line is about. In light theme --p1-accent2 resolves to the
+   display colour, so this is deliberately no change there — the design gives
+   the second accent to dark theme only. */
+.h1 em {
+  font-style: normal;
+  color: var(--p1-accent2);
+}
+.terms {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--p1-head-dim);
+}
 
-   `.stage` is `min-height: 100dvh`, not `height`, so when its content is tall
-   the grid is content-sized and the `1fr` middle row grows with it. A percentage
-   `max-height` on this card therefore resolves against a track that has already
-   stretched to fit, and clamps nothing — measured, not assumed: six positions
-   pushed the card to 1096px inside an 813px viewport and it still reported
-   itself as "within" its own grid area. Since every section is
-   `scroll-snap-stop: always`, that bottom is somewhere nobody can scroll to.
+/* Borderless: paper on ground does the separating. A border on top of that
+   contrast would be a third edge saying the same thing. */
+.card {
+  background: var(--p1-paper);
+  border-radius: var(--p1-r-lg);
+  padding: 0.9rem;
+  display: grid;
+  gap: 0.6rem;
+  color: var(--p1-ink);
+}
 
-   `minmax(0, 1fr)` on the track does not rescue it either, for the same reason.
-   The list is capped in `dvh` instead — see Positions.module.css. */
+/* ---------------- the two fields ---------------- */
 
-.rowLabel {
-  display: block;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+.field {
+  background: var(--p1-sunk);
+  border-radius: var(--p1-r);
+  padding: 0.6rem 0.8rem;
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.fieldTop {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.lbl {
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
   color: var(--p1-dim);
 }
+.lbl em {
+  font-style: normal;
+  color: var(--p1-accent2);
+}
 
-.field {
+.tokenBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--p1-paper);
+  border: 0;
+  border-radius: var(--p1-r);
+  padding: 0.3rem 0.55rem;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--p1-ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tokenBtn:hover:not(:disabled) {
+  filter: brightness(0.97);
+}
+.tokenBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.tokenBtn:focus-visible {
+  outline: 2px solid var(--p1-accent);
+  outline-offset: 2px;
+}
+.tokenBtn svg {
+  width: 14px;
+  height: 14px;
+}
+/* The borrowed side never changes, so it is a label rather than a control. */
+.tokenStatic {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--p1-dim);
+  white-space: nowrap;
+}
+
+.entry {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  margin-top: 0.4rem;
-  padding: 0.55rem 0.55rem 0.55rem 0.85rem;
-  border-radius: 14px;
-  background: var(--p1-sunk);
+  min-width: 0;
+}
+.entry input {
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+  background: transparent;
+  border: 0;
+  color: var(--p1-ink);
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+}
+.entry input:focus {
+  outline: none;
+}
+.field:focus-within {
+  outline: 2px solid var(--p1-accent);
+  outline-offset: 1px;
 }
 
-/* The second half of the trade. Read-only, so no picker and no caret — the
-   ruler above is what moves it. */
-.borrowField {
-  margin-top: 0;
+.under {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--p1-dim);
+  min-width: 0;
 }
 
+.pcts {
+  display: flex;
+  gap: 0.1rem;
+}
+.pct {
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--p1-dim);
+  background: transparent;
+  border: 0;
+  border-radius: 0.4rem;
+  padding: 0.18rem 0.38rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pct:hover {
+  background: var(--p1-paper);
+  color: var(--p1-ink);
+}
+.pct:focus-visible {
+  outline: 2px solid var(--p1-accent);
+  outline-offset: 1px;
+}
+
+/* Negative margin so the arrow sits between the two fields rather than adding a
+   row of its own to the card's gap. */
 .arrow {
+  justify-self: center;
+  width: 24px;
+  height: 24px;
   display: grid;
   place-items: center;
-  /* Negative margin so it rides in the gap between the two fields rather than
-     adding a third band of space. */
-  margin: -0.35rem 0 -0.5rem;
   color: var(--p1-dim);
-  position: relative;
-  z-index: 1;
+  margin: -0.55rem 0;
 }
 .arrow svg {
-  width: 22px;
-  height: 22px;
-  padding: 3px;
-  border-radius: 50%;
-  background: var(--p1-paper);
+  width: 14px;
+  height: 14px;
 }
 
-.share {
-  margin: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  font-size: 1.35rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-.share small {
-  font-size: 0.7rem;
-  font-weight: 400;
-  color: var(--p1-dim);
-}
-.share[data-health="warn"] {
-  color: var(--p1-warn);
-}
-.share[data-health="danger"] {
-  color: var(--p1-danger);
-}
+/* ---------------- readout ---------------- */
 
-.amount {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  background: none;
-  color: var(--p1-ink);
-  font: inherit;
-  font-size: 1.35rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-.amount:focus-visible {
-  outline: 3px solid var(--p1-accent);
-  outline-offset: 4px;
-  border-radius: 6px;
-}
-
-.pick {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  border: 0;
-  border-radius: 10px;
-  padding: 0.4rem 0.5rem;
-  background: var(--p1-paper);
-  color: var(--p1-ink);
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-.pick svg {
-  width: 15px;
-  height: 15px;
-  opacity: 0.6;
-}
-.pick:focus-visible {
-  outline: 3px solid var(--p1-accent);
-  outline-offset: 2px;
-}
-
-.dot {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
+.readout {
   display: grid;
-  place-items: center;
-  font-size: 0.62rem;
-  font-weight: 800;
-  flex: none;
-}
-
-/* ---------------- summary ---------------- */
-
-.summary {
+  gap: 0.35rem;
   margin: 0;
-  display: grid;
-  gap: 0.5rem;
 }
-.summary > div {
+.rd {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: 0.6rem;
+  font-size: 0.8rem;
 }
-.summary dt {
-  font-size: 0.78rem;
+.rd dt {
   color: var(--p1-dim);
+  font-weight: 500;
 }
-.summary dd {
-  margin: 0;
+.rd dd {
+  margin: 0 0 0 auto;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  text-align: right;
 }
-
-.big {
-  font-size: 1.35rem;
-  display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
-}
-.big small {
-  font-size: 0.7rem;
-  font-weight: 400;
-  color: var(--p1-dim);
-}
-
-/* Amber and red appear here and on the ruler, and nowhere else. */
-.summary dd[data-health="warn"],
-.terms dd[data-health="warn"] {
-  color: var(--p1-warn);
-}
-.summary dd[data-health="danger"],
-.terms dd[data-health="danger"] {
-  color: var(--p1-danger);
-}
-.bad {
+.rd dd[data-tone="danger"] {
   color: var(--p1-danger);
 }
 
+/* The risk line. A left rule rather than a filled box: it is a sentence to be
+   read, not an alert to be dismissed. */
 .note {
-  margin: 0.9rem 0 0;
+  margin: 0;
   font-size: 0.76rem;
-  line-height: 1.5;
+  font-weight: 500;
+  line-height: 1.45;
   color: var(--p1-dim);
+  border-left: 2px solid var(--p1-line);
+  padding-left: 0.6rem;
+}
+.note b {
+  font-weight: 700;
+  color: var(--p1-ink);
+}
+.note[data-tone="safe"] {
+  border-left-color: var(--p1-accent);
+}
+.note[data-tone="danger"] {
+  border-left-color: var(--p1-danger);
+  color: var(--p1-ink);
 }
 
 .link {
@@ -382,265 +424,24 @@
   background: none;
   padding: 0;
   font: inherit;
-  color: var(--p1-ink);
+  color: inherit;
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
 }
 .link:focus-visible {
-  outline: 3px solid var(--p1-accent);
-  outline-offset: 2px;
-}
-
-/* ---------------- buttons ---------------- */
-
-.primary {
-  width: 100%;
-  margin-top: 1rem;
-  border: 0;
-  border-radius: 14px;
-  padding: 0.85rem 1rem;
-  /* Flat: fill only, no border, no shadow. */
-  background: var(--p1-accent);
-  color: var(--p1-on-accent);
-  font: inherit;
-  font-size: 0.92rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: filter 140ms ease;
-}
-.primary:hover {
-  filter: brightness(0.95);
-}
-.primary:focus-visible {
-  outline: 3px solid var(--p1-ink);
-  outline-offset: 3px;
-}
-
-.ghost {
-  width: 100%;
-  border: 0;
-  border-radius: 12px;
-  padding: 0.7rem 1rem;
-  background: var(--p1-sunk);
-  color: var(--p1-ink);
-  font: inherit;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-.ghost:focus-visible {
-  outline: 3px solid var(--p1-accent);
-  outline-offset: 2px;
-}
-
-/* ---------------- positions: nothing yet ---------------- */
-
-.empty {
-  display: grid;
-  gap: 0.6rem;
-  justify-items: center;
-  text-align: center;
-  padding: 1rem 0;
-}
-.emptyTitle {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-}
-.emptyBody {
-  margin: 0;
-  max-width: 34ch;
-  font-size: 0.82rem;
-  line-height: 1.55;
-  color: var(--p1-dim);
-}
-.empty .ghost {
-  width: auto;
-  margin-top: 0.4rem;
-  padding-inline: 1.2rem;
-}
-
-/* ---------------- popup contents ---------------- */
-
-.coinList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.3rem;
-}
-.coinRow {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  border: 0;
-  border-radius: 12px;
-  padding: 0.6rem 0.7rem;
-  background: none;
-  color: var(--p1-ink);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: background 140ms ease;
-}
-.coinRow:hover {
-  background: var(--p1-sunk);
-}
-.coinOn {
-  background: var(--p1-sunk);
-}
-
-/* A coin on the roster that the contract has no address for.
-   Dimmed rather than hidden: the six are an approved running order, and a list
-   that silently loses five of its rows reads as a bug in the page rather than as
-   news about the desk. The row still says which coin it is and its own line says
-   why it cannot be picked. The disc keeps its colour at reduced opacity so the
-   coin stays recognisable — greying it out too would make the row look like a
-   loading skeleton. */
-.coinRow:disabled {
-  cursor: default;
-  color: var(--p1-dim);
-}
-.coinRow:disabled:hover {
-  background: none;
-}
-.coinRow:disabled .dot {
-  opacity: 0.45;
-}
-.coinRow:focus-visible {
-  outline: 3px solid var(--p1-accent);
-  outline-offset: -3px;
-}
-.coinName {
-  display: grid;
-}
-.coinName b {
-  font-size: 0.86rem;
-  font-weight: 700;
-}
-.coinName small {
-  font-size: 0.72rem;
-  color: var(--p1-dim);
-}
-
-.terms {
-  margin: 0;
-  display: grid;
-  gap: 0.55rem;
-}
-.terms > div {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-}
-.terms dt {
-  font-size: 0.8rem;
-  color: var(--p1-dim);
-}
-.terms dd {
-  margin: 0;
-  font-weight: 600;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.foot {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem 1rem;
-  flex-wrap: wrap;
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: var(--p1-head-dim);
-  text-align: center;
-}
-
-.footBtn {
-  border: 0;
-  background: none;
-  padding: 0;
-  font: inherit;
-  color: var(--p1-head-dim);
-  cursor: pointer;
-}
-.footBtn:hover {
-  color: var(--p1-head);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.footBtn:focus-visible {
-  outline: 3px solid var(--p1-accent);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* ---------------- wired to the contract ---------------- */
-
-/* The wallet chip and the theme toggle share the right-hand end of the top row.
-   Baseline-free centring, because the chip is text and the toggle is a square
-   icon — aligning their boxes is what keeps them level. */
-.topRight {
-  justify-self: end;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-/* A disabled primary is common here — no wallet, wrong network, nothing typed —
-   so it has to read as "not yet" rather than broken. Opacity alone made the mint
-   fill look like a rendering fault; dropping to the sunk surface says the same
-   thing in the vocabulary the rest of the card already uses. */
-.primary:disabled {
-  background: var(--p1-sunk);
-  color: var(--p1-dim);
-  cursor: not-allowed;
-}
-.primary:disabled:hover {
-  filter: none;
-}
-
-.balance {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin: 0.35rem 0 0;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--p1-dim);
-  font-variant-numeric: tabular-nums;
-}
-
-.max {
-  border: 0;
-  border-radius: 99px;
-  padding: 0.12rem 0.45rem;
-  background: color-mix(in srgb, var(--p1-ink) 10%, transparent);
-  color: var(--p1-ink);
-  font: inherit;
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-.max:focus-visible {
-  outline: 3px solid var(--p1-accent);
+  outline: 2px solid var(--p1-accent);
   outline-offset: 2px;
 }
 
 /* Anything the contract or the network refuses. Amber, not red: none of these
-   are failures, they are the form telling you it is not submittable yet — and
-   red here would collide with the liquidation danger colour, which is the one
-   thing on this screen that must keep meaning exactly one thing. */
+   are failures, they are the form saying it is not submittable yet — and red
+   here would collide with the liquidation danger colour, which is the one thing
+   on this screen that must keep meaning exactly one thing. */
 .problem {
-  margin: 0.7rem 0 0;
+  margin: 0;
   padding: 0.5rem 0.65rem;
-  border-radius: 10px;
+  border-radius: 0.6rem;
   background: color-mix(in srgb, var(--p1-warn) 14%, transparent);
   color: var(--p1-warn);
   font-size: 0.74rem;
@@ -648,130 +449,209 @@
   font-weight: 600;
 }
 
+/* ---------------- buttons ---------------- */
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  border: 0;
+  border-radius: var(--p1-r);
+  cursor: pointer;
+  transition: background 130ms ease, filter 130ms ease;
+}
+.primary {
+  width: 100%;
+  background: var(--p1-accent);
+  color: var(--p1-on-accent);
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.8rem 1.3rem;
+}
+.primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.primary:focus-visible {
+  outline: 3px solid var(--p1-ink);
+  outline-offset: 3px;
+}
+/* A disabled primary is common here — no wallet, wrong network, nothing typed —
+   so it has to read as "not yet" rather than broken. */
+.primary:disabled {
+  background: var(--p1-sunk);
+  color: var(--p1-dim);
+  cursor: not-allowed;
+}
+
+/* ---------------- foot ---------------- */
+
+.foot {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--p1-head-dim);
+}
+.addrRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-variant-numeric: tabular-nums;
+}
 .footLink {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
   color: inherit;
   text-decoration: underline;
   text-underline-offset: 2px;
-  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.footLink:hover {
+  color: var(--p1-head);
+}
+.footLink:focus-visible {
+  outline: 2px solid var(--p1-accent);
+  outline-offset: 2px;
+}
+.foot .iconBtn {
+  width: 24px;
+  height: 24px;
+}
+.foot .iconBtn svg {
+  width: 14px;
+  height: 14px;
 }
 
-/* The scroll cue is a global element and takes `--text-dim`, which is chosen
-   against the story screens' cream. On this screen in dark mode that is dark on
-   dark — measured at 2.18:1, the only text on the page below AA. It has to
-   follow this section's palette instead. */
-.stage :global(.cue) {
-  color: var(--p1-head-dim);
+/* ---------------- popups ---------------- */
+
+.tokens {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tok {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  background: transparent;
+  border: 0;
+  border-radius: var(--p1-r);
+  font: inherit;
+  text-align: left;
+  color: var(--p1-ink);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+.tok:hover:not(:disabled) {
+  background: var(--p1-sunk);
+}
+.tok[aria-current] {
+  background: var(--p1-sunk);
+}
+/* A coin the contract has no address for. Dimmed rather than hidden: the roster
+   is an approved running order, and a list that silently loses rows reads as a
+   bug in the page rather than as news about the desk. */
+.tok:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.tok:focus-visible {
+  outline: 2px solid var(--p1-accent);
+  outline-offset: -2px;
+}
+.dotBig {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: 800;
+  flex: none;
+}
+.tokName {
+  display: grid;
+  min-width: 0;
+}
+.tokName b {
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+.tokName small {
+  font-size: 0.72rem;
+  color: var(--p1-dim);
+  font-weight: 500;
+}
+
+.mnote {
+  margin: 0.9rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--p1-dim);
+}
+
+.terms2 {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+}
+.terms2 > div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+}
+.terms2 dt {
+  color: var(--p1-dim);
+  font-weight: 500;
+}
+.terms2 dd {
+  margin: 0 0 0 auto;
+  font-weight: 700;
+}
+.terms2 dd[data-tone="danger"] {
+  color: var(--p1-danger);
 }
 
 /* Tap targets, on a screen made entirely of them. */
 @media (pointer: coarse) {
   .tab,
-  .pick,
-  .theme,
-  .coinRow {
+  .tokenBtn,
+  .iconBtn,
+  .buy,
+  .tok {
     min-height: 44px;
   }
 }
 
-/* The card is the tallest fixed thing on the site: two fields, a ruler with a
-   scale under it, a two-row summary, a note, sometimes a problem banner, and a
-   button. Below this it stops being laid out for a desktop and gives room back.
-   Everything here is spacing and type size; no tap target moves. */
-@media (max-height: 800px) {
-  .h1 {
-    font-size: clamp(1.2rem, min(3.4vw, 3.6dvh), 1.9rem);
-  }
-  .terms {
-    margin-top: 0.25rem;
-    font-size: 0.74rem;
-  }
-  .card {
-    padding: clamp(0.9rem, 2.4vw, 1.1rem);
-  }
-  .field {
-    padding: 0.45rem 0.45rem 0.45rem 0.75rem;
-  }
-  .amount,
-  .share {
-    font-size: 1.2rem;
-  }
-  .summary {
-    gap: 0.35rem;
-  }
-  .note {
-    margin-top: 0.6rem;
-  }
-  .primary {
-    margin-top: 0.75rem;
-    padding: 0.72rem 1rem;
-  }
-}
-
-/* The headline repeats what the card already says, and this is the tier where
-   the card needs the room more than the screen needs a title.
-
-   Two conditions, an OR, because they catch different machines. Narrow-and-short
-   carries the phones: a 414x622 iPhone 8 Plus is fine on height but has no width
-   to spend. Height-alone carries the case a width rule never sees — a 1024x600
-   laptop window, short for exactly the same reason, which overflowed by 140px. */
-@media (max-width: 560px) and (max-height: 700px), (max-height: 620px) {
-  .h1,
-  .terms {
-    display: none;
-  }
-}
-
 @media (max-height: 580px) {
-  /* The global short-screen tier shrinks `h1.sticker`, and this headline is not
-     one — it is the app's face, not the story's sticker type — so it needs its
-     own line here or it stays full size while everything around it gives. */
   .h1 {
-    font-size: clamp(1.05rem, min(4vw, 4.4dvh), 1.6rem);
+    font-size: clamp(1.05rem, min(4vw, 4.4dvh), 1.35rem);
   }
-  .rowLabel {
-    font-size: 0.64rem;
-  }
-  .arrow {
-    margin: -0.4rem 0 -0.55rem;
-  }
-  .arrow svg {
-    width: 18px;
-    height: 18px;
-  }
-  .share {
-    font-size: 1.1rem;
-  }
-  .foot {
-    font-size: 0.66rem;
+  .deal {
+    gap: 0.6rem;
   }
   .card {
-    padding: 0.8rem;
+    padding: 0.7rem;
+    gap: 0.45rem;
   }
-  .amount {
-    font-size: 1.1rem;
-  }
-  .big {
-    font-size: 1.1rem;
+  .entry input {
+    font-size: 1.15rem;
   }
   .note {
-    margin-top: 0.6rem;
-    font-size: 0.7rem;
+    font-size: 0.72rem;
   }
   .primary {
-    margin-top: 0.7rem;
-    padding: 0.6rem 1rem;
-  }
-  .summary {
-    gap: 0.35rem;
-  }
-  .balance {
-    margin-top: 0.25rem;
-    font-size: 0.68rem;
-  }
-  .problem {
-    margin-top: 0.5rem;
-    padding: 0.4rem 0.55rem;
-    font-size: 0.7rem;
+    padding: 0.62rem 1rem;
+    font-size: 0.88rem;
   }
 }
 
@@ -780,64 +660,35 @@
    nothing that is a tap target does. */
 @media (max-height: 500px) {
   .h1 {
-    font-size: clamp(0.95rem, min(3.6vw, 4dvh), 1.4rem);
+    font-size: clamp(0.95rem, min(3.6vw, 4dvh), 1.2rem);
+  }
+  .terms {
+    font-size: 0.68rem;
   }
   .card {
-    padding: 0.65rem;
+    padding: 0.55rem;
+    gap: 0.35rem;
   }
   .field {
-    margin-top: 0.25rem;
-    padding: 0.35rem 0.35rem 0.35rem 0.7rem;
-  }
-  .amount,
-  .share {
-    font-size: 1rem;
-  }
-  .share small {
-    font-size: 0.62rem;
-  }
-  .arrow {
-    margin: -0.45rem 0 -0.6rem;
-  }
-  .arrow svg {
-    width: 15px;
-    height: 15px;
-  }
-  .summary {
+    padding: 0.45rem 0.6rem;
     gap: 0.2rem;
   }
-  .summary dt,
-  .summary dd {
-    font-size: 0.72rem;
-  }
-  .big {
+  .entry input {
     font-size: 1rem;
   }
-  .big small {
-    font-size: 0.62rem;
+  .under,
+  .rd {
+    font-size: 0.68rem;
   }
   .note {
-    margin-top: 0.45rem;
-    font-size: 0.66rem;
-    line-height: 1.4;
+    font-size: 0.68rem;
+    line-height: 1.35;
   }
   .primary {
-    margin-top: 0.5rem;
     padding: 0.5rem 1rem;
     font-size: 0.82rem;
   }
   .foot {
-    font-size: 0.62rem;
-  }
-  /* The wallet balance is the one line on this card that repeats a figure shown
-     elsewhere, so it is the first thing to go when there is no room. */
-  .balance {
-    display: none;
-  }
-  .problem {
-    margin-top: 0.4rem;
-    padding: 0.35rem 0.5rem;
-    font-size: 0.66rem;
-    line-height: 1.35;
+    font-size: 0.64rem;
   }
 }

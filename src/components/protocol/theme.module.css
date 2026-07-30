@@ -44,6 +44,21 @@
      mixed at the point of use so the dark theme can give it its own value —
      dimming a dark ground with more of itself does nothing. */
   --p1-veil: color-mix(in srgb, #1e1435 62%, transparent);
+
+  /* The second accent. Light theme has none — the design's own choice, so the
+     one word the headline is about takes the display colour and nothing shouts
+     over the mint. Dark theme gives it the orange below. */
+  --p1-accent2: var(--p1-display);
+
+  /* Hairlines: table rules and the quiet variant of the risk bar. Mixed from
+     the ink so it follows the theme rather than being two hard-coded greys. */
+  --p1-line: color-mix(in srgb, var(--p1-ink) 12%, transparent);
+
+  /* Two radii, from the prototype: --p1-r on controls and fields, --p1-r-lg on
+     the card and the popups. Named rather than repeated so the two do not drift
+     into four. */
+  --p1-r: 0.7rem;
+  --p1-r-lg: 1rem;
 }
 
 .tokens[data-p1-theme="dark"] {
@@ -61,4 +76,8 @@
   --p1-warn: #ff9433;
   --p1-danger: #ff6b5a;
   --p1-veil: color-mix(in srgb, #04070b 78%, transparent);
+  /* Here the second accent is its own colour: the orange carries the one word
+     the headline is about, against the cyan the rest of it is set in. */
+  --p1-accent2: #ff7900;
+  --p1-line: color-mix(in srgb, var(--p1-ink) 16%, transparent);
 }

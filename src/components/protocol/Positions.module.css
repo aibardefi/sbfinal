@@ -1,306 +1,213 @@
-/* Open loans.
+/* Open loans, as the design's sheet.
 
-   The list scrolls inside the card rather than growing it: every section on this
-   site is a `min-height: 100dvh` snap panel, and a card that grows with the
-   number of positions is a card that pushes its own bottom off a short screen —
-   which `npm run audit` would catch, but only after someone with four loans
-   found it first. */
+   The list scrolls inside the sheet rather than growing it. Every section on
+   this site is a `min-height: 100dvh` snap panel, and `.stage` is a *minimum*
+   height, so its middle row grows with its content and a percentage cap clamps
+   nothing — the cap is against the viewport, less the chrome above and below,
+   measured on the built page. See the note in ProtocolSection.module.css. */
+
+.sheet {
+  background: var(--p1-paper);
+  border-radius: var(--p1-r-lg);
+  overflow: hidden;
+  color: var(--p1-ink);
+  display: grid;
+  /* rows must be able to shrink for the list's own scroll to engage */
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 0;
+}
+
+.pshead {
+  padding: 0.55rem 0.9rem;
+  border-bottom: 1px solid var(--p1-line);
+}
+.subtab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--p1-sunk);
+  border-radius: var(--p1-r);
+  padding: 0.3rem 0.6rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.pip {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.22rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--p1-ink) 14%, transparent);
+  font-size: 0.64rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
 
 .list {
-  display: grid;
-  gap: 0.6rem;
   margin: 0;
   padding: 0;
   list-style: none;
-  /* The list is capped against the viewport, minus the chrome above and below
-     it. Not a percentage: `.stage` is `min-height: 100dvh`, so its middle row
-     grows with its content and a percentage clamps nothing (the note in
-     ProtocolSection.module.css has the measurement).
-
-     The subtrahend is measured, not guessed. Available height for this list, on
-     the built page, at width 1000:
-
-         viewport  1200  1000   900   800   700   600 | 550   500   460   400
-         available  894   697   605   526   432   337 | 382   343   304   247
-         viewport −  306   303   295   274   268   263 | 168   157   156   153
-
-     310 clears the worst of the upper regime with a few pixels to spare. Below
-     580px the short-screen tiers shrink the headline, the card padding and the
-     footer, and the chrome drops by about 100px — which is why the two tiers
-     below exist rather than one number stretched across the whole range.
-
-     The old cap was `min(50dvh, 26rem)`. The 26rem arm bound at 416px on any
-     window taller than about 830px, which is what made two loans scroll with
-     nearly 200px of unused space beneath them. */
-  max-height: calc(100dvh - 310px);
   overflow-y: auto;
-  /* No `scrollbar-gutter: stable` here. It reserves the scrollbar's width
-     whether or not one is showing, which stops the list jumping sideways the
-     first time it overflows — but with the cap above sized to the screen, the
-     list only overflows at four or five loans. So the gutter bought a rare,
-     one-off shift and charged 16px of dead space on the right of every row, on
-     every visit, for it. The rows sat left of centre inside the card and the
-     asymmetry was the most visible thing on the tab.
-
-     A transient nobody meets is worth less than an alignment everybody sees. */
-}
-
-/* Grid and flex children default to `min-width: auto`, which means they refuse
-   to shrink below their own content. One long row — a wide symbol beside
-   "31.00% · Healthy" — therefore pushed the whole list wider than the card,
-   which turned `overflow-y: auto` into a box that scrolled *both* ways: the
-   status and the Max button were cut off on the right, and the horizontal
-   scrollbar ate a line of the height the list was short of in the first place.
-   Every box from here down is allowed to be narrower than its contents.
-   Wrapping does the rest. */
-.list,
-.row,
-.head,
-.figs,
-.form,
-.field {
-  min-width: 0;
+  min-height: 0;
+  max-height: calc(100dvh - 400px);
 }
 
 .row {
   display: grid;
-  gap: 0.5rem;
-  padding: 0.7rem 0.75rem;
-  border-radius: 14px;
-  background: var(--p1-sunk);
+  gap: 0.4rem;
+  padding: 0.7rem 0.9rem;
+  min-width: 0;
+}
+.row + .row {
+  border-top: 1px solid var(--p1-line);
 }
 
-.head {
+/* Grid and flex children default to `min-width: auto` and refuse to shrink
+   below their content, which is what made an earlier version of this list
+   scroll sideways over its own controls. */
+.row,
+.rowHead,
+.stacks,
+.stack {
+  min-width: 0;
+}
+
+.rowHead {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.25rem 0.45rem;
+  align-items: baseline;
+  gap: 0.5rem;
 }
-
-.dot {
-  display: grid;
-  place-items: center;
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 50%;
-  font-size: 0.7rem;
-  font-weight: 800;
+.sp {
+  margin-left: auto;
 }
-
-.sym {
+.pid {
   font-size: 0.86rem;
-  font-weight: 800;
-  color: var(--p1-ink);
-}
-
-.id {
-  font-size: 0.7rem;
-  font-weight: 600;
   color: var(--p1-dim);
   font-variant-numeric: tabular-nums;
 }
-
-/* Health is written as well as coloured, here as everywhere else on the screen,
-   so the state survives being unable to tell the colours apart. Which is exactly
-   why it must not be the thing that gets clipped: `nowrap` keeps "At risk" whole
-   and the wrapping head above drops it to its own line rather than cutting it in
-   half. Truncating this one would leave a coloured number with no word on it. */
-.state {
-  margin-left: auto;
-  white-space: nowrap;
-  font-size: 0.72rem;
+.pltv {
+  font-size: 0.98rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
-.state[data-health="safe"] {
-  color: var(--p1-ink);
-}
-.state[data-health="warn"] {
-  color: var(--p1-warn);
-}
-.state[data-health="danger"] {
+.pltv[data-tone="danger"] {
   color: var(--p1-danger);
 }
 
-.figs {
+.stacks {
   display: flex;
+  align-items: center;
+  gap: 0.4rem 1rem;
   flex-wrap: wrap;
-  /* Was 1.2rem. A debt like "51,052.8504 $CB" beside a collateral amount is the
-     widest line in the row, and the gap was the difference between the two
-     sitting side by side and the second one wrapping under. */
-  gap: 0.2rem 0.9rem;
-  margin: 0;
 }
-.figs div {
-  display: flex;
-  align-items: baseline;
-  gap: 0.35rem;
-  min-width: 0;
+.stack {
+  display: grid;
+  gap: 0.05rem;
 }
-.figs dt {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--p1-dim);
-}
-.figs dd {
-  margin: 0;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--p1-ink);
-  font-variant-numeric: tabular-nums;
-  /* Long enough figures break rather than push the row wide. `anywhere` and not
-     `break-word`: these are digits and separators with no spaces to break at. */
+.stack b {
+  font-size: 0.86rem;
+  font-weight: 600;
   overflow-wrap: anywhere;
 }
-
-/* ---------------- actions ---------------- */
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
+.stack small {
+  font-size: 0.72rem;
+  color: var(--p1-dim);
+  font-weight: 500;
 }
 
 .action {
   border: 0;
-  border-radius: 99px;
-  padding: 0.3rem 0.62rem;
-  background: color-mix(in srgb, var(--p1-ink) 8%, transparent);
+  border-radius: var(--p1-r);
+  padding: 0.4rem 0.75rem;
+  background: var(--p1-sunk);
   color: var(--p1-ink);
   font: inherit;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
 }
-
-/* Repay and Add read as the ordinary thing to do; Withdraw and Borrow are the
-   two the 80% cap applies to, and they are quieter. Never disabled on health —
-   the contract decides that, and its refusal carries the real figure. */
-.action[data-safe="false"] {
-  color: var(--p1-dim);
+.action:hover {
+  filter: brightness(0.97);
 }
-
-.actionOn {
-  background: var(--p1-accent);
-  color: var(--p1-on-accent);
-}
-
 .action:focus-visible {
-  outline: 3px solid var(--p1-ink);
+  outline: 2px solid var(--p1-accent);
   outline-offset: 2px;
 }
-
-.form {
-  display: grid;
-  gap: 0.4rem;
-}
-
-.field {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.4rem 0.45rem 0.4rem 0.65rem;
-  border-radius: 12px;
-  background: var(--p1-paper);
-}
-
-.amount {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  background: none;
-  color: var(--p1-ink);
-  font: inherit;
-  font-size: 0.95rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.amount:focus-visible {
-  outline: none;
-}
-.field:focus-within {
-  outline: 3px solid var(--p1-accent);
-  outline-offset: 1px;
-}
-
-/* Both of these are `flex: none` so the input is what gives when the row is
-   tight. Left to shrink, the unit and the Max button were the two things cut off
-   at the right-hand edge — the label saying which token the number is in, and
-   the control that fills it. The field can afford to be narrow; those cannot. */
-.unit {
-  flex: none;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--p1-dim);
-}
-
-.max {
-  flex: none;
-  border: 0;
-  border-radius: 99px;
-  padding: 0.12rem 0.45rem;
-  background: color-mix(in srgb, var(--p1-ink) 10%, transparent);
-  color: var(--p1-ink);
-  font: inherit;
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.confirm {
-  border: 0;
-  border-radius: 12px;
-  padding: 0.55rem 1rem;
+/* The row that needs acting on says so. Accent rather than danger: it is the
+   way *out* of trouble, and a red button reads as the trouble itself. */
+.actionHot {
   background: var(--p1-accent);
   color: var(--p1-on-accent);
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
 }
-.confirm:disabled {
-  background: color-mix(in srgb, var(--p1-ink) 8%, transparent);
+
+.rowRisk {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 500;
   color: var(--p1-dim);
-  cursor: not-allowed;
 }
-.confirm:focus-visible,
-.max:focus-visible {
-  outline: 3px solid var(--p1-ink);
+.rowRisk[data-tone="danger"] {
+  color: var(--p1-danger);
+  font-weight: 600;
+}
+
+.tally {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 0.9rem;
+  border-top: 1px solid var(--p1-line);
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--p1-dim);
+}
+.tallyLink {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--p1-ink);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.tallyLink:focus-visible {
+  outline: 2px solid var(--p1-accent);
   outline-offset: 2px;
 }
 
 /* ---------------- empty and error states ---------------- */
 
-.empty {
+.center {
   display: grid;
-  gap: 0.6rem;
-  justify-items: center;
+  place-items: center;
   text-align: center;
-  padding: 1rem 0;
+  gap: 0.8rem;
+  padding: 1.5rem 0.9rem;
 }
-
-.emptyTitle {
+.center h2 {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: 800;
-  color: var(--p1-ink);
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
 }
-
-.emptyBody {
+.center p {
   margin: 0;
-  max-width: 30ch;
-  font-size: 0.78rem;
-  line-height: 1.5;
   color: var(--p1-dim);
+  font-weight: 500;
+  max-width: 34ch;
+  font-size: 0.82rem;
+  line-height: 1.5;
 }
-
 .ghost {
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--p1-r);
   padding: 0.6rem 1.1rem;
   background: var(--p1-sunk);
   color: var(--p1-ink);
@@ -310,54 +217,234 @@
   cursor: pointer;
 }
 .ghost:focus-visible {
-  outline: 3px solid var(--p1-accent);
+  outline: 2px solid var(--p1-accent);
   outline-offset: 2px;
 }
-
 .muted {
   margin: 0;
-  padding: 1rem 0;
+  padding: 1.2rem 0;
   text-align: center;
   font-size: 0.8rem;
   color: var(--p1-dim);
 }
-
 .problem {
   margin: 0;
   padding: 0.5rem 0.65rem;
-  border-radius: 10px;
+  border-radius: 0.6rem;
   background: color-mix(in srgb, var(--p1-warn) 14%, transparent);
   color: var(--p1-warn);
   font-size: 0.76rem;
   font-weight: 600;
 }
 
+/* ---------------- manage popup ---------------- */
+
+.seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.15rem;
+  background: var(--p1-sunk);
+  border-radius: var(--p1-r);
+  padding: 0.2rem;
+}
+.segBtn {
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.76rem;
+  padding: 0.42rem 0.3rem;
+  border: 0;
+  border-radius: calc(var(--p1-r) - 0.2rem);
+  background: transparent;
+  color: var(--p1-dim);
+  cursor: pointer;
+}
+.segBtn[aria-selected="true"] {
+  background: var(--p1-paper);
+  color: var(--p1-ink);
+}
+.segBtn:focus-visible {
+  outline: 2px solid var(--p1-accent);
+  outline-offset: -1px;
+}
+
+.mfield {
+  background: var(--p1-sunk);
+  border-radius: var(--p1-r);
+  padding: 0.6rem 0.8rem;
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.mfieldTop {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.lbl {
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--p1-dim);
+}
+.tokenStatic {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--p1-dim);
+}
+.mamount {
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+  background: transparent;
+  border: 0;
+  color: var(--p1-ink);
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+}
+.mamount:focus {
+  outline: none;
+}
+.mfield:focus-within {
+  outline: 2px solid var(--p1-accent);
+  outline-offset: 1px;
+}
+.under {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--p1-dim);
+  min-width: 0;
+}
+.pcts {
+  display: flex;
+  gap: 0.1rem;
+}
+.pct {
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--p1-dim);
+  background: transparent;
+  border: 0;
+  border-radius: 0.4rem;
+  padding: 0.18rem 0.38rem;
+  cursor: pointer;
+}
+.pct:hover {
+  background: var(--p1-paper);
+  color: var(--p1-ink);
+}
+.pct:focus-visible {
+  outline: 2px solid var(--p1-accent);
+  outline-offset: 1px;
+}
+
+.after {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.readout {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+}
+.rd {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+}
+.rd dt {
+  color: var(--p1-dim);
+  font-weight: 500;
+}
+.rd dd {
+  margin: 0 0 0 auto;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* before → after. The old figure stays on screen next to the new one, because
+   "0.0%" on its own does not tell you what it is replacing. */
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.was {
+  color: var(--p1-dim);
+}
+.delta [data-tone="danger"] {
+  color: var(--p1-danger);
+}
+
+.note {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--p1-dim);
+  border-left: 2px solid var(--p1-line);
+  padding-left: 0.6rem;
+}
+.note[data-tone="safe"] {
+  border-left-color: var(--p1-accent);
+}
+.note[data-tone="danger"] {
+  border-left-color: var(--p1-danger);
+  color: var(--p1-ink);
+}
+
+.btn {
+  font: inherit;
+  border: 0;
+  border-radius: var(--p1-r);
+  cursor: pointer;
+}
+.primary {
+  width: 100%;
+  background: var(--p1-accent);
+  color: var(--p1-on-accent);
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.8rem 1.3rem;
+  transition: filter 130ms ease;
+}
+.primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.primary:focus-visible {
+  outline: 3px solid var(--p1-ink);
+  outline-offset: 3px;
+}
+.primary:disabled {
+  background: var(--p1-sunk);
+  color: var(--p1-dim);
+  cursor: not-allowed;
+}
+
 @media (pointer: coarse) {
   .action,
-  .confirm,
+  .segBtn,
   .ghost {
     min-height: 44px;
   }
 }
 
-/* The tier where the headline, the card padding and the footer all shrink, so
-   the chrome around the list drops by roughly 100px and it can have that back. */
 @media (max-height: 580px) {
   .list {
-    max-height: calc(100dvh - 175px);
-  }
-}
-
-@media (max-height: 500px) {
-  .list {
-    max-height: calc(100dvh - 165px);
-    gap: 0.4rem;
+    max-height: calc(100dvh - 265px);
   }
   .row {
-    padding: 0.5rem 0.55rem;
-    gap: 0.35rem;
-  }
-  .emptyBody {
-    font-size: 0.72rem;
+    padding: 0.5rem 0.7rem;
+    gap: 0.3rem;
   }
 }

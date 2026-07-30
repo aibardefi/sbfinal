@@ -1,30 +1,41 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import type { Address } from "viem";
 import { Modal } from "./protocol/Modal";
 import { Positions } from "./protocol/Positions";
 import { Ruler } from "./protocol/Ruler";
 import { TxStatus } from "./protocol/TxStatus";
-import { WalletChip } from "./protocol/WalletChip";
 import { BORROWED, ROSTER, rosterEntry } from "./protocol/tokens";
 import { lendingAbi } from "@/lib/abi";
 import { DEPLOYMENT, publicClient } from "@/lib/chain";
-import { LIQ_LTV, MAX_LTV, UI_MAX_LTV, healthLabel, healthOf } from "@/lib/health";
 import {
-  borrowableCB,
+  LIQ_LTV,
+  MAX_LTV,
+  UI_MAX_LTV,
+  dropToLiquidation,
+  riskLabel,
+  riskOf,
+  riskTone,
+} from "@/lib/health";
+import {
+  borrowForLtv,
+  collateralForLtv,
   exactAmount,
   formatAmount,
+  formatWeth,
+  ltvPercentFor,
   parseAmount,
   useMarket,
   usePositions,
-  usePrices,
+  useShortAddress,
   useTokenBalance,
+  valueInWeth,
 } from "@/lib/protocol";
+import { BUY_URL, isLive } from "@/lib/links";
 import { approvalStep, useTx, type Step } from "@/lib/tx";
 import { useWallet } from "@/lib/wallet";
 import { EXPLORER_ORIGIN } from "@/lib/rpc";
-import { BUY_URL } from "@/lib/links";
 import { useEntrance } from "@/lib/useEntrance";
 import s from "./ProtocolSection.module.css";
 import t from "./protocol/theme.module.css";
@@ -36,8 +47,7 @@ import t from "./protocol/theme.module.css";
  * saying "not live" underneath a button labelled "Review borrow" — so the one
  * word that was supposed to arm the screen produced a screen that contradicted
  * itself. Everything that can send a transaction is now behind this, and so is
- * every sentence that claims nothing can be sent. Flip it to false and the
- * screen is honestly inert again: no wallet, no confirm, no claim.
+ * every sentence that claims nothing can be sent.
  *
  * Reads are deliberately outside it. The collateral roster, the inventory and
  * the prices come off chain either way, because a page that invents a coin list
@@ -47,40 +57,99 @@ const LIVE = true;
 
 type Tab = "borrow" | "positions";
 type Theme = "light" | "dark";
+/** Which amount the visitor pinned. The ruler moves the other one. */
+type Pin = "lock" | "borrow";
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
+/**
+ * Page 1: the borrow desk.
+ *
+ * Laid out from `design/borrow-screen.prototype.html` — the approved source
+ * rather than a screenshot of it. Two fields with the ratio between them, not
+ * one field and a percentage: the design's argument is that "lock this, receive
+ * that" *is* the transaction, and a lone percentage leaves the visitor to do the
+ * multiplication.
+ *
+ * Three things in the prototype are deliberately not ported, all of them noted
+ * in `design/README.md`: an invented contract address, a `.example` explorer
+ * that does not resolve, and a DEX link carrying neither chain nor output token.
+ * The last is the most dangerous of the three on a memecoin site — `BUY_URL` in
+ * `src/lib/links.ts` is what replaces it.
+ */
 export function ProtocolSection() {
   const ref = useEntrance<HTMLElement>();
-  const amountId = useId();
+  const lockId = useId();
+  const borrowId = useId();
 
   const [tab, setTab] = useState<Tab>("borrow");
   const [theme, setTheme] = useState<Theme>("light");
   const [chosen, setChosen] = useState<Address>();
-  const [amount, setAmount] = useState("");
-  const [ltv, setLtv] = useState(50);
+  const [lock, setLock] = useState("");
+  const [borrow, setBorrow] = useState("");
+  const [pin, setPin] = useState<Pin>("lock");
   const [picking, setPicking] = useState(false);
   const [explaining, setExplaining] = useState(false);
-  const [reviewing, setReviewing] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [soon, setSoon] = useState(false);
 
   const wallet = useWallet();
   const market = useMarket();
   const positions = usePositions(LIVE ? wallet.account : undefined);
   const tx = useTx();
+  const shortAccount = useShortAddress(wallet.account);
 
-  /* Memoised because the `?? []` would otherwise mint a new array on every
-     render while the market is still loading, which is enough to make every
-     downstream useMemo recompute forever. */
   const collateral = useMemo(() => market.data?.collateral ?? [], [market.data]);
   /* Default to the first coin the contract will still open a position against,
      not simply the first in the list: a disabled coin at index 0 would greet
      every visitor with a form that cannot be submitted. */
-  const coin =
-    collateral.find((c) => c.address === chosen) ?? collateral.find((c) => c.enabled) ?? collateral[0];
+  const coin = useMemo(
+    () =>
+      collateral.find((c) => c.address === chosen) ??
+      collateral.find((c) => c.enabled) ??
+      collateral[0],
+    [collateral, chosen]
+  );
 
-  /* The picker's rows: every coin on the roster in its approved order, each
-     carrying the contract's token when there is one, then anything the contract
-     lists that the roster has never heard of. */
+  const balance = useTokenBalance(LIVE ? coin?.address : undefined, wallet.account);
+
+  const cbDecimals = market.data?.cbDecimals ?? 18;
+  const cbUnitWeth = market.data?.cbUnitWeth ?? 0n;
+
+  const lockWei = coin ? parseAmount(lock, coin.decimals) : 0n;
+  const borrowWei = parseAmount(borrow, cbDecimals);
+
+  const ltv = coin ? ltvPercentFor(lockWei, borrowWei, coin, cbDecimals, cbUnitWeth) : 0;
+  const risk = riskOf(ltv);
+  const tone = riskTone(risk);
+  const drop = dropToLiquidation(ltv);
+
+  /** The most $CB the current lock supports, at the UI's shaded cap. */
+  const maxBorrowWei = coin ? borrowForLtv(lockWei, UI_MAX_LTV, coin, cbDecimals, cbUnitWeth) : 0n;
+
+  /**
+   * The ruler moves whichever field is not pinned.
+   *
+   * LTV is a ratio, so dragging it can only change one side, and which side
+   * depends on whether the visitor arrived saying "I am locking this much" or "I
+   * want this much $CB". Whichever they typed into last is the one held.
+   */
+  /* A plain function, not a useCallback. The React Compiler is on for this repo
+     and memoises this itself; a hand-written dependency array over values it
+     already tracks makes it bail out of the whole component with "existing
+     memoization could not be preserved", which is strictly worse than not
+     writing one. */
+  const setLtv = (next: number) => {
+    if (!coin) return;
+    if (pin === "lock") {
+      setBorrow(exactAmount(borrowForLtv(lockWei, next, coin, cbDecimals, cbUnitWeth), cbDecimals));
+    } else {
+      setLock(
+        exactAmount(collateralForLtv(borrowWei, next, coin, cbDecimals, cbUnitWeth), coin.decimals)
+      );
+    }
+  };
+
   const pickerRows = useMemo(() => {
     const live = new Map(collateral.map((c) => [c.symbol.toUpperCase(), c]));
     const rows = ROSTER.map((meta) => ({ meta, token: live.get(meta.sym) }));
@@ -90,86 +159,38 @@ export function ProtocolSection() {
     return [...rows, ...extra];
   }, [collateral]);
 
-  const prices = usePrices(coin, market.data?.cbDecimals);
-  const balance = useTokenBalance(LIVE ? coin?.address : undefined, wallet.account);
-
-  const cbDecimals = market.data?.cbDecimals ?? 18;
-  const lockedWei = coin ? parseAmount(amount, coin.decimals) : 0n;
-  const borrowWei = useMemo(
-    () =>
-      coin && prices.data
-        ? borrowableCB(lockedWei, Math.round(ltv) * 100, prices.data, coin.decimals, cbDecimals)
-        : 0n,
-    [coin, prices.data, lockedWei, ltv, cbDecimals]
-  );
-
-  const health = healthOf(ltv);
-
-  const reset = useCallback(() => {
-    setPicking(false);
-    setExplaining(false);
-    setReviewing(false);
-  }, []);
-
-  /* The buy link is a placeholder until there is a pool, and a placeholder that
-     silently jumps to the top of the page is worse than one that says why. Same
-     answer the hero gives, in the shape this bar has room for. */
-  const [soon, setSoon] = useState(false);
-  const soonTimer = useRef<number | undefined>(undefined);
-  useEffect(() => () => window.clearTimeout(soonTimer.current), []);
-  const buyReady = BUY_URL !== "#";
-  const handleBuy = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (e.currentTarget.getAttribute("href") !== "#") return;
-    e.preventDefault();
-    setSoon(true);
-    window.clearTimeout(soonTimer.current);
-    soonTimer.current = window.setTimeout(() => setSoon(false), 1800);
-  }, []);
-
   // --- what stands between this form and a signature -----------------------
 
+  const overBalance = balance !== undefined && lockWei > balance;
+  const underMinimum = !!coin && lockWei > 0n && lockWei < coin.minCollateral;
+  const overCap = ltv > UI_MAX_LTV;
   const enoughInventory = market.data ? borrowWei <= market.data.available : true;
-  const overBalance = balance !== undefined && lockedWei > balance;
-  const underMinimum = !!coin && lockedWei > 0n && lockedWei < coin.minCollateral;
 
-  const blocker =
-    !market.data
-      ? undefined
-      : market.data.paused
-        ? "New borrowing is paused right now. Repaying and adding collateral still work."
-        : coin && !coin.enabled
-          ? `${coin.symbol} is not being accepted for new loans at the moment.`
-          : overBalance
-            ? `That is more ${coin?.symbol ?? ""} than this wallet holds.`
-            : underMinimum
-              ? `The contract sets a minimum of ${formatAmount(coin!.minCollateral, coin!.decimals)} ${coin!.symbol} to open with.`
+  const blocker = !market.data
+    ? undefined
+    : market.data.paused
+      ? "New borrowing is paused. Repaying and adding collateral still work."
+      : coin && !coin.enabled
+        ? `${coin.symbol} is not being accepted for new loans at the moment.`
+        : overBalance
+          ? `That is more ${coin?.symbol ?? ""} than this wallet holds.`
+          : underMinimum
+            ? `Below the ${formatAmount(coin!.minCollateral, coin!.decimals)} ${coin!.symbol} minimum this coin opens with.`
+            : overCap
+              ? `That works out at ${ltv.toFixed(1)}% — over the ${UI_MAX_LTV}% this page will let you reach.`
               : !enoughInventory
                 ? `The desk only has ${formatAmount(market.data.available, cbDecimals)} ${BORROWED} left to lend.`
                 : undefined;
 
-  const ready = !!coin && !!prices.data && lockedWei > 0n && borrowWei > 0n && !blocker;
+  const ready = !!coin && lockWei > 0n && borrowWei > 0n && !blocker;
 
-  const cta = !LIVE
-    ? { label: "See what this would do", onClick: () => setReviewing(true), disabled: !ready }
-    : !wallet.ready || market.loading
-      ? { label: "Reading the chain…", onClick: undefined, disabled: true }
-      : !wallet.hasProvider
-        ? { label: "No wallet found in this browser", onClick: undefined, disabled: true }
-        : !wallet.account
-          ? { label: "Connect wallet", onClick: wallet.connect, disabled: wallet.connecting }
-          : wallet.wrongNetwork
-            ? { label: "Switch to Robinhood Chain", onClick: wallet.switchNetwork, disabled: false }
-            : { label: "Review borrow", onClick: () => setReviewing(true), disabled: !ready };
-
-  // --- the write ------------------------------------------------------------
-
-  const confirm = async () => {
+  const submit = async () => {
     if (!LIVE || !wallet.walletClient || !wallet.account || !coin || !ready) return;
     const client = wallet.walletClient;
     const account = wallet.account;
 
     const steps: Step[] = [
-      ...(await approvalStep(client, account, coin.address, coin.symbol, lockedWei)),
+      ...(await approvalStep(client, account, coin.address, coin.symbol, lockWei)),
       {
         label: "Opening the loan",
         run: async () => {
@@ -178,7 +199,7 @@ export function ProtocolSection() {
             address: DEPLOYMENT.lending,
             abi: lendingAbi,
             functionName: "openPosition",
-            args: [coin.address, lockedWei, borrowWei],
+            args: [coin.address, lockWei, borrowWei],
           });
           return client.writeContract(request);
         },
@@ -186,60 +207,95 @@ export function ProtocolSection() {
     ];
 
     if (await tx.send(steps)) {
-      setAmount("");
+      setLock("");
+      setBorrow("");
       market.refresh();
       positions.refresh();
     }
   };
 
-  const afterSuccess = tx.state.phase === "done";
+  const cta = !LIVE
+    ? { label: "Not live yet", onClick: undefined, disabled: true }
+    : !wallet.ready || market.loading
+      ? { label: "Reading the chain…", onClick: undefined, disabled: true }
+      : !wallet.hasProvider
+        ? { label: "No wallet found in this browser", onClick: undefined, disabled: true }
+        : !wallet.account
+          ? { label: "Connect wallet", onClick: wallet.connect, disabled: wallet.connecting }
+          : wallet.wrongNetwork
+            ? { label: "Switch to Robinhood Chain", onClick: wallet.switchNetwork, disabled: false }
+            : { label: `Approve & borrow`, onClick: () => void submit(), disabled: !ready };
+
+  const copyContract = async () => {
+    try {
+      await navigator.clipboard.writeText(DEPLOYMENT.lending);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      // A refused clipboard is not worth an error box: the address is on screen
+      // and selectable either way.
+    }
+  };
+
+  const openCount = positions.data?.length ?? 0;
 
   return (
     <section className={`stage ${t.tokens} ${s.stage}`} data-p1-theme={theme} ref={ref}>
-      <div className={`top ${s.bar}`} data-ent="fade" data-ent-delay="0">
-        <div className={s.barLeft}>
-          <span className={s.brand}>{BORROWED}</span>
+      {/* ---------------- top bar ---------------- */}
+      <div className="top" data-ent="fade" data-ent-delay="0">
+        <div className={s.bar}>
+          <span className={s.mark}>{BORROWED}</span>
 
           <div className={s.tabs} role="tablist" aria-label="Borrow or positions">
-          {(["borrow", "positions"] as const).map((id) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={tab === id}
-              className={`${s.tab} ${tab === id ? s.tabOn : ""}`}
-              onClick={() => {
-                setTab(id);
-                reset();
-              }}
-            >
-              {id === "borrow" ? "Borrow" : "Positions"}
-            </button>
-          ))}
+            {(["borrow", "positions"] as const).map((id) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={tab === id}
+                className={s.tab}
+                onClick={() => {
+                  setTab(id);
+                  setPicking(false);
+                }}
+              >
+                {id === "borrow" ? "Borrow" : "Positions"}
+                {id === "positions" && openCount > 0 ? <span className={s.pip}>{openCount}</span> : null}
+              </button>
+            ))}
           </div>
+
+          <span className={s.sp} />
+
+          {/* A card-coloured pill on the ground, so it reads as a button without
+              competing with the primary action or the active tab. */}
+          <a
+            className={s.buy}
+            href={BUY_URL}
+            onClick={(e) => {
+              if (isLive(BUY_URL)) return;
+              e.preventDefault();
+              setSoon(true);
+              window.setTimeout(() => setSoon(false), 1800);
+            }}
+            {...(isLive(BUY_URL) ? { target: "_blank", rel: "noreferrer noopener" } : {})}
+          >
+            {soon ? "soon." : `Buy ${BORROWED}`}
+          </a>
         </div>
+      </div>
 
-        {/* Centre cell of a 1fr–auto–1fr grid, so the pill sits on the middle of
-            the screen rather than midway between whatever happens to flank it.
-            The prototype uses two auto-margin spacers, which centre it between
-            its neighbours — with a wallet chip on one side and a brand plus tabs
-            on the other, those are never the same width and it lands visibly
-            off-centre. */}
-        <a
-          className={s.buy}
-          href={BUY_URL}
-          onClick={handleBuy}
-          {...(buyReady ? { target: "_blank", rel: "noreferrer noopener" } : {})}
-        >
-          {soon ? "soon." : `Buy ${BORROWED}`}
-          {buyReady ? <span className={s.vh}> opens a new tab</span> : null}
-        </a>
-
-        <div className={s.topRight}>
-          {LIVE ? <WalletChip wallet={wallet} /> : null}
+      {/* ---------------- chain row ---------------- */}
+      <div className="head" data-ent="fade" data-ent-delay="90">
+        <div className={s.chainRow}>
+          <span className={s.chip} data-bad={wallet.wrongNetwork || undefined}>
+            <span className={s.dot} aria-hidden="true" />
+            Robinhood Chain
+          </span>
+          {shortAccount ? <span className={s.addr}>{shortAccount}</span> : null}
           <button
             type="button"
-            className={s.theme}
+            className={s.iconBtn}
             onClick={() => setTheme((v) => (v === "light" ? "dark" : "light"))}
             aria-label={theme === "light" ? "Switch to dark" : "Switch to light"}
           >
@@ -265,129 +321,187 @@ export function ProtocolSection() {
         </div>
       </div>
 
-      <div className="head" data-ent="up" data-ent-delay="90">
-        <h1 className={s.h1}>
-          Lock memes.
-          <br />
-          Borrow <span className={s.token}>{BORROWED}</span>.
-        </h1>
-        <p className={s.terms}>0% interest · no fees</p>
-      </div>
-
+      {/* ---------------- the deal ---------------- */}
       <div className={`middle ${s.middle}`} data-ent="up" data-ent-delay="240">
-        <div className={s.card}>
+        <div className={s.deal}>
           {tab === "borrow" ? (
             <>
-              <label className={s.rowLabel} htmlFor={amountId}>
-                Lock
-              </label>
-              <div className={s.field}>
-                <input
-                  id={amountId}
-                  className={s.amount}
-                  /* text + inputmode, not type="number": a number input drops the
-                     caret to the end on every reformat and refuses a lone dot. */
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value.replace(/[^0-9.,]/g, ""))}
-                  aria-describedby={`${amountId}-note`}
-                />
+              <div className={s.pitch}>
+                <h1 className={s.h1}>
+                  Lock memes.
+                  <br />
+                  Borrow <em>{BORROWED}</em>.
+                </h1>
+                {/* True of this contract, which says so in its own header:
+                    "There is no interest and no fees." */}
+                <p className={s.terms}>0% interest · no fees</p>
+              </div>
+
+              <div className={s.card}>
+                {/* --- lock --- */}
+                <div className={s.field}>
+                  <div className={s.fieldTop}>
+                    <label className={s.lbl} htmlFor={lockId}>
+                      Lock
+                      {balance !== undefined && balance > 0n ? <em> · held</em> : null}
+                    </label>
+                    <span className={s.sp} />
+                    <button
+                      type="button"
+                      className={s.tokenBtn}
+                      onClick={() => setPicking(true)}
+                      disabled={collateral.length === 0}
+                    >
+                      {coin?.symbol ?? "—"}
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                          d="M7 10l5 5 5-5"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.4"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div className={s.entry}>
+                    <input
+                      id={lockId}
+                      /* text + inputmode, not type="number": a number input drops
+                         the caret to the end on every reformat and refuses a
+                         lone dot. */
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0"
+                      value={lock}
+                      onChange={(e) => {
+                        setLock(e.target.value.replace(/[^0-9.,]/g, ""));
+                        setPin("lock");
+                      }}
+                    />
+                  </div>
+
+                  <div className={s.under}>
+                    <span>
+                      {coin ? formatWeth(valueInWeth(lockWei, coin.decimals, coin.unitWeth)) : "—"}
+                    </span>
+                    <span className={s.sp} />
+                    {balance !== undefined && balance > 0n && coin ? (
+                      <div className={s.pcts}>
+                        {[25, 50, 75, 100].map((p) => (
+                          <button
+                            key={p}
+                            type="button"
+                            className={s.pct}
+                            onClick={() => {
+                              setLock(exactAmount((balance * BigInt(p)) / 100n, coin.decimals));
+                              setPin("lock");
+                            }}
+                          >
+                            {p === 100 ? "Max" : `${p}%`}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className={s.arrow} aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M12 5v14M6 13l6 6 6-6" strokeWidth="2.2" strokeLinecap="round" />
+                  </svg>
+                </div>
+
+                {/* --- borrow --- */}
+                <div className={s.field}>
+                  <div className={s.fieldTop}>
+                    <label className={s.lbl} htmlFor={borrowId}>
+                      Borrow
+                    </label>
+                    <span className={s.sp} />
+                    <span className={s.tokenStatic}>{BORROWED}</span>
+                  </div>
+
+                  <div className={s.entry}>
+                    <input
+                      id={borrowId}
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0"
+                      value={borrow}
+                      onChange={(e) => {
+                        setBorrow(e.target.value.replace(/[^0-9.,]/g, ""));
+                        setPin("borrow");
+                      }}
+                    />
+                  </div>
+
+                  <div className={s.under}>
+                    <span>{formatWeth(valueInWeth(borrowWei, cbDecimals, cbUnitWeth))}</span>
+                    <span className={s.sp} />
+                    {maxBorrowWei > 0n ? (
+                      <button
+                        type="button"
+                        className={s.pct}
+                        onClick={() => {
+                          setBorrow(exactAmount(maxBorrowWei, cbDecimals));
+                          setPin("borrow");
+                        }}
+                      >
+                        Max {formatAmount(maxBorrowWei, cbDecimals)} {BORROWED}
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+
+                <Ruler ltv={ltv} onChange={setLtv} interactive label="How much to borrow" />
+
+                <dl className={s.readout}>
+                  <div className={s.rd}>
+                    <dt>Loan to value</dt>
+                    <dd data-tone={tone}>{ltv.toFixed(1)}%</dd>
+                  </div>
+                  <div className={s.rd}>
+                    <dt>Repay</dt>
+                    <dd>
+                      {formatAmount(borrowWei, cbDecimals)} {BORROWED}
+                    </dd>
+                  </div>
+                </dl>
+
+                {/* The sentence this screen exists for. 72% sounds clear of 90
+                    and is not: it means a 20% dip takes everything. */}
+                <p className={s.note} data-tone={ltv > 0 ? tone : "calm"}>
+                  <b>{ltv > 0 ? riskLabel(risk) : "No loan yet"}</b>
+                  {ltv > 0 ? (
+                    <>
+                      {" · a "}
+                      {drop.toFixed(0)}% fall in {coin?.symbol ?? "the coin"} liquidates you, and{" "}
+                      <button type="button" className={s.link} onClick={() => setExplaining(true)}>
+                        you keep nothing
+                      </button>
+                      .
+                    </>
+                  ) : (
+                    <> · lock a coin, then say how much {BORROWED} you want.</>
+                  )}
+                </p>
+
+                {market.error ? <p className={s.problem}>{market.error}</p> : null}
+                {blocker ? <p className={s.problem}>{blocker}</p> : null}
+
                 <button
                   type="button"
-                  className={s.pick}
-                  onClick={() => setPicking(true)}
-                  disabled={collateral.length === 0}
+                  className={`${s.btn} ${s.primary}`}
+                  onClick={cta.onClick}
+                  disabled={cta.disabled}
                 >
-                  <span className={s.dot} style={{ background: coin?.bg, color: coin?.on }}>
-                    {coin?.symbol.slice(0, 1) ?? "?"}
-                  </span>
-                  {coin?.symbol ?? "—"}
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      d="M7 10l5 5 5-5"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.4"
-                      strokeLinecap="round"
-                    />
-                  </svg>
+                  {cta.label}
                 </button>
+
+                <TxStatus state={tx.state} onDismiss={tx.reset} />
               </div>
-
-              {LIVE && balance !== undefined && coin ? (
-                <p className={s.balance}>
-                  Wallet: {formatAmount(balance, coin.decimals)} {coin.symbol}
-                  <button
-                    type="button"
-                    className={s.max}
-                    onClick={() => setAmount(exactAmount(balance, coin.decimals))}
-                  >
-                    Max
-                  </button>
-                </p>
-              ) : null}
-
-              {/* Lock ↓ Borrow, as the design draws it. What used to be the
-                  first row of the summary is a field of its own: it is the
-                  other half of the trade, not a consequence of it. Read-only —
-                  the ruler is what drives it. */}
-              <div className={s.arrow} aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path
-                    d="M12 5v14M6 13l6 6 6-6"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-
-              <div className={s.rowLabel}>Borrow</div>
-              <div className={`${s.field} ${s.borrowField}`}>
-                <p className={s.share} data-health={health}>
-                  {prices.data ? formatAmount(borrowWei, cbDecimals) : "—"}
-                  <small>
-                    {BORROWED} · {Math.round(ltv)}% of its value
-                  </small>
-                </p>
-              </div>
-
-              <Ruler ltv={ltv} onChange={setLtv} interactive label="How much to borrow" />
-
-              <dl className={s.summary}>
-                <div>
-                  <dt>Loan to value</dt>
-                  <dd data-health={health}>
-                    {Math.round(ltv)}% · {healthLabel(health)}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Liquidated at</dt>
-                  <dd>{LIQ_LTV}%</dd>
-                </div>
-              </dl>
-
-              <p className={s.note} id={`${amountId}-note`}>
-                Most you can borrow is {MAX_LTV}%. Past {LIQ_LTV}% your collateral is sold in full
-                and you keep nothing.
-              </p>
-
-              {market.error ? <p className={s.problem}>{market.error}</p> : null}
-              {prices.error ? <p className={s.problem}>{prices.error}</p> : null}
-              {blocker ? <p className={s.problem}>{blocker}</p> : null}
-
-              <button
-                type="button"
-                className={s.primary}
-                onClick={cta.onClick}
-                disabled={cta.disabled}
-              >
-                {cta.label}
-              </button>
-
-              <TxStatus state={tx.state} onDismiss={tx.reset} />
             </>
           ) : (
             <Positions
@@ -396,39 +510,55 @@ export function ProtocolSection() {
               positions={positions.data}
               loading={positions.loading}
               error={positions.error}
+              theme={theme}
               onChanged={() => {
                 positions.refresh();
                 market.refresh();
               }}
+              onBorrowAgain={() => setTab("borrow")}
             />
           )}
         </div>
       </div>
 
-      {/* The design's footer: the liquidation terms on one side, what you are
-          talking to on the other. The liquidation link lives here rather than
-          inline in the card, which is where the approved screen puts it — it is
-          reference, not part of filling the form in. */}
+      {/* ---------------- foot ---------------- */}
       <div className="bottom">
         <div className={s.foot}>
-          <button type="button" className={s.footBtn} onClick={() => setExplaining(true)}>
+          <button type="button" className={s.footLink} onClick={() => setExplaining(true)}>
             Liquidation
           </button>
-          {LIVE ? (
-            <span>
-              Robinhood Chain ·{" "}
-              <a
-                className={s.footLink}
-                href={`${EXPLORER_ORIGIN}/address/${DEPLOYMENT.lending}`}
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                {short(DEPLOYMENT.lending)}
-              </a>
-            </span>
-          ) : (
-            <span>Not live yet — no wallet, no contract, nothing to sign.</span>
-          )}
+          <span className={s.addrRow}>
+            <a
+              className={s.footLink}
+              href={`${EXPLORER_ORIGIN}/address/${DEPLOYMENT.lending}`}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              {short(DEPLOYMENT.lending)}
+            </a>
+            <button
+              type="button"
+              className={s.iconBtn}
+              onClick={copyContract}
+              aria-label="Copy the contract address"
+            >
+              {copied ? (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                  <path
+                    d="M5 13l4 4L19 7"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                  <rect x="9" y="9" width="11" height="11" rx="2" strokeWidth="2" />
+                  <path d="M5 15V6a2 2 0 0 1 2-2h9" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              )}
+            </button>
+          </span>
         </div>
         <div className="cue">
           <span>Scroll ↓</span>
@@ -439,33 +569,28 @@ export function ProtocolSection() {
 
       <Modal theme={theme} open={picking} onClose={() => setPicking(false)} title="Choose collateral">
         {market.loading && collateral.length === 0 ? (
-          <p className={s.note}>Reading the collateral list from the contract…</p>
+          <p className={s.mnote}>Reading the collateral list from the contract…</p>
         ) : (
-          <ul className={s.coinList}>
+          <ul className={s.tokens}>
             {/* The running order is the roster's, not the contract's. A row is
-                live when the contract lists that symbol and dead otherwise —
-                the design's six stay in their approved sequence either way, and
-                anything whitelisted that is not on the roster is appended below
-                with whatever it calls itself. */}
+                live when the contract lists that symbol, and dead otherwise. */}
             {pickerRows.map(({ meta, token }) => (
               <li key={meta.sym}>
                 <button
                   type="button"
-                  className={`${s.coinRow} ${token?.address === coin?.address ? s.coinOn : ""}`}
+                  className={s.tok}
                   disabled={!token}
-                  /* Not `aria-disabled`: there is genuinely nothing to choose.
-                     The contract has no address for this coin, so a click could
-                     only produce InvalidPool() from somewhere further in. */
+                  aria-current={token?.address === coin?.address || undefined}
                   onClick={() => {
                     if (!token) return;
                     setChosen(token.address);
                     setPicking(false);
                   }}
                 >
-                  <span className={s.dot} style={{ background: meta.bg, color: meta.on }}>
+                  <span className={s.dotBig} style={{ background: meta.bg, color: meta.on }}>
                     {meta.sym.slice(0, 1)}
                   </span>
-                  <span className={s.coinName}>
+                  <span className={s.tokName}>
                     <b>{meta.sym}</b>
                     <small>
                       {!token
@@ -480,9 +605,9 @@ export function ProtocolSection() {
             ))}
           </ul>
         )}
-        <p className={s.note}>
-          Robinhood Chain memecoins. Which of them can be borrowed against is read from the
-          contract, so it changes when the contract does, without this page changing.
+        <p className={s.mnote}>
+          Robinhood Chain memecoins. Which of them can be borrowed against is read from the contract,
+          so it changes when the contract does, without this page changing.
         </p>
       </Modal>
 
@@ -492,114 +617,27 @@ export function ProtocolSection() {
         onClose={() => setExplaining(false)}
         title="How liquidation works"
       >
-        <dl className={s.terms}>
+        <dl className={s.terms2}>
           <div>
             <dt>You may borrow up to</dt>
             <dd>{MAX_LTV}% of what you lock</dd>
           </div>
           <div>
             <dt>You are liquidated at</dt>
-            <dd className={s.bad}>{LIQ_LTV}%</dd>
+            <dd data-tone="danger">{LIQ_LTV}%</dd>
           </div>
           <div>
             <dt>How much is sold</dt>
-            <dd className={s.bad}>All of it</dd>
+            <dd data-tone="danger">All of it</dd>
           </div>
         </dl>
-        <p className={s.note}>
+        <p className={s.mnote}>
           This is harsher than most lending. There is no partial liquidation and no grace: once the
           ratio touches {LIQ_LTV}%, the whole position is sold to clear the debt, and whatever it
           fetches above the debt goes to the keeper who cleared it, not to you. Adding collateral or
-          repaying is allowed at any time, including when you are already past the {MAX_LTV}% limit —
-          those two only ever improve your position, so they are never blocked.
+          repaying is allowed at any time, including past the {MAX_LTV}% limit — those two only ever
+          improve your position, so they are never blocked.
         </p>
-      </Modal>
-
-      <Modal
-        theme={theme}
-        open={reviewing}
-        onClose={() => {
-          setReviewing(false);
-          if (afterSuccess) tx.reset();
-        }}
-        title={LIVE ? "Review your loan" : "What this would do"}
-        footer={
-          <>
-            {LIVE ? (
-              afterSuccess ? (
-                <button
-                  type="button"
-                  className={s.primary}
-                  onClick={() => {
-                    setReviewing(false);
-                    tx.reset();
-                    setTab("positions");
-                  }}
-                >
-                  See your position
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className={s.primary}
-                  onClick={confirm}
-                  disabled={tx.state.phase === "signing" || tx.state.phase === "pending" || !ready}
-                >
-                  {tx.state.phase === "signing" || tx.state.phase === "pending"
-                    ? "Working…"
-                    : "Confirm in wallet"}
-                </button>
-              )
-            ) : (
-              <p className={s.note}>
-                Nothing was sent. There is no wallet on this page and no contract behind it yet.
-              </p>
-            )}
-            <button
-              type="button"
-              className={s.ghost}
-              onClick={() => {
-                setReviewing(false);
-                if (afterSuccess) tx.reset();
-              }}
-            >
-              Close
-            </button>
-          </>
-        }
-      >
-        <dl className={s.terms}>
-          <div>
-            <dt>You lock</dt>
-            <dd>
-              {coin ? formatAmount(lockedWei, coin.decimals) : "—"} {coin?.symbol ?? ""}
-            </dd>
-          </div>
-          <div>
-            <dt>You borrow</dt>
-            <dd>
-              {formatAmount(borrowWei, cbDecimals)} {BORROWED}
-            </dd>
-          </div>
-          <div>
-            <dt>Loan to value</dt>
-            <dd data-health={health}>
-              {Math.round(ltv)}% · {healthLabel(health)}
-            </dd>
-          </div>
-          <div>
-            <dt>Liquidated at</dt>
-            <dd className={s.bad}>{LIQ_LTV}% — all of it sold</dd>
-          </div>
-        </dl>
-        <Ruler ltv={ltv} />
-        <p className={s.note}>
-          Priced from the contract&rsquo;s own TWAP oracle at the moment you opened this dialog, and
-          checked against the contract before it reaches your wallet. The most this page will let you
-          reach is {UI_MAX_LTV}% rather than a round {MAX_LTV}% — the contract rounds against the
-          borrower, and a loan set to exactly {MAX_LTV}% would be refused.
-        </p>
-        {LIVE ? <TxStatus state={tx.state} onDismiss={tx.reset} /> : null}
       </Modal>
     </section>
   );
