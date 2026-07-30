@@ -50,9 +50,19 @@ jobs:
       # with "Create Pages site failed. Resource not accessible by integration".
       # Pages is switched on once by hand, in Settings -> Pages -> Source:
       # GitHub Actions.
+      # 24, to match the machine the lockfile is written on — and it is npm that
+      # matters here, not node. Node 22 ships npm 10, node 24 ships npm 11, and
+      # the two disagree about where the wasm builds' transitive dependencies
+      # belong: npm 11 records @emnapi/core and @emnapi/runtime only nested under
+      # @unrs/resolver-binding-wasm32-wasi, while npm 10 also wants them hoisted
+      # for @tailwindcss/oxide-wasm32-wasi and calls the lockfile out of sync.
+      #
+      # `npm ci` then fails with "Missing: @emnapi/runtime from lock file" —
+      # in CI only, on a lockfile that installs cleanly by hand. Reproduced both
+      # ways before changing this: npm@10 fails on it, npm@11 does not.
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - run: npm ci
