@@ -327,6 +327,42 @@ export function ProtocolSection() {
               Robinhood Chain
             </span>
             {shortAccount ? <span className={s.addr}>{shortAccount}</span> : null}
+
+            {/* Only when there is something to disconnect. A permanently visible
+                log-out next to an empty address is a control for a state the
+                visitor is not in.
+
+                The wording is careful: this ends the session between the site and
+                the wallet, and wagmi forgets the connection so a reload does not
+                silently reattach — but the wallet may still list this site among
+                the ones it has permitted, and that is the wallet's to revoke, not
+                ours. Saying "log out" without that caveat is a claim the next
+                page load can contradict. */}
+            {wallet.account ? (
+              <button
+                type="button"
+                className={s.iconBtn}
+                onClick={wallet.disconnect}
+                aria-label="Disconnect this wallet"
+                title="Disconnect. Your wallet may still list this site as permitted — revoke that in the wallet."
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor">
+                  <path
+                    d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M10 17l5-5-5-5M15 12H3"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            ) : null}
+
             <button
               type="button"
               className={s.iconBtn}
