@@ -24,21 +24,35 @@ export const robinhoodChain = defineChain({
   blockExplorers: { default: { name: "Blockscout", url: EXPLORER_ORIGIN } },
 });
 
-/** Deployment manifest for chain 4663, mirrored from `sb/ui/deployments/4663.json`. */
+/**
+ * Deployment manifest for chain 4663.
+ *
+ * This replaced a mock deployment. The lent token here answers `symbol()` with
+ * `CB` and `name()` with "cyka blyat", against a supply of exactly
+ * 1,000,000,000 — the figure in CLAUDE.md's settled facts — where the previous
+ * one called itself `WN` ("Wewen"). So the site's `$CB` and the chain finally
+ * agree, and the copy is no longer standing in for a placeholder.
+ *
+ * Verified against the chain when it was wired in: MAX_LTV_BPS 8000,
+ * LIQ_THRESHOLD_BPS 9000, not paused, twapWindow 60s, maxSlippageBps 200.
+ *
+ * `deployBlock` is deliberately absent rather than carried over. The manifest did
+ * not supply one, and the old value belonged to the old contract — a stale block
+ * number is worse than none, because the only thing that would read it is a log
+ * replay for closed positions, which would silently start after the history it
+ * was meant to find.
+ */
 export const DEPLOYMENT = {
   chainId: 4663,
-  lending: "0x13BCbCb4F2F42951A5BBcb481B0496554eEC9774" as Address,
-  cb: "0x35C84a03960C5684Eb803264eA7dE6f0a159cdFc" as Address,
+  lending: "0x1f2Da0cc5b6163650894Fd2a6Af8E3f9f99F30Ad" as Address,
+  cb: "0x7F318D1c00734A6FBe157E151715D516adc173E3" as Address,
   weth: "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73" as Address,
-  cbPool: "0x41B275eeda2Dd4AeB12722511017Fb4637edF136" as Address,
+  cbPool: "0x9c417bFE06A3277504653198BaDC0e1e612d2021" as Address,
   router: "0xCaf681a66D020601342297493863E78C959E5cb2" as Address,
-  deployBlock: 94945449,
-  /** True on this deployment: the collateral and the lent token are mocks. */
-  mocks: true,
 } as const;
 
 /** Reference only. Never call this — see the note at the top of the file. */
-export const IMPLEMENTATION = "0xbB7C6799774A89DAa3B5D451aCE022c018a11D7D" as Address;
+export const IMPLEMENTATION = "0x8b10274EC25caA40A15Fc69dd74a6765Aef21Fe4" as Address;
 
 export const publicClient = createPublicClient({
   chain: robinhoodChain,

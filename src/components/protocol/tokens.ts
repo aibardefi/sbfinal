@@ -91,9 +91,10 @@ export const rosterIndex = (symbol: string) => {
 /**
  * What you borrow, as the site says it.
  *
- * The token on this deployment answers `symbol()` with "WN". The site says $CB
- * throughout and that is the decision on file, so this string is the copy, not a
- * reading of the chain — `Market.cbSymbol` in `src/lib/protocol.ts` carries what
- * the contract actually reports.
+ * Still the copy rather than a reading of the chain, even now that the two
+ * agree: the token on this deployment answers `symbol()` with `CB`, where the
+ * one before it said `WN`. `Market.cbSymbol` in `src/lib/protocol.ts` carries
+ * what the contract actually reports, so a future redeploy that disagrees is
+ * visible in the code instead of only in a wallet.
  */
 export const BORROWED = "$CB";

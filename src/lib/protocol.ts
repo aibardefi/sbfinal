@@ -50,11 +50,11 @@ export type Market = {
   /**
    * What the lent token calls itself on chain.
    *
-   * Recorded and deliberately not displayed. This deployment carries
-   * `mocks: true` and its token answers `symbol()` with "WN" ("Wewen"); the
-   * screen says $CB because that is the decision on file. Kept here so the next
-   * person reads the difference in the code rather than discovering it in a
-   * wallet.
+   * Read and kept rather than assumed. It now answers `CB` ("cyka blyat"), so it
+   * agrees with the `$CB` the site writes — but the deployment before this one
+   * answered `WN` ("Wewen") while the screen still said $CB, and the only reason
+   * that was discoverable was this field. It stays for the next time the two
+   * drift apart.
    */
   cbSymbol: string;
   /** What one whole $CB is worth in WETH wei. */

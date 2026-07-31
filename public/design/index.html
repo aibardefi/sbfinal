@@ -102,19 +102,27 @@ footer { margin-top: 4rem; padding-top: 1.4rem; border-top: 1px solid var(--line
 <table>
   <tr><th>Thing</th><th>Value</th></tr>
   <tr><td>Chain</td><td>Robinhood Chain mainnet, id <b>4663</b></td></tr>
-  <tr><td>Lending proxy</td><td>0x13BCbCb4F2F42951A5BBcb481B0496554eEC9774</td></tr>
-  <tr><td>$CB token</td><td>0x35C84a03960C5684Eb803264eA7dE6f0a159cdFc</td></tr>
+  <tr><td>Lending proxy</td><td>0x1f2Da0cc5b6163650894Fd2a6Af8E3f9f99F30Ad</td></tr>
+  <tr><td>$CB token</td><td>0x7F318D1c00734A6FBe157E151715D516adc173E3</td></tr>
   <tr><td>RPC origin</td><td>https://rpc.mainnet.chain.robinhood.com</td></tr>
 </table>
 </div>
 <div class="panel">
   <p>
-    <span class="tag no">Read this</span> The deployment manifest carries
-    <code>mocks: true</code>, and the lent token answers <code>symbol()</code>
-    with <b>WN</b> (&ldquo;Wewen&rdquo;). The screen says <b>$CB</b> because that
-    is the decision on file — see <code>BORROWED</code> in
-    <code>src/components/protocol/tokens.ts</code>, and
-    <code>Market.cbSymbol</code> for what the chain actually reports.
+    <span class="tag no">Read this</span> This deployment is new and not yet
+    stocked: <code>collateralTokens()</code> returns nothing and
+    <code>availableCB()</code> is zero, so every coin shows as &ldquo;not listed
+    yet&rdquo; and nobody can borrow until an admin calls
+    <code>setCollateralConfig</code> and $CB is transferred to the contract.
+    Neither is a change to the site.
+  </p>
+  <p>
+    The lent token now answers <code>symbol()</code> with <b>CB</b>
+    (&ldquo;cyka blyat&rdquo;), matching the <b>$CB</b> on the page. It did not
+    always: the deployment before this one said <b>WN</b>. The page&rsquo;s copy
+    is <code>BORROWED</code> in <code>src/components/protocol/tokens.ts</code>
+    and what the chain reports is <code>Market.cbSymbol</code> — kept apart on
+    purpose, so the next disagreement shows up in code rather than in a wallet.
   </p>
   <p>
     The ABI is <b>not</b> the compiled artifact. It is hand-written and

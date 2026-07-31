@@ -16,16 +16,22 @@ that shows a borrow form without them is worse than one that shows nothing.
 
 **It is wired to the contract and it can sign.** `LIVE` is `true` in
 `ProtocolSection.tsx`, and the screen reads `CBLending` at
-`0x13BCbCb4F2F42951A5BBcb481B0496554eEC9774` on Robinhood Chain (4663) and opens,
-repays, tops up and unwinds real positions through an injected wallet.
+`0x1f2Da0cc5b6163650894Fd2a6Af8E3f9f99F30Ad` on Robinhood Chain (4663) and opens,
+repays, tops up and unwinds real positions through a connected wallet.
 `/design/` is the handover note for it.
 
-Two things about that deployment are worth knowing before you touch it. Its
-manifest carries `mocks: true`, and its lent token answers `symbol()` with `WN`
-("Wewen") — the page says `$CB` because that is the decision on file, and
-`Market.cbSymbol` in `src/lib/protocol.ts` carries what the chain actually
-reports. The collateral roster is whatever `collateralTokens()` returns, which at
-the time of writing is one coin, `CASHCAT`.
+This deployment replaced a mock one. Its lent token answers `symbol()` with `CB`
+and `name()` with "cyka blyat" against a supply of 1,000,000,000, so the `$CB` on
+the page and the token on the chain finally mean the same thing — the one before
+it called itself `WN` ("Wewen"). `Market.cbSymbol` in `src/lib/protocol.ts` still
+carries whatever the chain reports, so the next disagreement is visible in code.
+
+**It is also brand new and not yet stocked.** `collateralTokens()` returns
+nothing, `availableCB()` is zero and no position has ever been opened. The page
+renders and prices itself correctly, and nobody can borrow: every coin in the
+roster shows as "not listed yet" until an admin calls `setCollateralConfig`, and
+the desk has nothing to lend until $CB is transferred to the contract. Neither is
+a change to this repo.
 
 ## Running it
 
