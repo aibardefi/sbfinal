@@ -181,6 +181,35 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Connect, in the bar. Sized and shaped like the Buy pill opposite it so the two
+   read as one family, but in the accent rather than on paper: this is the thing
+   the page wants you to do, and Buy is the thing you might also want. */
+.connect {
+  border: 0;
+  border-radius: var(--p1-r);
+  padding: 0.4rem 0.8rem;
+  background: var(--p1-accent);
+  color: var(--p1-on-accent);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter 130ms ease;
+}
+.connect:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.connect:disabled {
+  background: color-mix(in srgb, var(--p1-head) 12%, transparent);
+  color: var(--p1-head-dim);
+  cursor: progress;
+}
+.connect:focus-visible {
+  outline: 2px solid var(--p1-ink);
+  outline-offset: 2px;
+}
+
 .iconBtn {
   width: 32px;
   height: 32px;

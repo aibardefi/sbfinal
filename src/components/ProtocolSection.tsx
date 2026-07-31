@@ -6,7 +6,10 @@ import { Modal } from "./protocol/Modal";
 import { Positions } from "./protocol/Positions";
 import { Ruler } from "./protocol/Ruler";
 import { TxStatus } from "./protocol/TxStatus";
-import { BORROWED, ROSTER, rosterEntry } from "./protocol/tokens";
+/* Only BORROWED now. The roster is still consulted for order, names and
+   colours — but in `loadMarket`, where it is applied to what the contract
+   returned, rather than here where it used to generate rows of its own. */
+import { BORROWED } from "./protocol/tokens";
 import { lendingAbi } from "@/lib/abi";
 import { DEPLOYMENT, publicClient } from "@/lib/chain";
 import {
@@ -180,15 +183,6 @@ export function ProtocolSection() {
     }
   };
 
-  const pickerRows = useMemo(() => {
-    const live = new Map(collateral.map((c) => [c.symbol.toUpperCase(), c]));
-    const rows = ROSTER.map((meta) => ({ meta, token: live.get(meta.sym) }));
-    const extra = collateral
-      .filter((c) => !rosterEntry(c.symbol))
-      .map((c) => ({ meta: { sym: c.symbol, name: c.name, bg: c.bg, on: c.on }, token: c }));
-    return [...rows, ...extra];
-  }, [collateral]);
-
   // --- what stands between this form and a signature -----------------------
 
   const overBalance = balance !== undefined && lockWei > balance;
@@ -326,6 +320,28 @@ export function ProtocolSection() {
               <span className={s.dot} aria-hidden="true" />
               Robinhood Chain
             </span>
+
+            {/* Connect lives here as well as on the card. The card's button is
+                the end of a form somebody has already started filling in; this
+                one is for the visitor who lands on the page and wants to attach a
+                wallet before deciding anything. Hidden once connected, where the
+                address and the disconnect take its place — the two are the same
+                slot in two states, not two controls.
+
+                Nothing renders while `ready` is false: that is wagmi restoring a
+                stored session, and offering Connect to somebody who is about to
+                appear as connected reads as having been logged out. */}
+            {wallet.ready && !wallet.account ? (
+              <button
+                type="button"
+                className={s.connect}
+                onClick={wallet.connect}
+                disabled={wallet.connecting}
+              >
+                {wallet.connecting ? "Connecting…" : "Connect"}
+              </button>
+            ) : null}
+
             {shortAccount ? <span className={s.addr}>{shortAccount}</span> : null}
 
             {/* Only when there is something to disconnect. A permanently visible
@@ -643,37 +659,45 @@ export function ProtocolSection() {
       {/* ---------------- popups ---------------- */}
 
       <Modal theme={theme} open={picking} onClose={() => setPicking(false)} title="Choose collateral">
+        {/* Every row here is a token `collateralTokens()` returned. The roster in
+            `protocol/tokens.ts` no longer contributes rows of its own — it is
+            consulted for the running order, the display name and the colour, all
+            of which a token contract cannot answer, and nothing else.
+
+            That is the difference between a list that is read and a list that is
+            merely checked against one: a coin the admin whitelists appears here
+            without this page changing, and a coin the design knows about but the
+            contract has never heard of does not appear at all. */}
         {market.loading && collateral.length === 0 ? (
           <p className={s.mnote}>Reading the collateral list from the contract…</p>
+        ) : collateral.length === 0 ? (
+          <p className={s.mnote}>
+            The contract is not accepting any collateral yet. Nothing can be borrowed against until
+            an admin whitelists a coin — when one is, it appears here on its own.
+          </p>
         ) : (
           <ul className={s.tokens}>
-            {/* The running order is the roster's, not the contract's. A row is
-                live when the contract lists that symbol, and dead otherwise. */}
-            {pickerRows.map(({ meta, token }) => (
-              <li key={meta.sym}>
+            {collateral.map((c) => (
+              <li key={c.address}>
                 <button
                   type="button"
                   className={s.tok}
-                  disabled={!token}
-                  aria-current={token?.address === coin?.address || undefined}
+                  /* Listed but not selectable when the contract has closed it to
+                     new loans. It still has to be visible: repaying and adding
+                     collateral against a disabled coin must stay reachable. */
+                  disabled={!c.enabled}
+                  aria-current={c.address === coin?.address || undefined}
                   onClick={() => {
-                    if (!token) return;
-                    setChosen(token.address);
+                    setChosen(c.address);
                     setPicking(false);
                   }}
                 >
-                  <span className={s.dotBig} style={{ background: meta.bg, color: meta.on }}>
-                    {meta.sym.slice(0, 1)}
+                  <span className={s.dotBig} style={{ background: c.bg, color: c.on }}>
+                    {c.symbol.slice(0, 1)}
                   </span>
                   <span className={s.tokName}>
-                    <b>{meta.sym}</b>
-                    <small>
-                      {!token
-                        ? `${meta.name} — not listed yet`
-                        : token.enabled
-                          ? meta.name
-                          : `${meta.name} — closed to new loans`}
-                    </small>
+                    <b>{c.symbol}</b>
+                    <small>{c.enabled ? c.name : `${c.name} — closed to new loans`}</small>
                   </span>
                 </button>
               </li>
@@ -681,8 +705,8 @@ export function ProtocolSection() {
           </ul>
         )}
         <p className={s.mnote}>
-          Robinhood Chain memecoins. Which of them can be borrowed against is read from the contract,
-          so it changes when the contract does, without this page changing.
+          Robinhood Chain memecoins, read from the contract. The list changes when the contract does,
+          without this page changing.
         </p>
       </Modal>
 
