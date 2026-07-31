@@ -245,17 +245,19 @@ export function ProtocolSection() {
     }
   };
 
+  /* No "no wallet found" branch any more. RainbowKit answers that case with its
+     own "Get a wallet" flow, which is a better reply than a dead button — so
+     somebody without an extension gets the same Connect button and is taken
+     somewhere useful rather than told no. */
   const cta = !LIVE
     ? { label: "Not live yet", onClick: undefined, disabled: true }
     : !wallet.ready || market.loading
       ? { label: "Reading the chain…", onClick: undefined, disabled: true }
-      : !wallet.hasProvider
-        ? { label: "No wallet found in this browser", onClick: undefined, disabled: true }
-        : !wallet.account
-          ? { label: "Connect wallet", onClick: wallet.connect, disabled: wallet.connecting }
-          : wallet.wrongNetwork
-            ? { label: "Switch to Robinhood Chain", onClick: wallet.switchNetwork, disabled: false }
-            : { label: `Approve & borrow`, onClick: () => void submit(), disabled: !ready };
+      : !wallet.account
+        ? { label: "Connect wallet", onClick: wallet.connect, disabled: wallet.connecting }
+        : wallet.wrongNetwork
+          ? { label: "Switch to Robinhood Chain", onClick: wallet.switchNetwork, disabled: false }
+          : { label: `Approve & borrow`, onClick: () => void submit(), disabled: !ready };
 
   const copyContract = async () => {
     try {

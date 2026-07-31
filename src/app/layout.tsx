@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Poppins } from "next/font/google";
 import { RPC_ORIGIN } from "@/lib/rpc";
+import { Providers } from "@/components/Providers";
 import "./globals.css";
 
 const sb = Geist({
@@ -139,7 +140,11 @@ export default function RootLayout({
       {/* Ground and colour come from globals.css, which owns the shared
           palette; the old Tailwind colour classes no longer resolve. */}
       <body>
-        {children}
+        {/* wagmi + RainbowKit, around everything rather than around the borrow
+            screen: the connection lives in context and the wallet dialog portals
+            to the body, so a provider nested inside one of nine scroll-snap
+            sections would put that dialog inside a snap target. */}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
