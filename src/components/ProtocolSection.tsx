@@ -35,7 +35,7 @@ import {
   useTokenBalance,
   valueInWeth,
 } from "@/lib/protocol";
-import { BUY_URL, isLive } from "@/lib/links";
+import { BUY_URL, externalLinkProps, isLive } from "@/lib/links";
 import { approvalStep, useTx, type Step } from "@/lib/tx";
 import { useWallet } from "@/lib/wallet";
 import { EXPLORER_ORIGIN } from "@/lib/rpc";
@@ -310,7 +310,7 @@ export function ProtocolSection() {
               setSoon(true);
               window.setTimeout(() => setSoon(false), 1800);
             }}
-            {...(isLive(BUY_URL) ? { target: "_blank", rel: "noreferrer noopener" } : {})}
+            {...externalLinkProps(BUY_URL)}
           >
             {soon ? "soon." : `Buy ${BORROWED}`}
           </a>

@@ -6,7 +6,7 @@ import { Mascot } from "./Mascot";
 import { COINS, CoinGlyph, type Coin } from "./coins";
 import { useEntrance, prefersReducedMotion } from "@/lib/useEntrance";
 import { useAutoRearm } from "@/lib/useAutoRearm";
-import { BORROW_URL, BUY_URL } from "@/lib/links";
+import { BORROW_URL, BUY_URL, externalLinkProps } from "@/lib/links";
 import s from "./HeroSection.module.css";
 
 const MAX = 10;
@@ -193,7 +193,14 @@ export function HeroSection() {
             sees. Orange buys, blue borrows — the same two colours the headline
             already uses for those two words. */}
         <div className={s.topcta}>
-          <a className={`${s.cta} ${s.buy}`} href={BUY_URL} onClick={handleCta}>
+          {/* Off-site now, so it opens in a new tab — see externalLinkProps.
+              Borrow below stays in-tab: that one is our own property. */}
+          <a
+            className={`${s.cta} ${s.buy}`}
+            href={BUY_URL}
+            onClick={handleCta}
+            {...externalLinkProps(BUY_URL)}
+          >
             Buy $CB
           </a>
           <a
