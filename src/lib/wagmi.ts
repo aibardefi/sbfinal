@@ -1,48 +1,75 @@
 "use client";
 
+import { connectorsForWallets } from "@rainbow-me/rainbowkit";
+import { injectedWallet, walletConnectWallet } from "@rainbow-me/rainbowkit/wallets";
 import { createConfig, http } from "wagmi";
-import { injected, safe } from "wagmi/connectors";
+import { safe } from "wagmi/connectors";
 import { robinhoodChain } from "./chain";
 import { RPC_URL } from "./rpc";
 
 /**
- * RainbowKit, wired to browser wallets only.
+ * The WalletConnect project id — a free, PUBLIC key from cloud.reown.com. It is
+ * shipped to every browser in the client bundle, so committing it is fine; it is
+ * not a secret. The deploy can set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`, or the
+ * literal fallback below can hold it. Fill in ONE and phone wallets light up on
+ * the next build.
  *
- * **No WalletConnect, deliberately.** It is what would add QR and mobile wallets,
- * and it costs two things this site has decided against. It needs a `projectId`
- * from a third-party account, and it needs `connect-src` widened to the
- * WalletConnect relay and `img-src` to their logo CDN — the same policy line the
- * README calls the thing that keeps "a script on this page cannot ask for your
- * wallet" a fact rather than a hope. On a memecoin site that is not a trade worth
- * making by default.
- *
- * **Connectors come from wagmi, not from `@rainbow-me/rainbowkit/wallets`.** That
- * module is a barrel: importing one wallet from it pulls the whole roster, and
- * the roster reaches `@coinbase/wallet-sdk` and then `@coinbase/cdp-sdk`, whose
- * optional `@x402/*` payment packages are not installed. The build fails on five
- * unresolved modules belonging to a wallet this config never lists. Installing
- * them to satisfy an import we do not want would put a payments SDK in a static
- * marketing site.
- *
- * Nothing is lost by dropping it. `multiInjectedProviderDiscovery` is wagmi's
- * EIP-6963 support and is on by default, so every extension the browser
- * announces — MetaMask, Rabby, Coinbase, Brave, Phantom, Zerion — is discovered
- * at runtime and offered by name, and RainbowKit renders whatever the config
- * holds. That discovery is also the real upgrade here: the hand-rolled hook this
- * replaces read `window.ethereum`, so with two extensions installed it silently
- * used whichever won the race and gave the visitor no say.
- *
- * `safe` is named because a Safe app runs in an iframe and cannot announce
- * itself. It is inert outside one.
- *
- * Turning WalletConnect on later means the `walletConnect` connector, a real
- * projectId, and both copies of the CSP — `src/app/layout.tsx` and
- * `public/_headers`, which `npm run check:csp` holds together.
+ * While it is empty, `walletConnectWallet` is left out of the roster — it needs
+ * a project id — so the modal behaves exactly as it did before: injected wallets
+ * only, no QR.
  */
+const WALLETCONNECT_PROJECT_ID =
+  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "";
 
+/**
+ * RainbowKit's connector roster, built its own way.
+ *
+ * **Why `connectorsForWallets` and not a hand-built `connectors` array.**
+ * RainbowKit's modal only renders wallets it was handed through this function
+ * (or `getDefaultConfig`). A bare wagmi `walletConnect()` connector dropped into
+ * `createConfig` does initialise — but RainbowKit draws no tile for it, so the
+ * "Connect" dialog comes up empty and there is no way to reach the QR. The
+ * WalletConnect and injected options have to come from
+ * `@rainbow-me/rainbowkit/wallets` for RainbowKit to know how to present them.
+ *
+ * **The barrel scare is narrower than it looks.** The whole module does reach
+ * `@coinbase/wallet-sdk` and its uninstalled `@x402/*` payment packages — but
+ * only through `coinbaseWallet`. Named-importing `injectedWallet` and
+ * `walletConnectWallet` alone tree-shakes `coinbaseWallet` out, and the build
+ * resolves cleanly. We simply never name the Coinbase entry.
+ *
+ * `injectedWallet` is the browser-extension option and, with wagmi's EIP-6963
+ * discovery still on by default, every extension the browser announces —
+ * MetaMask, Rabby, Coinbase, Brave, Phantom, Zerion — is offered by name too.
+ * `walletConnectWallet` is what adds QR and phone wallets: any wallet on any
+ * device, scanning from a desktop or deep-linking into a wallet app on a phone.
+ * RainbowKit draws its QR inside its own themed modal.
+ *
+ * The relay this needs is why `connect-src` in both copies of the CSP
+ * (`src/app/layout.tsx`, `public/_headers`, held together by `npm run
+ * check:csp`) names the WalletConnect origins.
+ */
+const wallets = [injectedWallet, ...(WALLETCONNECT_PROJECT_ID ? [walletConnectWallet] : [])];
+
+const rainbowConnectors = connectorsForWallets(
+  [{ groupName: "Wallets", wallets }],
+  {
+    appName: "$CB — Capybara Blyatovich",
+    // connectorsForWallets requires a string; the value is only ever read by
+    // walletConnectWallet, which is absent while the id is empty.
+    projectId: WALLETCONNECT_PROJECT_ID || "unset",
+  }
+);
+
+/**
+ * `safe()` is added outside RainbowKit's list on purpose. A Safe app runs in an
+ * iframe and auto-connects; it never needs a tile a human clicks, so it does not
+ * belong among the wallets and RainbowKit does not have to render it. Inert
+ * outside a Safe.
+ */
 export const wagmiConfig = createConfig({
   chains: [robinhoodChain],
-  connectors: [injected(), safe()],
+  connectors: [...rainbowConnectors, safe()],
   /**
    * Reads go over our own RPC rather than the wallet's: the same transport
    * `publicClient` uses in `chain.ts`, so the collateral list, the inventory and

@@ -99,20 +99,34 @@ export const metadata: Metadata = {
  * is the one thing GitHub Pages cannot send; put it in front (Cloudflare) if
  * clickjacking protection is wanted.
  */
+// The WalletConnect origins named in connect-src: the relay websocket that
+// carries pairing, plus the registry/telemetry hosts its SDK calls. Exact
+// origins, no wildcards — check:csp rejects a `*` here, and rightly. Kept in one
+// const so the literal string in public/_headers has a single thing to match.
+const WALLETCONNECT_CONNECT_SRC =
+  "wss://relay.walletconnect.com wss://relay.walletconnect.org " +
+  "https://explorer-api.walletconnect.com https://api.web3modal.org " +
+  "https://pulse.walletconnect.org";
+
 const CSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data:",
+  // WalletConnect fetches wallet logos for its picker; the rest of the page's
+  // images are still 'self' and data:.
+  "img-src 'self' data: https://explorer-api.walletconnect.com https://imagedelivery.net",
   "font-src 'self'",
   // The borrow screen reads the lending contract over JSON-RPC, so this is no
-  // longer 'self' alone. It is one named origin, built from the same constant
-  // the client dials — never a wildcard and never a widened default-src, which
-  // would look like a one-word change and remove the protection entirely.
+  // longer 'self' alone. It is named origins, never a wildcard and never a
+  // widened default-src, which would look like a one-word change and remove the
+  // protection entirely.
   //
-  // The wallet needs nothing here: an injected EIP-1193 provider is same-page
-  // JavaScript, and the signing traffic is the extension's, not the page's.
-  `connect-src 'self' ${RPC_ORIGIN}`,
+  // An injected wallet needs nothing here — its signing traffic is the
+  // extension's, not the page's. WalletConnect is the exception: pairing runs
+  // over its relay websocket, so the relay and the wallet-registry origins are
+  // named. They are only dialled once a WalletConnect session opens; an injected
+  // connection never touches them.
+  `connect-src 'self' ${RPC_ORIGIN} ${WALLETCONNECT_CONNECT_SRC}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'none'",

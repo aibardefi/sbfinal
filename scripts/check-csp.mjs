@@ -59,7 +59,18 @@ if (!headerPolicy) note("public/_headers has no Content-Security-Policy line.");
 
 const layout = read("src/app/layout.tsx");
 
-const expected = `'self' ${origin}`;
+// The WalletConnect relay/registry origins connect-src must also name, in the
+// same order both copies write them. Exact origins, no wildcards — the widening
+// check below still refuses a `*` here.
+const WALLETCONNECT = [
+  "wss://relay.walletconnect.com",
+  "wss://relay.walletconnect.org",
+  "https://explorer-api.walletconnect.com",
+  "https://api.web3modal.org",
+  "https://pulse.walletconnect.org",
+].join(" ");
+
+const expected = `'self' ${origin} ${WALLETCONNECT}`;
 
 // The header copy is literal text, so it is compared literally.
 if (headerPolicy) {
@@ -99,4 +110,6 @@ if (problems.length) {
   process.exit(1);
 }
 
-console.log(`check:csp ok — connect-src is 'self' plus ${origin}, in both copies.`);
+console.log(
+  `check:csp ok — connect-src is 'self' plus ${origin} plus the WalletConnect relay, in both copies.`
+);
