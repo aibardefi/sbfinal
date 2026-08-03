@@ -38,7 +38,6 @@ import {
 import { BUY_URL, externalLinkProps, isLive } from "@/lib/links";
 import { approvalStep, useTx, type Step } from "@/lib/tx";
 import { useWallet } from "@/lib/wallet";
-import { EXPLORER_ORIGIN } from "@/lib/rpc";
 import { useEntrance } from "@/lib/useEntrance";
 import s from "./ProtocolSection.module.css";
 import t from "./protocol/theme.module.css";
@@ -78,8 +77,6 @@ type Theme = "light" | "dark";
 /** Which amount the visitor pinned. The ruler moves the other one. */
 type Pin = "lock" | "borrow";
 
-const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
-
 /**
  * Page 1: the borrow desk.
  *
@@ -113,7 +110,6 @@ export function ProtocolSection() {
   const [pin, setPin] = useState<Pin>("lock");
   const [picking, setPicking] = useState(false);
   const [explaining, setExplaining] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [soon, setSoon] = useState(false);
 
   const wallet = useWallet();
@@ -253,16 +249,6 @@ export function ProtocolSection() {
           ? { label: "Switch to Robinhood Chain", onClick: wallet.switchNetwork, disabled: false }
           : { label: `Approve & borrow`, onClick: () => void submit(), disabled: !ready };
 
-  const copyContract = async () => {
-    try {
-      await navigator.clipboard.writeText(DEPLOYMENT.lending);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      // A refused clipboard is not worth an error box: the address is on screen
-      // and selectable either way.
-    }
-  };
 
   const openCount = positions.data?.length ?? 0;
 
@@ -615,41 +601,14 @@ export function ProtocolSection() {
       {/* ---------------- foot ---------------- */}
       <div className="bottom">
         <div className={s.foot}>
+          {/* The contract address and its explorer link are deliberately not
+              shown here yet: the token has not been announced, and the owner
+              asked that no address appear on the site until it is. The screen
+              still reads and writes the contract — this only removes the
+              on-screen address, not the wiring. */}
           <button type="button" className={s.footLink} onClick={() => setExplaining(true)}>
             Liquidation
           </button>
-          <span className={s.addrRow}>
-            <a
-              className={s.footLink}
-              href={`${EXPLORER_ORIGIN}/address/${DEPLOYMENT.lending}`}
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              {short(DEPLOYMENT.lending)}
-            </a>
-            <button
-              type="button"
-              className={s.iconBtn}
-              onClick={copyContract}
-              aria-label="Copy the contract address"
-            >
-              {copied ? (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                  <path
-                    d="M5 13l4 4L19 7"
-                    strokeWidth="2.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              ) : (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                  <rect x="9" y="9" width="11" height="11" rx="2" strokeWidth="2" />
-                  <path d="M5 15V6a2 2 0 0 1 2-2h9" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              )}
-            </button>
-          </span>
         </div>
         <div className="cue">
           <span>Scroll ↓</span>

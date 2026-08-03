@@ -20,8 +20,9 @@ import { DEPLOYMENT } from "./chain";
  */
 export const BUY_URL = `https://app.uniswap.org/swap?chain=robinhood&inputCurrency=ETH&outputCurrency=${DEPLOYMENT.cb}`;
 
-/** The lending app, once there is one. Our own property, so: same tab. */
-export const BORROW_URL = "https://app.cykablyat.vip";
+// There is no separate borrow app: the borrow screen is the first screen of
+// this site. The hero's "Borrow $CB" scrolls to it rather than linking off to
+// app.cykablyat.vip, which this project does not serve.
 
 /**
  * Whether a link is a real destination or the `"#"` placeholder this file used

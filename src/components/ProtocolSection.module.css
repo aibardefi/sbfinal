@@ -562,12 +562,6 @@
   font-weight: 500;
   color: var(--p1-head-dim);
 }
-.addrRow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-variant-numeric: tabular-nums;
-}
 .footLink {
   border: 0;
   background: none;
