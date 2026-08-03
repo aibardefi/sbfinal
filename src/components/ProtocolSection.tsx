@@ -39,6 +39,7 @@ import { BUY_URL, TOKEN_ADDRESS, externalLinkProps, isLive } from "@/lib/links";
 import { approvalStep, useTx, type Step } from "@/lib/tx";
 import { useWallet } from "@/lib/wallet";
 import { useEntrance } from "@/lib/useEntrance";
+import { MobileWalletLinks } from "./MobileWalletLinks";
 import s from "./ProtocolSection.module.css";
 import t from "./protocol/theme.module.css";
 
@@ -591,6 +592,12 @@ export function ProtocolSection() {
                 >
                   {cta.label}
                 </button>
+
+                {/* The phone-in-a-browser case the RainbowKit modal cannot serve
+                    without a WalletConnect project id: open this page inside the
+                    wallet app, where injected takes over. Self-hides on desktop
+                    and once connected. */}
+                {!wallet.account ? <MobileWalletLinks /> : null}
 
                 <TxStatus state={tx.state} onDismiss={tx.reset} />
               </div>
