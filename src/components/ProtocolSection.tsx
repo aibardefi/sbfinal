@@ -35,7 +35,7 @@ import {
   useTokenBalance,
   valueInWeth,
 } from "@/lib/protocol";
-import { BUY_URL, externalLinkProps, isLive } from "@/lib/links";
+import { BUY_URL, TOKEN_ADDRESS, externalLinkProps, isLive } from "@/lib/links";
 import { approvalStep, useTx, type Step } from "@/lib/tx";
 import { useWallet } from "@/lib/wallet";
 import { useEntrance } from "@/lib/useEntrance";
@@ -77,6 +77,8 @@ type Theme = "light" | "dark";
 /** Which amount the visitor pinned. The ruler moves the other one. */
 type Pin = "lock" | "borrow";
 
+const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
+
 /**
  * Page 1: the borrow desk.
  *
@@ -111,6 +113,7 @@ export function ProtocolSection() {
   const [picking, setPicking] = useState(false);
   const [explaining, setExplaining] = useState(false);
   const [soon, setSoon] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const wallet = useWallet();
   const market = useMarket();
@@ -249,6 +252,18 @@ export function ProtocolSection() {
           ? { label: "Switch to Robinhood Chain", onClick: wallet.switchNetwork, disabled: false }
           : { label: `Approve & borrow`, onClick: () => void submit(), disabled: !ready };
 
+  // Copies the public token address, once there is one. Null until launch, so
+  // the chip shows "coming soon" and this never runs before then.
+  const copyContract = async () => {
+    if (!TOKEN_ADDRESS) return;
+    try {
+      await navigator.clipboard.writeText(TOKEN_ADDRESS);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      // A refused clipboard is not worth an error box.
+    }
+  };
 
   const openCount = positions.data?.length ?? 0;
 
@@ -601,14 +616,28 @@ export function ProtocolSection() {
       {/* ---------------- foot ---------------- */}
       <div className="bottom">
         <div className={s.foot}>
-          {/* The contract address and its explorer link are deliberately not
-              shown here yet: the token has not been announced, and the owner
-              asked that no address appear on the site until it is. The screen
-              still reads and writes the contract — this only removes the
-              on-screen address, not the wiring. */}
           <button type="button" className={s.footLink} onClick={() => setExplaining(true)}>
             Liquidation
           </button>
+          {/* The public token address. Null until the final token exists, so it
+              shows "coming soon" and cannot be copied; the moment TOKEN_ADDRESS
+              in lib/links.ts holds the real value it becomes the copyable
+              address, with no other change. The old interim contract is
+              deliberately not shown. */}
+          <span className={s.addrRow}>
+            {TOKEN_ADDRESS ? (
+              <button
+                type="button"
+                className={s.footLink}
+                onClick={copyContract}
+                aria-label="Copy the contract address"
+              >
+                {copied ? "Copied ✓" : `${short(TOKEN_ADDRESS)} · copy`}
+              </button>
+            ) : (
+              <span className={s.addrSoon}>Contract · coming soon</span>
+            )}
+          </span>
         </div>
         <div className="cue">
           <span>Scroll ↓</span>

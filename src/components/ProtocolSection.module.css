@@ -562,6 +562,18 @@
   font-weight: 500;
   color: var(--p1-head-dim);
 }
+.addrRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-variant-numeric: tabular-nums;
+}
+/* The not-yet state: same footer type, muted and plainly not interactive, so it
+   reads as "nothing to copy here" rather than a dead link. */
+.addrSoon {
+  opacity: 0.65;
+  cursor: default;
+}
 .footLink {
   border: 0;
   background: none;

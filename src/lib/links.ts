@@ -1,39 +1,37 @@
-import { DEPLOYMENT } from "./chain";
+/**
+ * The final $CB token's public address — the one people buy and verify.
+ *
+ * `null` until the token is created. It is deliberately NOT `DEPLOYMENT.cb`:
+ * that value wires the borrow screen to the contract it reads and signs
+ * against, and the token that ships to the public is a separate, not-yet-minted
+ * thing. Selling or displaying an interim address on a memecoin site is
+ * indistinguishable from pointing buyers at a counterfeit, so nothing on the
+ * site shows or links to an address until this holds the real one.
+ *
+ * Fill this in ONE place on launch: `BUY_URL` starts working and the copy chip
+ * on the first screen goes from "Coming soon" to the live, copyable address.
+ */
+export const TOKEN_ADDRESS: string | null = null;
 
 /**
- * Where the outbound calls to action point.
+ * Where "Buy $CB" points. Both screens that carry the button share it, so the
+ * address can never land on one and not the other.
  *
- * `BUY_URL` is shared rather than duplicated because two screens carry a Buy $CB
- * button — the hero and the borrow app — and a token address that lands in one
- * and not the other is the failure mode worth engineering against. One constant,
- * one edit, both buttons.
- *
- * **The output token is read from `DEPLOYMENT.cb`, not typed out here.** Both are
- * `0x7F31…73E3` today, and writing it twice is how they stop being. A redeploy
- * moves the contract, somebody updates `chain.ts`, and this link quietly goes on
- * selling the previous token — which on a memecoin site is indistinguishable from
- * a counterfeit, and worse for being on our own page. Derived, it cannot drift.
- *
- * The chain and the output token are both pinned for the same reason. A bare
- * `https://app.uniswap.org/swap` opens a token search box, and a search box is
- * the single most reliable way for somebody to buy the wrong $CB.
+ * While `TOKEN_ADDRESS` is null this is `"#"` — the site's convention for "not
+ * wired up yet". `HeroSection`'s `handleCta` and the borrow screen's buy button
+ * both catch `"#"` and say "soon" instead of opening a swap for the wrong token.
+ * The chain and output token are pinned rather than left to a search box, which
+ * is the single most reliable way for somebody to buy the wrong $CB.
  */
-export const BUY_URL = `https://app.uniswap.org/swap?chain=robinhood&inputCurrency=ETH&outputCurrency=${DEPLOYMENT.cb}`;
+export const BUY_URL = TOKEN_ADDRESS
+  ? `https://app.uniswap.org/swap?chain=robinhood&inputCurrency=ETH&outputCurrency=${TOKEN_ADDRESS}`
+  : "#";
 
 // There is no separate borrow app: the borrow screen is the first screen of
 // this site. The hero's "Borrow $CB" scrolls to it rather than linking off to
 // app.cykablyat.vip, which this project does not serve.
 
-/**
- * Whether a link is a real destination or the `"#"` placeholder this file used
- * to hold.
- *
- * `BUY_URL` is live now, so nothing takes the false branch — it stays because
- * `"#"` is the site's convention for "not wired up yet" and the way back to it
- * should be one edit, not one edit plus remembering to restore two click
- * handlers. `HeroSection`'s `handleCta` and the borrow screen's buy button both
- * still catch it.
- */
+/** Whether a link is a real destination or the `"#"` placeholder. */
 export const isLive = (url: string) => url !== "#" && url.length > 0;
 
 /**
