@@ -85,7 +85,6 @@
 }
 .link:nth-child(1) { animation-delay: 900ms; }
 .link:nth-child(2) { animation-delay: 1000ms; }
-.link:nth-child(3) { animation-delay: 1100ms; }
 @keyframes linkin {
   to { opacity: 1; transform: none; }
 }
@@ -93,13 +92,6 @@
 .link:active { transform: translateY(2px); box-shadow: 0 1px 0 0 var(--ink); }
 .link:focus-visible { outline: 3px solid var(--stamp); outline-offset: 3px; }
 .link svg { width: 1.15em; height: 1.15em; display: block; flex: none; }
-
-.primary {
-  background: var(--cb);
-  padding: 0.8rem 1.5rem;
-  font-size: clamp(0.72rem, 1.9vw, 0.88rem);
-}
-.primary:hover { background: var(--cb-lit); }
 
 /* ---- tokenomics: a spec sheet, not a set of cards ----
    Boxing four short facts made them look like four separate claims competing
@@ -394,10 +386,6 @@
     border-width: 3px;
     font-size: 0.64rem;
     box-shadow: 0 3px 0 0 var(--ink);
-  }
-  .primary {
-    padding: 0.32rem 0.8rem;
-    font-size: 0.68rem;
   }
   .links {
     gap: 0.25rem;

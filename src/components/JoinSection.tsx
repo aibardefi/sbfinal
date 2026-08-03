@@ -15,8 +15,6 @@ const CONTRACT: string | null = null;
  */
 const X_URL = "https://x.com/cykablyatvip";
 const TELEGRAM_URL = "https://t.me/cykablyatvip";
-/** The lending app. Same tab — it is ours, not somewhere off-site. */
-const APP_URL = "https://app.cykablyat.vip";
 
 function shorten(a: string) {
   return a.length > 20 ? a.slice(0, 8) + "…" + a.slice(-6) : a;
@@ -163,17 +161,6 @@ export function JoinSection() {
           </div>
 
           <div className={s.links}>
-            <a className={`${s.link} ${s.primary}`} href={APP_URL} onClick={handleLink}>
-              <svg
-                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M5 12h13M12 5l7 7-7 7" />
-              </svg>
-              Launch app
-            </a>
-
             <a
               className={s.link}
               href={X_URL}
@@ -242,7 +229,7 @@ export function JoinSection() {
               <dt className={s.slab}>Treasury</dt>
               <span className={s.sdots} aria-hidden="true" />
               <dd className={`${s.sval} ${s.hot}`}>
-                20% <small>never sold</small>
+                50% <small>never sold</small>
               </dd>
             </div>
             <div className={s.specRow}>

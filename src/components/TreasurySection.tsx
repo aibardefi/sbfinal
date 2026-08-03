@@ -113,7 +113,7 @@ export function TreasurySection() {
             <div className={s.safewrap}>
               <Vault
                 className={s.vault}
-                alt="The treasury vault, holding 20% of all $CB"
+                alt="The treasury vault, holding 50% of all $CB"
                 inside={
                   <>
                     {/* Bigger than the 26 these were, so `$CB` is legible once
@@ -134,7 +134,7 @@ export function TreasurySection() {
                       textAnchor="middle"
                       aria-hidden="true"
                     >
-                      20%
+                      50%
                     </text>
                   </>
                 }
@@ -143,7 +143,7 @@ export function TreasurySection() {
             <span className={`${s.cap} ${s.c1}`}>
               The treasury holds
               <br />
-              <b>20% of all $CB</b>
+              <b>50% of all $CB</b>
             </span>
           </div>
 

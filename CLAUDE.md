@@ -104,6 +104,6 @@ replace that with a client-side guess at the limit.
 ## Facts that are settled
 
 - 1,000,000,000 $CB · fair launch · no presale · no team allocation
-- Treasury holds 20%, stated on screen 04 as contract-locked
+- Treasury holds 50%, stated on screen 04 as contract-locked
 - Copy says "memecoin", never a specific ticker. Artwork may show real coins.
 - Robinhood Chain memecoins only
