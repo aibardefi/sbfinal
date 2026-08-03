@@ -6,7 +6,7 @@ import { Mascot } from "./Mascot";
 import { COINS, CoinGlyph, type Coin } from "./coins";
 import { useEntrance, prefersReducedMotion } from "@/lib/useEntrance";
 import { useAutoRearm } from "@/lib/useAutoRearm";
-import { BORROW_URL, BUY_URL, externalLinkProps } from "@/lib/links";
+import { BUY_URL, externalLinkProps } from "@/lib/links";
 import s from "./HeroSection.module.css";
 
 const MAX = 10;
@@ -173,6 +173,17 @@ export function HeroSection() {
     [say]
   );
 
+  // The borrow app is the first screen, above this one. Scroll to the top of
+  // the page rather than navigate — same move the last screen's "Back to top"
+  // makes, and it honours a reduced-motion preference.
+  const handleBorrow = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    window.scrollTo({
+      top: 0,
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+    });
+  }, []);
+
   const { sx, sy } = shape(fed);
   const full = fed >= MAX;
 
@@ -203,10 +214,13 @@ export function HeroSection() {
           >
             Buy $CB
           </a>
+          {/* Borrow lives on the first screen — the lending app itself, which
+              sits above this one. So the button scrolls there rather than off to
+              a separate address. */}
           <a
             className={`${s.cta} ${s.borrow}`}
-            href={BORROW_URL}
-            onClick={handleCta}
+            href="#top"
+            onClick={handleBorrow}
           >
             Borrow $CB
           </a>

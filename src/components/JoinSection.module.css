@@ -156,100 +156,6 @@
   letter-spacing: 0.02em;
 }
 
-/* ---- contract address: coming soon, copyable when it lands ---- */
-.ca {
-  display: grid;
-  justify-items: center;
-  gap: 0.4rem;
-  opacity: 0;
-  animation: linkin 620ms var(--spring) 1250ms both;
-}
-
-.caLabel {
-  font-size: clamp(0.72rem, 1.7vw, 0.8rem);
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.caBox {
-  /* The one thing on the site worth selecting. Everything inside `.stage` is
-     user-select: none so a drag on the artwork does not paint a blue selection
-     over it, and a contract address you cannot select is a contract address you
-     cannot check against a block explorer. */
-  -webkit-user-select: text;
-  user-select: text;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.55rem 0.7rem 0.55rem 0.95rem;
-  border: 3px dashed var(--ink);
-  border-radius: 12px;
-  background: transparent;
-  color: var(--text-dim);
-  font: inherit;
-  font-weight: 900;
-  font-size: clamp(0.72rem, 1.7vw, 0.76rem);
-  letter-spacing: 0.04em;
-  cursor: not-allowed;
-}
-.caBox:focus-visible { outline: 3px solid var(--stamp); outline-offset: 3px; }
-
-.caBoxReady {
-  border-style: solid;
-  background: var(--cream);
-  color: var(--ink);
-  cursor: pointer;
-  font-variant-numeric: tabular-nums;
-}
-
-.copy { width: 1em; height: 1em; opacity: 0.45; }
-.caBoxReady .copy { opacity: 1; }
-
-.caWrap {
-  position: relative;
-  display: grid;
-  justify-items: center;
-}
-
-.copied {
-  position: absolute;
-  left: 50%;
-  bottom: 100%;
-  transform: translate(-50%, 6px);
-  padding: 0.3rem 0.55rem;
-  background: var(--ink);
-  color: var(--cream);
-  border-radius: 8px;
-  font-size: clamp(0.72rem, 1.7vw, 0.8rem);
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 180ms ease, transform 320ms var(--spring);
-  white-space: nowrap;
-}
-.showCopied .copied {
-  opacity: 1;
-  transform: translate(-50%, -8px);
-}
-
-.signoff {
-  font-size: clamp(0.72rem, 1.9vw, 0.8rem);
-  font-weight: 700;
-  color: var(--text-dim);
-  text-align: center;
-  /* Holds its line while empty. It starts with nothing to say, and without
-     this the tokenomics above it would jump the moment it did. The
-     line-height is pinned to the same 1.2 so the reserved box and the filled
-     box are exactly equal — leaving it to the default made the filled state
-     ~2px taller, which is a small jump but still a jump. */
-  line-height: 1.2;
-  min-height: 1.2em;
-}
-
 /* The cue is a real control on the last screen — it is the only way back up
    without scrolling the whole page by hand. */
 .toTop {
@@ -333,9 +239,6 @@
   .specRow {
     font-size: 0.74rem;
   }
-  .caLabel {
-    font-size: 0.68rem;
-  }
 }
 
 @media (max-width: 560px) and (max-height: 700px) {
@@ -390,17 +293,6 @@
   .links {
     gap: 0.25rem;
   }
-  .ca {
-    gap: 0.1rem;
-  }
-  .caLabel {
-    font-size: 0.58rem;
-    letter-spacing: 0.1em;
-  }
-  .caBox {
-    padding: 0.28rem 0.5rem 0.28rem 0.65rem;
-    font-size: 0.64rem;
-  }
   .spec {
     gap: 0;
     margin-top: 0.05rem;
@@ -410,9 +302,6 @@
   }
   .slab {
     font-size: 0.58rem;
-  }
-  .signoff {
-    display: none;
   }
 }
 
@@ -433,8 +322,5 @@
   }
   .specRow {
     font-size: 0.7rem;
-  }
-  .signoff {
-    display: none;
   }
 }
