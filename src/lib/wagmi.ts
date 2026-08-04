@@ -1,7 +1,13 @@
 "use client";
 
 import { connectorsForWallets } from "@rainbow-me/rainbowkit";
-import { injectedWallet, walletConnectWallet } from "@rainbow-me/rainbowkit/wallets";
+import {
+  injectedWallet,
+  metaMaskWallet,
+  phantomWallet,
+  trustWallet,
+  walletConnectWallet,
+} from "@rainbow-me/rainbowkit/wallets";
 import { createConfig, http } from "wagmi";
 import { safe } from "wagmi/connectors";
 import { robinhoodChain } from "./chain";
@@ -10,54 +16,56 @@ import { RPC_URL } from "./rpc";
 /**
  * The WalletConnect project id — a free, PUBLIC key from cloud.reown.com. It is
  * shipped to every browser in the client bundle, so committing it is fine; it is
- * not a secret. The deploy can set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`, or the
- * literal fallback below can hold it. Fill in ONE and phone wallets light up on
- * the next build.
+ * not a secret. The deploy may override it with
+ * NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID; otherwise the literal below is used.
  *
- * While it is empty, `walletConnectWallet` is left out of the roster — it needs
- * a project id — so the modal behaves exactly as it did before: injected wallets
- * only, no QR.
+ * This is what turns the named mobile wallets on. MetaMask, Trust and Phantom
+ * reach a phone through the WalletConnect relay, so an empty id would leave those
+ * tiles present but unable to pair. With a real id they scan a QR from a desktop
+ * or deep-link straight into the app on a phone, and the session stays in this
+ * tab.
  */
 const WALLETCONNECT_PROJECT_ID =
-  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "";
+  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ??
+  "f6857532efcddfe6a529b65c08ef68b8";
 
 /**
  * RainbowKit's connector roster, built its own way.
  *
  * **Why `connectorsForWallets` and not a hand-built `connectors` array.**
- * RainbowKit's modal only renders wallets it was handed through this function
- * (or `getDefaultConfig`). A bare wagmi `walletConnect()` connector dropped into
- * `createConfig` does initialise — but RainbowKit draws no tile for it, so the
- * "Connect" dialog comes up empty and there is no way to reach the QR. The
- * WalletConnect and injected options have to come from
+ * RainbowKit's modal only renders wallets it was handed through this function.
+ * A bare wagmi connector dropped into `createConfig` initialises but gets no
+ * tile, so the "Connect" dialog comes up empty. The options have to come from
  * `@rainbow-me/rainbowkit/wallets` for RainbowKit to know how to present them.
  *
  * **The barrel scare is narrower than it looks.** The whole module does reach
  * `@coinbase/wallet-sdk` and its uninstalled `@x402/*` payment packages — but
- * only through `coinbaseWallet`. Named-importing `injectedWallet` and
- * `walletConnectWallet` alone tree-shakes `coinbaseWallet` out, and the build
- * resolves cleanly. We simply never name the Coinbase entry.
+ * only through `coinbaseWallet`. Named-importing the entries below tree-shakes
+ * `coinbaseWallet` out and the build resolves cleanly. We simply never name it.
  *
- * `injectedWallet` is the browser-extension option and, with wagmi's EIP-6963
- * discovery still on by default, every extension the browser announces —
- * MetaMask, Rabby, Coinbase, Brave, Phantom, Zerion — is offered by name too.
- * `walletConnectWallet` is what adds QR and phone wallets: any wallet on any
- * device, scanning from a desktop or deep-linking into a wallet app on a phone.
- * RainbowKit draws its QR inside its own themed modal.
+ * The roster:
+ * - `metaMaskWallet`, `trustWallet`, `phantomWallet` — the popular wallets by
+ *   name, each with a phone path over WalletConnect (QR + deep-link).
+ * - `walletConnectWallet` — the catch-all for every other WalletConnect wallet
+ *   that is not listed by name.
+ * - `injectedWallet` — the browser-extension option; with wagmi's EIP-6963
+ *   discovery still on, every extension the browser announces is also offered.
  *
- * The relay this needs is why `connect-src` in both copies of the CSP
+ * The relay these need is why `connect-src` in both copies of the CSP
  * (`src/app/layout.tsx`, `public/_headers`, held together by `npm run
  * check:csp`) names the WalletConnect origins.
  */
-const wallets = [injectedWallet, ...(WALLETCONNECT_PROJECT_ID ? [walletConnectWallet] : [])];
-
 const rainbowConnectors = connectorsForWallets(
-  [{ groupName: "Wallets", wallets }],
+  [
+    {
+      groupName: "Popular",
+      wallets: [metaMaskWallet, walletConnectWallet, trustWallet, phantomWallet],
+    },
+    { groupName: "Other", wallets: [injectedWallet] },
+  ],
   {
     appName: "$CB — Capybara Blyatovich",
-    // connectorsForWallets requires a string; the value is only ever read by
-    // walletConnectWallet, which is absent while the id is empty.
-    projectId: WALLETCONNECT_PROJECT_ID || "unset",
+    projectId: WALLETCONNECT_PROJECT_ID,
   }
 );
 
