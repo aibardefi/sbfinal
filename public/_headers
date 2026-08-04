@@ -35,6 +35,16 @@
   # into browsers, and getting off it takes months.
   Strict-Transport-Security: max-age=63072000; includeSubDomains
 
+# The HTML document must never be served stale. It carries the CSP meta tag and
+# the references to the hashed bundles, so a cached copy pins an old policy and
+# an old app on a returning visitor — which is exactly how a fix can ship and a
+# phone keep showing the version from before it. Revalidate on every load; the
+# bytes are still held and an unchanged document comes back as a bodyless 304.
+/
+  Cache-Control: public, max-age=0, must-revalidate
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
 # Every filename under here is content-hashed by the build, so a change ships a
 # new name rather than a new version of an old name. Nothing needs revalidating.
 /_next/static/*
