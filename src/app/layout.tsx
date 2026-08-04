@@ -41,9 +41,9 @@ const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ??
   "https://cykablyat.vip";
 
-const TITLE = "$CB — Capybara Blyatovich";
+const TITLE = "$CB — Capybara CykaBlyat";
 const DESCRIPTION =
-  "Lock memes. Borrow the meme. A lending protocol run by one tired capybara.";
+  "Lock Memes. Borrow the CB, buy more memes or do whatever - a lending protocol run on Robinhood.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "Capybara Blyatovich in his 'cyka blyat' ushanka, beside the words: lock memes, borrow the meme.",
+        alt: "Capybara CykaBlyat in his 'cyka blyat' ushanka, beside the words: $CB, lock memes, borrow the meme.",
       },
     ],
   },
