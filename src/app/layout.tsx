@@ -41,7 +41,12 @@ const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ??
   "https://cykablyat.vip";
 
-const TITLE = "$CB — Capybara CykaBlyat";
+// The browser-tab title, and the only place the name lives now. It is
+// deliberately just "$CB": a link preview draws its bold line from og:title,
+// falling back to this <title>, so keeping the full "Capybara CykaBlyat" here
+// would put that bold line back on the card the moment a scraper ignored the
+// empty og:title. The card art already says everything the title used to.
+const TITLE = "$CB";
 const DESCRIPTION =
   "Lock Memes. Borrow the CB, buy more memes or do whatever - a lending protocol run on Robinhood.";
 
@@ -51,10 +56,12 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   openGraph: {
     type: "website",
-    siteName: "$CB",
+    // No `siteName`. Next forces og:title to fall back to the "$CB" <title>
+    // (an empty og:title is dropped, not emitted), so a site_name of "$CB" on
+    // top of that title-"$CB" is the very double line this change removes. One
+    // "$CB" above the art is enough; the art carries the rest.
     locale: "en_US",
     url: SITE_URL,
-    title: TITLE,
     description: DESCRIPTION,
     images: [
       {
@@ -74,7 +81,6 @@ export const metadata: Metadata = {
     // carries "@cykablyatvip" under it rather than a bare domain.
     site: "@cykablyatvip",
     creator: "@cykablyatvip",
-    title: TITLE,
     description: DESCRIPTION,
     images: ["/og.png"],
   },
