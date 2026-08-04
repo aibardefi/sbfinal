@@ -6,6 +6,7 @@ import {
   metaMaskWallet,
   phantomWallet,
   trustWallet,
+  uniswapWallet,
   walletConnectWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 import { createConfig, http } from "wagmi";
@@ -44,8 +45,9 @@ const WALLETCONNECT_PROJECT_ID =
  * `coinbaseWallet` out and the build resolves cleanly. We simply never name it.
  *
  * The roster:
- * - `metaMaskWallet`, `trustWallet`, `phantomWallet` — the popular wallets by
- *   name, each with a phone path over WalletConnect (QR + deep-link).
+ * - `metaMaskWallet`, `trustWallet`, `phantomWallet`, `uniswapWallet` — the
+ *   popular wallets by name, each with a phone path over WalletConnect (QR +
+ *   deep-link).
  * - `walletConnectWallet` — the catch-all for every other WalletConnect wallet
  *   that is not listed by name.
  * - `injectedWallet` — the browser-extension option; with wagmi's EIP-6963
@@ -59,7 +61,13 @@ const rainbowConnectors = connectorsForWallets(
   [
     {
       groupName: "Popular",
-      wallets: [metaMaskWallet, walletConnectWallet, trustWallet, phantomWallet],
+      wallets: [
+        metaMaskWallet,
+        walletConnectWallet,
+        trustWallet,
+        phantomWallet,
+        uniswapWallet,
+      ],
     },
     { groupName: "Other", wallets: [injectedWallet] },
   ],
