@@ -105,22 +105,25 @@ export const metadata: Metadata = {
  * is the one thing GitHub Pages cannot send; put it in front (Cloudflare) if
  * clickjacking protection is wanted.
  */
-// The WalletConnect origins named in connect-src: the relay websocket that
-// carries pairing, plus the registry/telemetry/verify hosts its SDK calls. Exact
-// origins, no wildcards — check:csp rejects a `*` here, and rightly. Kept in one
-// const so the literal string in public/_headers has a single thing to match.
+// WalletConnect reaches a spread of its OWN subdomains to complete a
+// connection, and the set differs by device: the relay websocket, the wallet
+// registry, the config and analytics APIs, the Verify attestation host, and — on
+// a phone — secure-mobile.walletconnect.org. Naming them one by one is how this
+// broke: a strict list that missed the mobile host left "tap MetaMask" doing
+// nothing, because the pairing could not finish. So connect-src trusts
+// WalletConnect's and WalletConnect's web3modal registrable domains by wildcard,
+// the way production dapps do. This is scoped to their domains only — not a
+// blanket `*`, which check:csp still refuses.
 const WALLETCONNECT_CONNECT_SRC =
-  "wss://relay.walletconnect.com wss://relay.walletconnect.org " +
-  "https://explorer-api.walletconnect.com https://api.web3modal.org " +
-  "https://pulse.walletconnect.org " +
-  "https://verify.walletconnect.com https://verify.walletconnect.org";
+  "wss://*.walletconnect.org wss://*.walletconnect.com " +
+  "https://*.walletconnect.org https://*.walletconnect.com https://*.web3modal.org";
 
-// WalletConnect's Verify API runs in a hidden iframe to attest the dapp's origin
+// WalletConnect's Verify API runs in a hidden iframe (verify.walletconnect.org,
+// which itself frames secure.walletconnect.org) to attest the dapp's origin
 // during pairing. With only `default-src 'self'` that iframe is blocked, and on
-// mobile that is enough to leave "tap MetaMask" doing nothing — the connection
-// never finishes. Naming the two verify origins in frame-src lets it load.
+// mobile that alone is enough to leave the tap dead. Same scoped wildcard.
 const WALLETCONNECT_FRAME_SRC =
-  "https://verify.walletconnect.com https://verify.walletconnect.org";
+  "https://*.walletconnect.org https://*.walletconnect.com";
 
 const CSP = [
   "default-src 'self'",
@@ -128,7 +131,7 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   // WalletConnect fetches wallet logos for its picker; the rest of the page's
   // images are still 'self' and data:.
-  "img-src 'self' data: https://explorer-api.walletconnect.com https://imagedelivery.net",
+  "img-src 'self' data: https://*.walletconnect.com https://imagedelivery.net",
   "font-src 'self'",
   // The borrow screen reads the lending contract over JSON-RPC, so this is no
   // longer 'self' alone. It is named origins, never a wildcard and never a

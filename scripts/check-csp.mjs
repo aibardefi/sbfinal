@@ -59,17 +59,18 @@ if (!headerPolicy) note("public/_headers has no Content-Security-Policy line.");
 
 const layout = read("src/app/layout.tsx");
 
-// The WalletConnect relay/registry origins connect-src must also name, in the
-// same order both copies write them. Exact origins, no wildcards — the widening
-// check below still refuses a `*` here.
+// The WalletConnect domains connect-src must also name, in the same order both
+// copies write them. These are wildcards over WalletConnect's OWN registrable
+// domains — deliberately, because the exact-subdomain list kept missing hosts
+// (secure-mobile.walletconnect.org among them) and breaking mobile connect. The
+// widening check below still refuses a bare `*` or any non-WalletConnect
+// wildcard; only these three domains may be wildcarded.
 const WALLETCONNECT = [
-  "wss://relay.walletconnect.com",
-  "wss://relay.walletconnect.org",
-  "https://explorer-api.walletconnect.com",
-  "https://api.web3modal.org",
-  "https://pulse.walletconnect.org",
-  "https://verify.walletconnect.com",
-  "https://verify.walletconnect.org",
+  "wss://*.walletconnect.org",
+  "wss://*.walletconnect.com",
+  "https://*.walletconnect.org",
+  "https://*.walletconnect.com",
+  "https://*.web3modal.org",
 ].join(" ");
 
 const expected = `'self' ${origin} ${WALLETCONNECT}`;
@@ -97,10 +98,18 @@ for (const [label, policy] of [
   ["src/app/layout.tsx", layout],
 ]) {
   if (!policy) continue;
+  // WalletConnect's own domains are allowed to be wildcarded (see the CSP note in
+  // layout.tsx) — strip those first, so what the widening check sees is only the
+  // wildcards nobody signed off on.
+  const cleaned = policy.replace(
+    /(?:wss|https):\/\/\*\.(?:walletconnect\.(?:org|com)|web3modal\.org)/g,
+    ""
+  );
   // A bare `*`, a scheme-wildcard, or a wildcard host in connect-src or
-  // default-src. `'self'` and named https origins are the only acceptable forms.
+  // default-src. `'self'`, named https origins, and the stripped WalletConnect
+  // wildcards are the only acceptable forms.
   const risky = /(connect-src|default-src)[^;"'`]*?(\*|https?:(?!\/\/[a-z0-9])|\bdata:)/i;
-  if (risky.test(policy)) note(`${label}: connect-src or default-src has been widened with a wildcard.`);
+  if (risky.test(cleaned)) note(`${label}: connect-src or default-src has been widened with a wildcard.`);
 }
 
 // --- report ----------------------------------------------------------------
