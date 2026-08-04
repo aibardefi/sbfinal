@@ -22,6 +22,15 @@ export const robinhoodChain = defineChain({
   nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
   rpcUrls: { default: { http: [RPC_URL] } },
   blockExplorers: { default: { name: "Blockscout", url: EXPLORER_ORIGIN } },
+  // Multicall3 at its canonical, deterministic address — the same one viem's own
+  // chain registry records for Robinhood Chain, so it is genuinely deployed here.
+  // Registering it is what lets `batch: { multicall: true }` on the client below
+  // fold the borrow screen's ~three-dozen per-refresh reads into a couple of
+  // eth_calls, which is the difference a visitor far from the one RPC endpoint
+  // actually feels.
+  contracts: {
+    multicall3: { address: "0xca11bde05977b3631167028862be2a173976ca11" },
+  },
 });
 
 /**
@@ -57,6 +66,12 @@ export const IMPLEMENTATION = "0x8b10274EC25caA40A15Fc69dd74a6765Aef21Fe4" as Ad
 export const publicClient = createPublicClient({
   chain: robinhoodChain,
   transport: http(RPC_URL),
+  // Every read on the borrow screen goes through this client, and there are many
+  // in one tick — the whole collateral list, prices and configs. With multicall3
+  // registered above, viem aggregates all the `readContract` calls fired in the
+  // same tick into a single `eth_call`, so ~36 round-trips become ~3–4. This is
+  // the standard way EVM apps read bulk state; nothing in `protocol.ts` changes.
+  batch: { multicall: true },
 });
 
 export const txUrl = (hash: string) => `${EXPLORER_ORIGIN}/tx/${hash}`;

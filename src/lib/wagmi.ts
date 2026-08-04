@@ -9,7 +9,8 @@ import {
   uniswapWallet,
   walletConnectWallet,
 } from "@rainbow-me/rainbowkit/wallets";
-import { createConfig, http } from "wagmi";
+import { createClient, http } from "viem";
+import { createConfig } from "wagmi";
 import { safe } from "wagmi/connectors";
 import { robinhoodChain } from "./chain";
 import { RPC_URL } from "./rpc";
@@ -87,13 +88,17 @@ export const wagmiConfig = createConfig({
   chains: [robinhoodChain],
   connectors: [...rainbowConnectors, safe()],
   /**
-   * Reads go over our own RPC rather than the wallet's: the same transport
-   * `publicClient` uses in `chain.ts`, so the collateral list, the inventory and
-   * the prices render for a visitor with no wallet at all — and still render
+   * A `client` factory rather than a bare `transports` map, for one reason: it
+   * lets wagmi's own client carry `batch: { multicall: true }`, the same setting
+   * `publicClient` uses in `chain.ts`. Any read wagmi makes then folds into a
+   * multicall too, so a connected wallet's reads are as cheap as the anonymous
+   * ones. Reads still go over our own RPC — the collateral list, the inventory
+   * and the prices render for a visitor with no wallet at all, and still render
    * correctly underneath the "switch network" prompt when a connected wallet is
    * pointed somewhere else.
    */
-  transports: { [robinhoodChain.id]: http(RPC_URL) },
+  client: ({ chain }) =>
+    createClient({ chain, transport: http(RPC_URL), batch: { multicall: true } }),
   // A static export prerenders this at build time, where there is no window to
   // read a stored connection from.
   ssr: true,

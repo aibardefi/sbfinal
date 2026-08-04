@@ -285,8 +285,20 @@ export function useMarket(): Loaded<Market> {
   }, [key]);
 
   useEffect(() => {
-    const id = window.setInterval(() => setTick((t) => t + 1), 30_000);
-    return () => window.clearInterval(id);
+    // A hidden tab has nobody watching the figures, so it does not poll — that is
+    // just heat on a public RPC. Returning to the tab refreshes once, because the
+    // numbers it is showing went stale while it was away.
+    const id = window.setInterval(() => {
+      if (!document.hidden) setTick((t) => t + 1);
+    }, 30_000);
+    const onVisible = () => {
+      if (!document.hidden) setTick((t) => t + 1);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
 
   /* Held across a refresh on purpose: the 30-second poll must not blank the
