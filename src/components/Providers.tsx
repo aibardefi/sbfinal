@@ -1,71 +1,78 @@
 "use client";
 
-import { useState } from "react";
-import { RainbowKitProvider, darkTheme, lightTheme } from "@rainbow-me/rainbowkit";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WagmiProvider } from "wagmi";
-import { wagmiConfig } from "@/lib/wagmi";
-import "@rainbow-me/rainbowkit/styles.css";
+import dynamic from "next/dynamic";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { WalletContext, type Wallet } from "@/lib/wallet";
 
 /**
- * The client-side providers, mounted once around the whole page.
+ * Loads the wallet runtime lazily, and gives the whole page a working wallet
+ * context in the meantime.
  *
- * They have to wrap everything rather than sit inside `ProtocolSection`, because
- * wagmi keeps the connection in context and RainbowKit portals its modal to the
- * body — a provider nested inside one of nine scroll-snap sections would put the
- * dialog inside a snap target, which is the same bug `protocol/Modal.tsx`
- * already documents.
+ * The old Providers imported wagmi, RainbowKit and TanStack Query at the top, so
+ * ~700 KB of wallet code sat in the first load and had to parse before anything
+ * responded — the site's "slow to wake, wallet won't connect on a phone" was
+ * mostly this. Now the heavy part is `WalletRuntime`, pulled in with `dynamic(…,
+ * { ssr: false })` so it is a separate chunk. It is fetched during the browser's
+ * first idle moment (proactively, so it is ready before anyone reaches the
+ * Connect button), not on the critical path.
  *
- * The QueryClient is created in state, not at module scope. A module-level
- * client is shared by every render of every request, which is wrong the moment
- * anything is prerendered — and this site is a static export, so every page is.
- *
- * The RainbowKit theme is built from the borrow screen's own tokens rather than
- * left at its defaults, so its modal cannot arrive in somebody else's mint and
- * violet. It is the one place on the site where a third-party component draws
- * over our own palette.
+ * Until it arrives, `WalletContext` holds a stub: not connected, and a
+ * `connect()` that pulls the runtime in and asks it to open the modal as soon as
+ * it can. So the Connect button works from first paint even though its code lands
+ * a moment later.
  */
+const WalletRuntime = dynamic(
+  () => import("./WalletRuntime").then((m) => m.WalletRuntime),
+  { ssr: false }
+);
+
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            // The contract reads here are hand-rolled around viem and refresh on
-            // their own 30-second poll; react-query is present for wagmi's sake,
-            // not as this site's data layer. Refetching on every window focus
-            // would be a burst of RPC calls nothing on screen asked for.
-            refetchOnWindowFocus: false,
-            retry: 1,
-          },
-        },
-      })
+  const [mounted, setMounted] = useState(false);
+  const [live, setLive] = useState<Wallet | null>(null);
+  const requestOpen = useRef(false);
+
+  // Pull the wallet chunk in as soon as the browser is idle after first paint —
+  // early enough to be ready when needed, late enough not to block the paint.
+  useEffect(() => {
+    const w = window as Window &
+      typeof globalThis & {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+        cancelIdleCallback?: (id: number) => void;
+      };
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(() => setMounted(true), { timeout: 2500 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const id = window.setTimeout(() => setMounted(true), 200);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  const stub = useMemo<Wallet>(
+    () => ({
+      // ready:true so the Connect button paints immediately for the common case
+      // (a first-time visitor). A returning visitor with a stored session sees
+      // Connect for the moment before the runtime reconnects — the small price
+      // for not shipping the wallet stack on the critical path.
+      ready: true,
+      hasProvider: true,
+      wrongNetwork: false,
+      connecting: false,
+      connect: () => {
+        requestOpen.current = true;
+        setMounted(true);
+      },
+      disconnect: () => {},
+      switchNetwork: () => {},
+    }),
+    []
   );
 
   return (
-    <WagmiProvider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider
-          appInfo={{ appName: "$CB — Capybara Blyatovich" }}
-          modalSize="compact"
-          theme={{
-            lightMode: lightTheme({
-              accentColor: "#4dffbc",
-              accentColorForeground: "#052b1f",
-              borderRadius: "medium",
-              fontStack: "system",
-            }),
-            darkMode: darkTheme({
-              accentColor: "#42eaff",
-              accentColorForeground: "#07222b",
-              borderRadius: "medium",
-              fontStack: "system",
-            }),
-          }}
-        >
-          {children}
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <WalletContext.Provider value={live ?? stub}>
+      {mounted ? (
+        <WalletRuntime onWallet={setLive} requestOpen={requestOpen} />
+      ) : null}
+      {children}
+    </WalletContext.Provider>
   );
 }

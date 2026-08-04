@@ -1,7 +1,11 @@
 "use client";
 
-import { getDefaultConfig } from "@rainbow-me/rainbowkit";
-import { http } from "viem";
+import { connectorsForWallets } from "@rainbow-me/rainbowkit";
+import {
+  injectedWallet,
+  walletConnectWallet,
+} from "@rainbow-me/rainbowkit/wallets";
+import { createConfig, http } from "wagmi";
 import { robinhoodChain } from "./chain";
 import { RPC_URL } from "./rpc";
 
@@ -14,30 +18,42 @@ const WALLETCONNECT_PROJECT_ID =
   "f6857532efcddfe6a529b65c08ef68b8";
 
 /**
- * RainbowKit's `getDefaultConfig` — the same batteries-included setup Aave,
- * Uniswap and the rest run on, chosen deliberately over a hand-built roster.
+ * The smallest connector roster that still covers everyone, chosen for weight.
  *
- * The hand-built roster was the bug. Listing `metaMaskWallet` by name gave a
- * tile that always went through WalletConnect — so on a desktop with the
- * MetaMask extension installed, clicking "MetaMask" opened a QR for the phone
- * instead of the extension, and the connection never happened. `getDefaultConfig`
- * does the standard thing instead: it surfaces every wallet the browser actually
- * announces (EIP-6963) as an "Installed" option that connects through the
- * extension directly, and keeps WalletConnect as the QR / mobile path for
- * everything else. That is why it "just works" where it is used.
+ * `getDefaultConfig` and the six-wallet roster before it dragged in the Coinbase
+ * and Rainbow SDKs and a per-wallet WalletConnect wrapper each — millions of
+ * bytes of JavaScript the phone had to parse before the page could respond. Two
+ * connectors replace all of it:
  *
- * The old comment warned that RainbowKit's wallet barrel drags in
- * `@coinbase/wallet-sdk` and its uninstalled `@x402/*` packages and breaks the
- * build. It does not: `getDefaultConfig` builds and runs cleanly here.
+ * - `injectedWallet` is the browser extension, and with wagmi's EIP-6963
+ *   discovery on it lists every installed wallet the browser announces — MetaMask,
+ *   Rabby, Phantom, Coinbase — by name, each connecting straight through the
+ *   extension. This is the path that actually works on a desktop.
+ * - `walletConnectWallet` is the QR on desktop and the deep-link on a phone, and
+ *   its heavy relay core is code-split, so it costs nothing until someone taps it.
  *
- * Reads still go over our own RPC. The heavy batching lives on the standalone
- * `publicClient` in `chain.ts` (multicall3), which is what every on-screen figure
- * is read through; this config's transport is only for wagmi's own calls.
+ * That is the whole trade: no bundled wallet SDKs, a far lighter first load, and
+ * the two connection methods that between them reach every wallet.
  */
-export const wagmiConfig = getDefaultConfig({
-  appName: "$CB — Capybara CykaBlyat",
-  projectId: WALLETCONNECT_PROJECT_ID,
+const rainbowConnectors = connectorsForWallets(
+  [
+    {
+      groupName: "Connect",
+      wallets: [injectedWallet, walletConnectWallet],
+    },
+  ],
+  {
+    appName: "$CB — Capybara CykaBlyat",
+    projectId: WALLETCONNECT_PROJECT_ID,
+  }
+);
+
+export const wagmiConfig = createConfig({
   chains: [robinhoodChain],
+  connectors: rainbowConnectors,
+  // Reads still go over our own RPC; the multicall batching lives on the
+  // standalone publicClient in chain.ts, which every on-screen figure is read
+  // through. This transport is only for wagmi's own calls.
   transports: { [robinhoodChain.id]: http(RPC_URL) },
   // A static export prerenders this at build time, where there is no window to
   // read a stored connection from.
