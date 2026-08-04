@@ -39,7 +39,7 @@ import { BUY_URL, TOKEN_ADDRESS, externalLinkProps, isLive } from "@/lib/links";
 import { approvalStep, useTx, type Step } from "@/lib/tx";
 import { useWallet } from "@/lib/wallet";
 import { useEntrance } from "@/lib/useEntrance";
-import { MobileWalletLinks } from "./MobileWalletLinks";
+import { MobileWalletLinks, useMobileNoInjected } from "./MobileWalletLinks";
 import s from "./ProtocolSection.module.css";
 import t from "./protocol/theme.module.css";
 
@@ -117,6 +117,10 @@ export function ProtocolSection() {
   const [copied, setCopied] = useState(false);
 
   const wallet = useWallet();
+  // On a phone with no extension the RainbowKit modal cannot connect (its tiles
+  // route through WalletConnect, whose handshake does not complete here), so the
+  // deep-link buttons stand in for the Connect button entirely on that surface.
+  const phoneConnect = useMobileNoInjected();
   const market = useMarket();
   const positions = usePositions(LIVE ? wallet.account : undefined);
   const tx = useTx();
@@ -333,7 +337,7 @@ export function ProtocolSection() {
                 Nothing renders while `ready` is false: that is wagmi restoring a
                 stored session, and offering Connect to somebody who is about to
                 appear as connected reads as having been logged out. */}
-            {wallet.ready && !wallet.account ? (
+            {wallet.ready && !wallet.account && !phoneConnect ? (
               <button
                 type="button"
                 className={s.connect}
@@ -584,19 +588,22 @@ export function ProtocolSection() {
                 {market.error ? <p className={s.problem}>{market.error}</p> : null}
                 {blocker ? <p className={s.problem}>{blocker}</p> : null}
 
-                <button
-                  type="button"
-                  className={`${s.btn} ${s.primary}`}
-                  onClick={cta.onClick}
-                  disabled={cta.disabled}
-                >
-                  {cta.label}
-                </button>
-
-                {/* Reliable phone path that does not need WalletConnect: open
-                    the page inside the wallet app, where injected connects.
-                    Mobile-only, hidden once connected. */}
-                {!wallet.account ? <MobileWalletLinks /> : null}
+                {/* On a phone with no extension, the deep-link wallet buttons
+                    replace the Connect button — the RainbowKit modal there only
+                    offers WalletConnect, whose tiles do not respond. Everywhere
+                    else, the normal CTA. */}
+                {phoneConnect && !wallet.account && LIVE ? (
+                  <MobileWalletLinks />
+                ) : (
+                  <button
+                    type="button"
+                    className={`${s.btn} ${s.primary}`}
+                    onClick={cta.onClick}
+                    disabled={cta.disabled}
+                  >
+                    {cta.label}
+                  </button>
+                )}
 
                 <TxStatus state={tx.state} onDismiss={tx.reset} />
               </div>

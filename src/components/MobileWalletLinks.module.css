@@ -1,44 +1,39 @@
-/* Sits under the Connect CTA, only on a phone with no injected wallet. A quiet
-   helper row, not a second primary action. */
+/* The phone connect UI, standing in for the Connect button. Prominent, since it
+   is the primary action there — not a quiet helper row. */
 .wrap {
-  margin-top: 0.75rem;
   display: grid;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .hint {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   color: var(--p1-head-dim);
   text-align: center;
 }
 
 .row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
 }
 
 .link {
-  flex: 1 1 auto;
-  min-width: 6.5rem;
   text-align: center;
-  padding: 0.5rem 0.7rem;
-  border: 1px solid var(--p1-line);
+  padding: 0.85rem 0.7rem;
+  border: 0;
   border-radius: var(--p1-r);
-  background: var(--p1-paper);
-  color: var(--p1-head);
-  font-size: 0.8rem;
-  font-weight: 700;
+  background: var(--p1-accent);
+  color: var(--p1-on-accent);
+  font-size: 0.95rem;
+  font-weight: 800;
   text-decoration: none;
-  transition: border-color 130ms ease, background 130ms ease;
+  transition: filter 130ms ease;
 }
 
 .link:hover,
 .link:active {
-  border-color: var(--p1-accent);
-  background: color-mix(in srgb, var(--p1-accent) 8%, var(--p1-paper));
+  filter: brightness(1.08);
 }
 
 .link:focus-visible {

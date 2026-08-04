@@ -4,17 +4,22 @@ import { useEffect, useState } from "react";
 import s from "./MobileWalletLinks.module.css";
 
 /**
- * The phone path that does not depend on WalletConnect.
- *
- * On a phone with no extension the in-modal wallets all route through
- * WalletConnect, and when its relay handshake will not complete the tiles do not
- * respond. These are the wallets' OWN universal links instead: each opens this
- * page inside that wallet's built-in browser, where the injected provider exists
- * and the ordinary Connect flow just works — no relay, no QR, no timing window.
- *
- * Shown only on a mobile user-agent with no injected provider (a normal mobile
- * browser, not already inside a wallet app), and hidden once connected.
+ * True on a normal mobile browser with no injected wallet — the case where
+ * RainbowKit's only option is WalletConnect, whose tiles do not respond when the
+ * relay handshake will not complete. There, the deep-link buttons below replace
+ * the Connect button entirely.
  */
+export function useMobileNoInjected(): boolean {
+  const [value, setValue] = useState(false);
+  useEffect(() => {
+    const ua = navigator.userAgent || "";
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+    const hasInjected =
+      typeof (window as unknown as { ethereum?: unknown }).ethereum !== "undefined";
+    setValue(isMobile && !hasInjected);
+  }, []);
+  return value;
+}
 
 type Link = { name: string; href: string };
 
@@ -33,22 +38,25 @@ function walletLinks(): Link[] {
   ];
 }
 
+/**
+ * The phone connect UI. Each button is the wallet's OWN universal link, which
+ * opens this page inside that wallet's built-in browser where the injected
+ * provider exists and Connect just works — no WalletConnect relay, no QR, no
+ * timing window. Rendered in place of the Connect button on a mobile browser.
+ */
 export function MobileWalletLinks() {
+  const show = useMobileNoInjected();
   const [links, setLinks] = useState<Link[] | null>(null);
 
   useEffect(() => {
-    const ua = navigator.userAgent || "";
-    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-    const hasInjected =
-      typeof (window as unknown as { ethereum?: unknown }).ethereum !== "undefined";
-    if (isMobile && !hasInjected) setLinks(walletLinks());
-  }, []);
+    if (show) setLinks(walletLinks());
+  }, [show]);
 
-  if (!links) return null;
+  if (!show || !links) return null;
 
   return (
     <div className={s.wrap}>
-      <p className={s.hint}>On a phone? Open this page in your wallet app:</p>
+      <p className={s.hint}>Tap your wallet — it opens the app to connect</p>
       <div className={s.row}>
         {links.map((w) => (
           <a key={w.name} className={s.link} href={w.href} rel="noopener noreferrer">
