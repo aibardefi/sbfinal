@@ -128,11 +128,15 @@ const WALLETCONNECT_FRAME_SRC =
 const CSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
-  "style-src 'self' 'unsafe-inline'",
-  // WalletConnect fetches wallet logos for its picker; the rest of the page's
-  // images are still 'self' and data:.
-  "img-src 'self' data: https://*.walletconnect.com https://imagedelivery.net",
-  "font-src 'self'",
+  // WalletConnect's wallet picker (Reown AppKit) styles itself with Inter loaded
+  // from Google Fonts, so its stylesheet host is named here and its font files in
+  // font-src. Without them the picker renders as blank grey tiles.
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  // The wallet logos in that picker come from api.web3modal.org (and the
+  // walletconnect image hosts); the rest of the page's images are still 'self'
+  // and data:. Blank tiles that do not respond to a tap are these being blocked.
+  "img-src 'self' data: https://*.walletconnect.com https://*.web3modal.org https://imagedelivery.net",
+  "font-src 'self' https://fonts.gstatic.com",
   // The borrow screen reads the lending contract over JSON-RPC, so this is no
   // longer 'self' alone. It is named origins, never a wildcard and never a
   // widened default-src, which would look like a one-word change and remove the
