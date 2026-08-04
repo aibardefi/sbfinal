@@ -3,6 +3,10 @@
 import { connectorsForWallets } from "@rainbow-me/rainbowkit";
 import {
   injectedWallet,
+  metaMaskWallet,
+  phantomWallet,
+  trustWallet,
+  uniswapWallet,
   walletConnectWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 import { createConfig, http } from "wagmi";
@@ -18,28 +22,30 @@ const WALLETCONNECT_PROJECT_ID =
   "f6857532efcddfe6a529b65c08ef68b8";
 
 /**
- * The smallest connector roster that still covers everyone, chosen for weight.
+ * The wallets shown by name, plus the two catch-alls.
  *
- * `getDefaultConfig` and the six-wallet roster before it dragged in the Coinbase
- * and Rainbow SDKs and a per-wallet WalletConnect wrapper each — millions of
- * bytes of JavaScript the phone had to parse before the page could respond. Two
- * connectors replace all of it:
+ * These are listed explicitly so the first screen of the modal shows the wallets
+ * people actually have — MetaMask, Phantom, Trust, Uniswap — instead of a generic
+ * set. On a desktop each connects through its installed extension; on a phone each
+ * deep-links into its app over WalletConnect. `walletConnectWallet` is the QR /
+ * "all wallets" catch-all, and `injectedWallet` covers any other extension the
+ * browser announces.
  *
- * - `injectedWallet` is the browser extension, and with wagmi's EIP-6963
- *   discovery on it lists every installed wallet the browser announces — MetaMask,
- *   Rabby, Phantom, Coinbase — by name, each connecting straight through the
- *   extension. This is the path that actually works on a desktop.
- * - `walletConnectWallet` is the QR on desktop and the deep-link on a phone, and
- *   its heavy relay core is code-split, so it costs nothing until someone taps it.
- *
- * That is the whole trade: no bundled wallet SDKs, a far lighter first load, and
- * the two connection methods that between them reach every wallet.
+ * The whole stack this builds is loaded lazily by `WalletRuntime`, so naming a
+ * few wallets here does not cost the first paint.
  */
 const rainbowConnectors = connectorsForWallets(
   [
     {
-      groupName: "Connect",
-      wallets: [injectedWallet, walletConnectWallet],
+      groupName: "Popular",
+      wallets: [
+        metaMaskWallet,
+        phantomWallet,
+        trustWallet,
+        uniswapWallet,
+        walletConnectWallet,
+        injectedWallet,
+      ],
     },
   ],
   {
