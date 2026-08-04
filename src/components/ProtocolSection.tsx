@@ -632,11 +632,11 @@ export function ProtocolSection() {
           <button type="button" className={s.footLink} onClick={() => setExplaining(true)}>
             Liquidation
           </button>
-          {/* The public token address. Null until the final token exists, so it
-              shows "coming soon" and cannot be copied; the moment TOKEN_ADDRESS
-              in lib/links.ts holds the real value it becomes the copyable
-              address, with no other change. The old interim contract is
-              deliberately not shown. */}
+          {/* The public token address, from TOKEN_ADDRESS in lib/links.ts — the
+              same constant "Buy $CB" is built from, so the address somebody
+              copies here and the token the swap opens on cannot drift apart.
+              Setting it back to null returns this to "coming soon" and cannot be
+              copied, with no other change. */}
           <span className={s.addrRow}>
             {TOKEN_ADDRESS ? (
               <button

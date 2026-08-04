@@ -16,22 +16,31 @@ that shows a borrow form without them is worse than one that shows nothing.
 
 **It is wired to the contract and it can sign.** `LIVE` is `true` in
 `ProtocolSection.tsx`, and the screen reads `CBLending` at
-`0x1f2Da0cc5b6163650894Fd2a6Af8E3f9f99F30Ad` on Robinhood Chain (4663) and opens,
+`0x369171De158fbf4eA80f9f608D5b406526E86963` on Robinhood Chain (4663) and opens,
 repays, tops up and unwinds real positions through a connected wallet.
 `/design/` is the handover note for it.
 
-This deployment replaced a mock one. Its lent token answers `symbol()` with `CB`
-and `name()` with "cyka blyat" against a supply of 1,000,000,000, so the `$CB` on
-the page and the token on the chain finally mean the same thing — the one before
-it called itself `WN` ("Wewen"). `Market.cbSymbol` in `src/lib/protocol.ts` still
-carries whatever the chain reports, so the next disagreement is visible in code.
+Its lent token answers `symbol()` with `CB` against a supply of 1,000,000,000, so
+the `$CB` on the page and the token on the chain mean the same thing.
+`Market.cbSymbol` in `src/lib/protocol.ts` still carries whatever the chain
+reports, so the next disagreement is visible in code. Only the lending address is
+written down by hand: `cb`, `weth` and `cbPool` in `src/lib/chain.ts` were read
+back off that contract, which is the only way the manifest cannot drift from it.
 
-**It is also brand new and not yet stocked.** `collateralTokens()` returns
-nothing, `availableCB()` is zero and no position has ever been opened. The page
-renders and prices itself correctly, and nobody can borrow: every coin in the
-roster shows as "not listed yet" until an admin calls `setCollateralConfig`, and
-the desk has nothing to lend until $CB is transferred to the contract. Neither is
-a change to this repo.
+**It is also brand new and not yet stocked.** `collateralTokens()` returns one
+coin, CASHCAT; `availableCB()` is zero and no position has ever been opened. The
+desk has nothing to lend until $CB is transferred to the contract, and every
+other coin in the roster shows as "not listed yet" until an admin calls
+`setCollateralConfig`. Neither is a change to this repo.
+
+**The CB price read reverts today.** `twapWindow` is 3600s and the new CB/WETH
+pool has an observation cardinality of 1, so there is no hour of history to
+average and `quoteCBInWeth` — the read the page prices a loan with, and the same
+one the contract uses to decide whether a borrow reverts — fails. Until an admin
+calls `increaseObservationCardinalityNext` on the pool (or the window comes
+down), the borrow screen cannot quote. The page deliberately does not fall back
+to a price of its own: a second opinion the contract has not agreed to is how a
+visitor gets quoted a loan the contract will reject.
 
 ## Running it
 

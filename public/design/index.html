@@ -102,24 +102,43 @@ footer { margin-top: 4rem; padding-top: 1.4rem; border-top: 1px solid var(--line
 <table>
   <tr><th>Thing</th><th>Value</th></tr>
   <tr><td>Chain</td><td>Robinhood Chain mainnet, id <b>4663</b></td></tr>
-  <tr><td>Lending proxy</td><td>0x1f2Da0cc5b6163650894Fd2a6Af8E3f9f99F30Ad</td></tr>
-  <tr><td>$CB token</td><td>0x7F318D1c00734A6FBe157E151715D516adc173E3</td></tr>
+  <tr><td>Lending proxy</td><td>0x369171De158fbf4eA80f9f608D5b406526E86963</td></tr>
+  <tr><td>$CB token</td><td>0xab46accEb52C3aBc3E891C17734CD0d09d9D38c9</td></tr>
   <tr><td>RPC origin</td><td>https://rpc.mainnet.chain.robinhood.com</td></tr>
 </table>
 </div>
 <div class="panel">
   <p>
     <span class="tag no">Read this</span> This deployment is new and not yet
-    stocked: <code>collateralTokens()</code> returns nothing and
-    <code>availableCB()</code> is zero, so every coin shows as &ldquo;not listed
-    yet&rdquo; and nobody can borrow until an admin calls
+    stocked: <code>collateralTokens()</code> returns one coin, CASHCAT, and
+    <code>availableCB()</code> is zero, so every other coin shows as &ldquo;not
+    listed yet&rdquo; and nobody can borrow until an admin calls
     <code>setCollateralConfig</code> and $CB is transferred to the contract.
     Neither is a change to the site.
   </p>
   <p>
-    The lent token now answers <code>symbol()</code> with <b>CB</b>
-    (&ldquo;cyka blyat&rdquo;), matching the <b>$CB</b> on the page. It did not
-    always: the deployment before this one said <b>WN</b>. The page&rsquo;s copy
+    <span class="tag no">And this</span> <code>quoteCBInWeth</code> reverts on it
+    today. <code>twapWindow</code> is 3600s and the new CB/WETH pool
+    (<code>0x3Ad2640Aa2a81d82117c8142BA82d45FfE8308b3</code>) has an observation
+    cardinality of <b>1</b>, so there is no hour of history to average. That read
+    is how the page prices a loan and how the contract itself decides whether a
+    borrow reverts, so until an admin calls
+    <code>increaseObservationCardinalityNext</code> on the pool — or lowers the
+    window — the screen cannot quote. It does not substitute a price of its own,
+    on purpose: a quote the contract has not agreed to is a loan it will reject
+    after the visitor has paid gas.
+  </p>
+  <p>
+    Only the lending proxy above is written down by hand. <code>cb</code>,
+    <code>weth</code> and <code>cbPool</code> in <code>src/lib/chain.ts</code>
+    were read back off that contract with <code>CB()</code> and
+    <code>WETH()</code>, which is what stops the manifest and the deployment from
+    drifting apart. Re-read them if the proxy address ever changes again.
+  </p>
+  <p>
+    The lent token answers <code>symbol()</code> with <b>CB</b>, matching the
+    <b>$CB</b> on the page. It did not always: an earlier deployment said
+    <b>WN</b>. The page&rsquo;s copy
     is <code>BORROWED</code> in <code>src/components/protocol/tokens.ts</code>
     and what the chain reports is <code>Market.cbSymbol</code> — kept apart on
     purpose, so the next disagreement shows up in code rather than in a wallet.

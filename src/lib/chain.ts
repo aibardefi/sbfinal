@@ -36,14 +36,25 @@ export const robinhoodChain = defineChain({
 /**
  * Deployment manifest for chain 4663.
  *
- * This replaced a mock deployment. The lent token here answers `symbol()` with
- * `CB` and `name()` with "cyka blyat", against a supply of exactly
- * 1,000,000,000 — the figure in CLAUDE.md's settled facts — where the previous
- * one called itself `WN` ("Wewen"). So the site's `$CB` and the chain finally
- * agree, and the copy is no longer standing in for a placeholder.
+ * Only `lending` was given. Everything under it was read back off that contract
+ * rather than carried over from the deployment before — `CB()`, `WETH()` and the
+ * CB/WETH pool it prices against — because a manifest that disagrees with the
+ * contract it points at is the one failure this file exists to prevent. `weth`
+ * and `router` came back unchanged; `cb` and `cbPool` did not.
  *
  * Verified against the chain when it was wired in: MAX_LTV_BPS 8000,
- * LIQ_THRESHOLD_BPS 9000, not paused, twapWindow 60s, maxSlippageBps 200.
+ * LIQ_THRESHOLD_BPS 9000, not paused, twapWindow 3600s (the previous deployment
+ * used 60), maxSlippageBps 200. `collateralTokens()` returns one token, CASHCAT,
+ * enabled with a 1 CASHCAT minimum. The lent token answers `symbol()` with `CB`
+ * and `name()` with "CB" — not "cyka blyat", which was the old one — against a
+ * supply of exactly 1,000,000,000, the figure in CLAUDE.md's settled facts.
+ *
+ * Two things are true of it that the site cannot fix and must not paper over:
+ * `availableCB()` is zero, so there is nothing to lend until $CB is transferred
+ * in; and the new CB pool has an observation cardinality of 1, so a 3600s TWAP
+ * has no history to read and `quoteCBInWeth` reverts. Both are admin actions on
+ * the deployment (`increaseObservationCardinalityNext` on the pool), not changes
+ * to this repo.
  *
  * `deployBlock` is deliberately absent rather than carried over. The manifest did
  * not supply one, and the old value belonged to the old contract — a stale block
@@ -53,15 +64,15 @@ export const robinhoodChain = defineChain({
  */
 export const DEPLOYMENT = {
   chainId: 4663,
-  lending: "0x1f2Da0cc5b6163650894Fd2a6Af8E3f9f99F30Ad" as Address,
-  cb: "0x7F318D1c00734A6FBe157E151715D516adc173E3" as Address,
+  lending: "0x369171De158fbf4eA80f9f608D5b406526E86963" as Address,
+  cb: "0xab46accEb52C3aBc3E891C17734CD0d09d9D38c9" as Address,
   weth: "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73" as Address,
-  cbPool: "0x9c417bFE06A3277504653198BaDC0e1e612d2021" as Address,
+  cbPool: "0x3Ad2640Aa2a81d82117c8142BA82d45FfE8308b3" as Address,
   router: "0xCaf681a66D020601342297493863E78C959E5cb2" as Address,
 } as const;
 
 /** Reference only. Never call this — see the note at the top of the file. */
-export const IMPLEMENTATION = "0x8b10274EC25caA40A15Fc69dd74a6765Aef21Fe4" as Address;
+export const IMPLEMENTATION = "0x914c1a842C7433Fe93083104C2D67fd05389dae4" as Address;
 
 export const publicClient = createPublicClient({
   chain: robinhoodChain,

@@ -1,30 +1,49 @@
 /**
- * The final $CB token's public address — the one people buy and verify.
+ * The $CB token's public address — the one people buy and verify.
  *
- * `null` until the token is created. It is deliberately NOT `DEPLOYMENT.cb`:
- * that value wires the borrow screen to the contract it reads and signs
- * against, and the token that ships to the public is a separate, not-yet-minted
- * thing. Selling or displaying an interim address on a memecoin site is
- * indistinguishable from pointing buyers at a counterfeit, so nothing on the
- * site shows or links to an address until this holds the real one.
+ * This is the token the lending contract lends: `CB()` on `CBLending` returns
+ * it, `symbol()` says `CB`, and its supply is exactly 1,000,000,000. It is still
+ * written out here as a literal rather than imported from `DEPLOYMENT`, and that
+ * is not duplication to be tidied away. `DEPLOYMENT.cb` follows whichever
+ * lending contract the borrow screen is pointed at; if that address is repointed
+ * again, an imported value would silently redirect "Buy $CB" at whatever token
+ * the new deployment happens to lend. A buy link that moves on its own is how a
+ * memecoin site sends its own visitors to a counterfeit. Two addresses that must
+ * agree, kept apart so that disagreeing is visible, is the same arrangement as
+ * `BORROWED` and `Market.cbSymbol`.
  *
- * Fill this in ONE place on launch: `BUY_URL` starts working and the copy chip
- * on the first screen goes from "Coming soon" to the live, copyable address.
+ * Set to `null` to take every public reference to an address off the site at
+ * once: `BUY_URL` goes back to `"#"` and the copy chip on the first screen
+ * returns to "coming soon".
  */
-export const TOKEN_ADDRESS: string | null = null;
+export const TOKEN_ADDRESS: string | null = "0xab46accEb52C3aBc3E891C17734CD0d09d9D38c9";
+
+/**
+ * WETH on Robinhood Chain — the other side of the pair people buy through.
+ *
+ * The swap is pinned to CB/WETH because that is the only pool that exists:
+ * `getPool(CB, WETH, fee)` on the factory answers with an address for the 1%
+ * tier and `address(0)` for 0.01%, 0.05% and 0.3%. It is also the pool the
+ * lending contract prices its own debt against
+ * (`0x3Ad2640Aa2a81d82117c8142BA82d45FfE8308b3`), so what a visitor buys at and
+ * what the borrow screen quotes are the same market rather than two that
+ * usually agree.
+ */
+const WETH_ADDRESS = "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73";
 
 /**
  * Where "Buy $CB" points. Both screens that carry the button share it, so the
  * address can never land on one and not the other.
  *
- * While `TOKEN_ADDRESS` is null this is `"#"` — the site's convention for "not
+ * Chain, input and output are all pinned rather than left to a search box —
+ * typing "CB" into one is the single most reliable way to buy the wrong $CB.
+ *
+ * While `TOKEN_ADDRESS` is null this is `"#"`, the site's convention for "not
  * wired up yet". `HeroSection`'s `handleCta` and the borrow screen's buy button
- * both catch `"#"` and say "soon" instead of opening a swap for the wrong token.
- * The chain and output token are pinned rather than left to a search box, which
- * is the single most reliable way for somebody to buy the wrong $CB.
+ * both catch `"#"` and say "soon" instead of opening a swap for nothing.
  */
 export const BUY_URL = TOKEN_ADDRESS
-  ? `https://app.uniswap.org/swap?chain=robinhood&inputCurrency=ETH&outputCurrency=${TOKEN_ADDRESS}`
+  ? `https://app.uniswap.org/swap?chain=robinhood&inputCurrency=${WETH_ADDRESS}&outputCurrency=${TOKEN_ADDRESS}`
   : "#";
 
 // There is no separate borrow app: the borrow screen is the first screen of

@@ -265,9 +265,10 @@ const settled = <T,>(entry: Stamped<T> | undefined, key: string | undefined) =>
 /**
  * The market, refreshed on a timer.
  *
- * 30 seconds against a 60-second TWAP window: fast enough that a price cannot
- * move a whole window without the screen noticing, slow enough not to hammer a
- * public endpoint from a page people leave open.
+ * 30 seconds, well inside the deployment's TWAP window (3600s as configured
+ * today): fast enough that a price cannot move a whole window without the screen
+ * noticing, slow enough not to hammer a public endpoint from a page people leave
+ * open.
  */
 export function useMarket(): Loaded<Market> {
   const [entry, setEntry] = useState<Stamped<Market>>();

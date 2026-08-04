@@ -173,6 +173,43 @@ export const lendingAbi = [
   { type: "error", name: "WindowOutOfBounds", inputs: [] },
   { type: "error", name: "SlippageOutOfBounds", inputs: [] },
   { type: "error", name: "EnforcedPause", inputs: [] },
+
+  // The four below are thrown by the `TwapOracle` library, not by CBLending
+  // itself. That distinction is invisible from outside — the library is
+  // internal, so its code is inlined into the implementation and its reverts
+  // arrive as if the lending contract raised them — but it is the reason they
+  // were missing here: reading the contract's own error list is not enough.
+  //
+  // They are the reason a price read fails, so leaving them out cost real time:
+  // `quoteCBInWeth` reverting with an undecodable `0x533e5228` looks like a
+  // broken RPC, and the screen said so. Decoded, it says the pool's newest
+  // observation is 3286 seconds old where at most 150 is allowed.
+  //
+  // `consult` demands both that the pool's history spans the whole TWAP window
+  // (`StaleOracle`) and that its newest observation is no older than a quarter
+  // of it (`DegradedOracle`), the second because Uniswap extrapolates the gap
+  // from the current tick — a stale pool would otherwise report spot dressed up
+  // as an average. A pool with an observation cardinality of 1 has one slot, so
+  // its oldest and newest observation are the same one, and it can never satisfy
+  // both at once at any window.
+  {
+    type: "error",
+    name: "StaleOracle",
+    inputs: [
+      { name: "oldestAvailable", type: "uint32" },
+      { name: "required", type: "uint32" },
+    ],
+  },
+  {
+    type: "error",
+    name: "DegradedOracle",
+    inputs: [
+      { name: "newestAge", type: "uint32" },
+      { name: "maxAge", type: "uint32" },
+    ],
+  },
+  { type: "error", name: "ZeroWindow", inputs: [] },
+  { type: "error", name: "UninitializedPool", inputs: [] },
 ] as const;
 
 /**
