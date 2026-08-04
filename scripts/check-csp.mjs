@@ -68,6 +68,8 @@ const WALLETCONNECT = [
   "https://explorer-api.walletconnect.com",
   "https://api.web3modal.org",
   "https://pulse.walletconnect.org",
+  "https://verify.walletconnect.com",
+  "https://verify.walletconnect.org",
 ].join(" ");
 
 const expected = `'self' ${origin} ${WALLETCONNECT}`;

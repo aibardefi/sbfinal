@@ -106,13 +106,21 @@ export const metadata: Metadata = {
  * clickjacking protection is wanted.
  */
 // The WalletConnect origins named in connect-src: the relay websocket that
-// carries pairing, plus the registry/telemetry hosts its SDK calls. Exact
+// carries pairing, plus the registry/telemetry/verify hosts its SDK calls. Exact
 // origins, no wildcards — check:csp rejects a `*` here, and rightly. Kept in one
 // const so the literal string in public/_headers has a single thing to match.
 const WALLETCONNECT_CONNECT_SRC =
   "wss://relay.walletconnect.com wss://relay.walletconnect.org " +
   "https://explorer-api.walletconnect.com https://api.web3modal.org " +
-  "https://pulse.walletconnect.org";
+  "https://pulse.walletconnect.org " +
+  "https://verify.walletconnect.com https://verify.walletconnect.org";
+
+// WalletConnect's Verify API runs in a hidden iframe to attest the dapp's origin
+// during pairing. With only `default-src 'self'` that iframe is blocked, and on
+// mobile that is enough to leave "tap MetaMask" doing nothing — the connection
+// never finishes. Naming the two verify origins in frame-src lets it load.
+const WALLETCONNECT_FRAME_SRC =
+  "https://verify.walletconnect.com https://verify.walletconnect.org";
 
 const CSP = [
   "default-src 'self'",
@@ -133,6 +141,9 @@ const CSP = [
   // named. They are only dialled once a WalletConnect session opens; an injected
   // connection never touches them.
   `connect-src 'self' ${RPC_ORIGIN} ${WALLETCONNECT_CONNECT_SRC}`,
+  // Only WalletConnect's Verify iframe is allowed to frame; nothing else, and no
+  // wildcard. Without this the default-src 'self' below would block it.
+  `frame-src 'self' ${WALLETCONNECT_FRAME_SRC}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'none'",
