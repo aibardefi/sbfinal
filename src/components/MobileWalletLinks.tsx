@@ -35,6 +35,10 @@ function walletLinks(): Link[] {
     { name: "MetaMask", href: `https://metamask.app.link/dapp/${hostPath}` },
     { name: "Trust", href: `https://link.trustwallet.com/open_url?coin_id=60&url=${full}` },
     { name: "Coinbase", href: `https://go.cb-w.com/dapp?cb_url=${full}` },
+    // Uniswap Wallet has no "open this URL in my browser" universal link the way
+    // the others do, so this opens the app itself; from there the user reaches
+    // the site through its in-app browser.
+    { name: "Uniswap", href: "https://uniswap.org/app" },
   ];
 }
 

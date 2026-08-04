@@ -33,7 +33,20 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   // Pull the wallet chunk in as soon as the browser is idle after first paint —
   // early enough to be ready when needed, late enough not to block the paint.
+  //
+  // Except on a phone with no wallet extension: there the connect UI is the
+  // deep-link buttons, which are plain links and need none of wagmi/RainbowKit.
+  // Loading ~700 KB of it there only janks the scroll for no benefit — the actual
+  // connection happens later, inside the wallet app's own browser, on a fresh
+  // page load where the injected provider is present and this does run. So that
+  // one case never mounts the runtime at all.
   useEffect(() => {
+    const ua = navigator.userAgent || "";
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+    const hasInjected =
+      typeof (window as unknown as { ethereum?: unknown }).ethereum !== "undefined";
+    if (isMobile && !hasInjected) return;
+
     const w = window as Window &
       typeof globalThis & {
         requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
