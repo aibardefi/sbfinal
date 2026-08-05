@@ -56,15 +56,24 @@ import t from "./protocol/theme.module.css";
  * the prices come off chain either way, because a page that invents a coin list
  * is wrong whether or not it can sign.
  *
- * It is false because the wallet integration was removed — wagmi, RainbowKit,
- * WalletConnect and the phone deep-links are all gone, so there is no way to
- * obtain the signer every write below needs. This flag is what makes that a
- * coherent screen rather than a broken one: the form still reads the chain and
- * shows real figures, and the button says so instead of offering an action it
- * cannot perform. The write paths underneath are dormant, not deleted; putting
- * a connector back and flipping this to true is what turns the product on.
+ * True again. It was false for as long as there was no way to obtain a signer —
+ * the whole wallet stack having been removed — and the nine connectors put that
+ * back, so the writes below have something to sign with.
+ *
+ * What this does NOT assert is that a borrow will succeed. Two things were read
+ * off the contract at the moment it was flipped: `availableCB()` is now about
+ * 500,000,000 CB where CLAUDE.md recorded zero, so there is inventory to lend;
+ * but `quoteCBInWeth` still reverts `0x533e5228`, the CB/WETH pool's newest
+ * observation being far older than the TWAP window allows. Prices are therefore
+ * unavailable, and every borrow will fail at simulation until an admin runs
+ * `increaseObservationCardinalityNext` on that pool.
+ *
+ * That failing at simulation rather than after signing is the point of the
+ * `simulateContract` step in `tx.ts` — the visitor is told why in a sentence and
+ * pays no gas. Live and usable are different claims, and this flag only makes
+ * the first one.
  */
-const LIVE = false;
+const LIVE = true;
 
 /**
  * Where the ruler starts.
@@ -252,11 +261,9 @@ export function ProtocolSection() {
     }
   };
 
-  /* The first branch is the only one reachable today: with no connector, `LIVE`
-     is false and this reads "Not live yet", disabled. The rest are kept in place
-     and in order because they are the arming sequence — connect, switch network,
-     borrow — and the screen is meant to come back by restoring a connector and
-     flipping the flag, not by rebuilding this ladder from memory. */
+  /* The arming sequence, in order: not live, still reading, connect, wrong
+     network, go. Every branch is reachable again now that `LIVE` is true and
+     there are connectors behind `wallet.connect`. */
   const cta = !LIVE
     ? { label: "Not live yet", onClick: undefined, disabled: true }
     : !wallet.ready || market.loading

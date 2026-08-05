@@ -104,27 +104,19 @@ export function Positions({
       <div className={s.sheet}>
         <div className={s.center}>
           <h2>Nothing to show yet</h2>
-          {/* Two sentences, because there are two reasons to be here. With a
-              connector, this is an invitation. Without one — which is the case
-              since the wallet integration was removed — promising that loans
-              "appear here once you connect" describes a button that does not
-              exist, so it says what is actually true instead. */}
+          <p>
+            Connect a wallet and any loans it holds appear here, each on the same 0–100 ruler as the
+            borrow form.
+          </p>
+          {/* `hasProvider` is true whenever there is anything to offer, and
+              WalletConnect needs nothing installed — so this is always shown now.
+              The check stays because it is the same gate as the header button,
+              and the two should vanish together if connectors ever go again. */}
           {wallet.hasProvider ? (
-            <>
-              <p>
-                Connect a wallet and any loans it holds appear here, each on the same 0–100 ruler as
-                the borrow form.
-              </p>
-              <button type="button" className={s.ghost} onClick={wallet.connect}>
-                Connect wallet
-              </button>
-            </>
-          ) : (
-            <p>
-              Loans are not open from this page yet. The market above is read live from the chain in
-              the meantime.
-            </p>
-          )}
+            <button type="button" className={s.ghost} onClick={wallet.connect}>
+              Connect wallet
+            </button>
+          ) : null}
         </div>
       </div>
     );
