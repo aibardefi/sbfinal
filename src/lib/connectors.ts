@@ -44,7 +44,8 @@ export type ConnectorId =
   | "trust"
   | "okx"
   | "uniswap"
-  | "coinbase";
+  | "coinbase"
+  | "rainbow";
 
 export type Connector = {
   id: ConnectorId;
@@ -277,6 +278,34 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
         ? (window as LegacyWindow).coinbaseWalletExtension
         : undefined) ?? pick((p) => p.isCoinbaseWallet === true),
   },
+
+  rainbow: {
+    id: "rainbow",
+    name: "Rainbow",
+    // The one rdns here that is genuinely confirmed rather than conventional: it
+    // was read straight out of RainbowKit's own bundle while that dependency was
+    // still installed, alongside `io.metamask`. Recorded because the source is
+    // gone now and this would otherwise look like another guess.
+    rdns: "me.rainbow",
+    installUrl: "https://rainbow.me/download",
+    /*
+     * Null, and unlike Rabby's this is not because the wallet cannot do it —
+     * Rainbow's mobile app does have an in-app browser. What could not be found
+     * is a documented URL that opens a given page in it.
+     *
+     * Which is the whole reason this is null. Every mobile handoff on this list
+     * that works came from a source that could be checked — three out of this
+     * repo's own history, MetaMask's from the standard documented form. Every one
+     * reconstructed from search or convention has failed on a real phone, twice
+     * for OKX alone, once landing the visitor on a Safari error. A plausible
+     * `rnbwapp.com/...` guessed here would be the same move a third time.
+     *
+     * If Rainbow's link format turns up, this becomes one assignment like
+     * Coinbase's directly below.
+     */
+    handoff: null,
+    legacy: () => pick((p) => p.isRainbow === true),
+  },
 };
 
 /** Display order in the panel. MetaMask first, as asked. */
@@ -288,6 +317,7 @@ export const CONNECTOR_ORDER: ConnectorId[] = [
   "okx",
   "uniswap",
   "coinbase",
+  "rainbow",
 ];
 
 /* ----------------------------------------------------------- 6963 discovery */

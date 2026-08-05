@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { CONNECTORS, isMobileBrowser, type ConnectorId } from "@/lib/connectors";
 import { useWallet, type ConnectorView } from "@/lib/wallet";
 import { Modal } from "./Modal";
@@ -166,6 +167,7 @@ function Mark({ id }: { id: ConnectorId }) {
     okx: Blocks,
     uniswap: Unicorn,
     coinbase: Coin,
+    rainbow: Arcs,
   };
   const Glyph = marks[id];
   return <Glyph />;
@@ -276,6 +278,38 @@ function Coin() {
       <rect width="32" height="32" rx="8" fill="#0052ff" />
       <circle cx="16" cy="16" r="9" fill="#fff" />
       <rect x="12.6" y="12.6" width="6.8" height="6.8" rx="1.6" fill="#0052ff" />
+    </svg>
+  );
+}
+
+/**
+ * Rainbow. Concentric arcs from the bottom-left corner.
+ *
+ * The clip is not decoration: the outermost band is wider than the tile, and
+ * without it the arc runs past the rounded corners and over whatever the row's
+ * background happens to be.
+ */
+function Arcs() {
+  // A fixed id would collide the moment this drew twice on one page. `useId`
+  // guarantees uniqueness; the strip is because React's ids contain characters
+  // that are not safe inside a `url(#…)` reference.
+  const clip = `rainbow-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+  return (
+    <svg viewBox="0 0 32 32" role="img">
+      <defs>
+        <clipPath id={clip}>
+          <rect width="32" height="32" rx="8" />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${clip})`}>
+        <rect width="32" height="32" fill="#fff" />
+        <g fill="none" strokeWidth="3.4">
+          <path d="M22.5 27A17.5 17.5 0 0 0 5 9.5" stroke="#ff6257" />
+          <path d="M18.5 27A13.5 13.5 0 0 0 5 13.5" stroke="#ffd838" />
+          <path d="M14.5 27A9.5 9.5 0 0 0 5 17.5" stroke="#4bd166" />
+          <path d="M10.5 27A5.5 5.5 0 0 0 5 21.5" stroke="#0e76fd" />
+        </g>
+      </g>
     </svg>
   );
 }
