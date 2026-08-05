@@ -37,7 +37,7 @@ export type Eip1193Provider = {
   removeListener?: (event: string, handler: (...args: never[]) => void) => void;
 };
 
-export type ConnectorId = "metamask" | "phantom" | "rabby" | "trust" | "okx";
+export type ConnectorId = "metamask" | "phantom" | "rabby" | "trust" | "okx" | "uniswap";
 
 export type Connector = {
   id: ConnectorId;
@@ -79,6 +79,7 @@ type LegacyWindow = Window & {
   // build, so both shapes are checked where it is read.
   trustwallet?: (Eip1193Provider & Flags) | { ethereum?: Eip1193Provider & Flags };
   okxwallet?: (Eip1193Provider & Flags) | { ethereum?: Eip1193Provider & Flags };
+  uniswap?: (Eip1193Provider & Flags) | { ethereum?: Eip1193Provider & Flags };
 };
 
 /** Accepts either `x` or `x.ethereum`, for wallets that have shipped both. */
@@ -218,10 +219,45 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
       unwrap(typeof window !== "undefined" ? (window as LegacyWindow).okxwallet : undefined) ??
       pick((p) => p.isOkxWallet === true || p.isOKExWallet === true),
   },
+
+  uniswap: {
+    id: "uniswap",
+    name: "Uniswap Wallet",
+    // Conventional, not confirmed — the searches echoed it back as an example
+    // rather than as Uniswap's registered value. `legacy` is the backstop.
+    rdns: "org.uniswap.app",
+    installUrl: "https://wallet.uniswap.org/",
+    /*
+     * Null, and this one is not an inference — it is recorded in this repo's own
+     * history. `MobileWalletLinks.tsx`, before it was deleted, carried the note:
+     *
+     *   "Uniswap Wallet has no 'open this URL in my browser' universal link the
+     *    way the others do, so this opens the app itself; from there the user
+     *    reaches the site through its in-app browser."
+     *
+     * It shipped a plain link to uniswap.org/app for that reason. That is a link
+     * to an app, not a handoff: it drops the visitor in Uniswap with no memory of
+     * where they came from, and they have to find their way back by typing the
+     * address into its browser. A row that does that is worse than no row, so on
+     * a phone this wallet is not offered — the same conclusion the note reached,
+     * made explicit instead of papered over with a button.
+     */
+    handoff: null,
+    legacy: () =>
+      unwrap(typeof window !== "undefined" ? (window as LegacyWindow).uniswap : undefined) ??
+      pick((p) => p.isUniswapWallet === true || p.isUniswap === true),
+  },
 };
 
 /** Display order in the panel. MetaMask first, as asked. */
-export const CONNECTOR_ORDER: ConnectorId[] = ["metamask", "phantom", "rabby", "trust", "okx"];
+export const CONNECTOR_ORDER: ConnectorId[] = [
+  "metamask",
+  "phantom",
+  "rabby",
+  "trust",
+  "okx",
+  "uniswap",
+];
 
 /* ----------------------------------------------------------- 6963 discovery */
 

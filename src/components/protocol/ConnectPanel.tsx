@@ -88,9 +88,11 @@ export function ConnectPanel({
           <p className={s.lead}>No wallet detected</p>
           <p className={s.note}>
             This browser has no wallet extension installed. Install{" "}
+            {/* Comma-separated with "or" before the last. Six wallets joined by
+                "or" throughout read as a chant rather than a sentence. */}
             {wallet.connectors.map((c, i) => (
               <span key={c.id}>
-                {i > 0 ? " or " : ""}
+                {i === 0 ? "" : i === wallet.connectors.length - 1 ? " or " : ", "}
                 <a
                   className={s.link}
                   href={CONNECTORS[c.id].installUrl}
@@ -162,6 +164,7 @@ function Mark({ id }: { id: ConnectorId }) {
     rabby: Rabbit,
     trust: Shield,
     okx: Blocks,
+    uniswap: Unicorn,
   };
   const Glyph = marks[id];
   return <Glyph />;
@@ -247,6 +250,20 @@ function Blocks() {
         <rect x="7" y="19.6" width="5.4" height="5.4" />
         <rect x="19.6" y="19.6" width="5.4" height="5.4" />
       </g>
+    </svg>
+  );
+}
+
+/** Uniswap. The unicorn, in its pink. */
+function Unicorn() {
+  return (
+    <svg viewBox="0 0 32 32" role="img">
+      <rect width="32" height="32" rx="8" fill="#ff007a" />
+      <path
+        d="M18.9 6.5c.4 1 .3 2-.2 2.9 1.6.9 2.8 2.4 3.3 4.2l1.7.7c.9.4 1.5 1.3 1.5 2.3v3.1c0 1.6-.9 3-2.3 3.7l-2.4 1.2a6.4 6.4 0 0 1-2.9.7h-2.2c-3.4 0-6.2-2.8-6.2-6.2 0-2.1 1-4 2.6-5.1l-1.6-2.7c-.4-.7.1-1.6.9-1.6h1.6l-.7-1.9c-.2-.6.4-1.2 1-.9l2.4 1.1c.6-1 1.7-1.6 2.9-1.6.2 0 .4 0 .6.1z"
+        fill="#fff"
+      />
+      <circle cx="17.2" cy="13.7" r="1.2" fill="#ff007a" />
     </svg>
   );
 }
