@@ -165,6 +165,7 @@ function Mark({ id }: { id: ConnectorId }) {
     trust: Shield,
     okx: Blocks,
     uniswap: Unicorn,
+    coinbase: Coin,
   };
   const Glyph = marks[id];
   return <Glyph />;
@@ -264,6 +265,17 @@ function Unicorn() {
         fill="#fff"
       />
       <circle cx="17.2" cy="13.7" r="1.2" fill="#ff007a" />
+    </svg>
+  );
+}
+
+/** Coinbase Wallet. The disc and square, in Coinbase blue. */
+function Coin() {
+  return (
+    <svg viewBox="0 0 32 32" role="img">
+      <rect width="32" height="32" rx="8" fill="#0052ff" />
+      <circle cx="16" cy="16" r="9" fill="#fff" />
+      <rect x="12.6" y="12.6" width="6.8" height="6.8" rx="1.6" fill="#0052ff" />
     </svg>
   );
 }

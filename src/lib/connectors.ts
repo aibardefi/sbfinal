@@ -37,7 +37,14 @@ export type Eip1193Provider = {
   removeListener?: (event: string, handler: (...args: never[]) => void) => void;
 };
 
-export type ConnectorId = "metamask" | "phantom" | "rabby" | "trust" | "okx" | "uniswap";
+export type ConnectorId =
+  | "metamask"
+  | "phantom"
+  | "rabby"
+  | "trust"
+  | "okx"
+  | "uniswap"
+  | "coinbase";
 
 export type Connector = {
   id: ConnectorId;
@@ -80,6 +87,7 @@ type LegacyWindow = Window & {
   trustwallet?: (Eip1193Provider & Flags) | { ethereum?: Eip1193Provider & Flags };
   okxwallet?: (Eip1193Provider & Flags) | { ethereum?: Eip1193Provider & Flags };
   uniswap?: (Eip1193Provider & Flags) | { ethereum?: Eip1193Provider & Flags };
+  coinbaseWalletExtension?: Eip1193Provider & Flags;
 };
 
 /** Accepts either `x` or `x.ethereum`, for wallets that have shipped both. */
@@ -247,6 +255,28 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
       unwrap(typeof window !== "undefined" ? (window as LegacyWindow).uniswap : undefined) ??
       pick((p) => p.isUniswapWallet === true || p.isUniswap === true),
   },
+
+  coinbase: {
+    id: "coinbase",
+    name: "Coinbase Wallet",
+    // Conventional, and the searches reasoned it from the naming rule rather than
+    // reading it off Coinbase — so unconfirmed, like most of these. The backstop
+    // is unusually solid here though: `isCoinbaseWallet` is already trusted a few
+    // lines up, where MetaMask's matcher excludes it.
+    rdns: "com.coinbase.wallet",
+    installUrl: "https://www.coinbase.com/wallet/downloads",
+    // From this repo's own history, like Trust's and Phantom's — the deleted
+    // `MobileWalletLinks.tsx` shipped exactly this. `go.cb-w.com` is Coinbase
+    // Wallet's universal link host, so with the app absent it resolves to a web
+    // page rather than the error a custom scheme would raise.
+    handoff: () => {
+      window.location.href = `https://go.cb-w.com/dapp?cb_url=${encodeURIComponent(window.location.href)}`;
+    },
+    legacy: () =>
+      (typeof window !== "undefined"
+        ? (window as LegacyWindow).coinbaseWalletExtension
+        : undefined) ?? pick((p) => p.isCoinbaseWallet === true),
+  },
 };
 
 /** Display order in the panel. MetaMask first, as asked. */
@@ -257,6 +287,7 @@ export const CONNECTOR_ORDER: ConnectorId[] = [
   "trust",
   "okx",
   "uniswap",
+  "coinbase",
 ];
 
 /* ----------------------------------------------------------- 6963 discovery */
