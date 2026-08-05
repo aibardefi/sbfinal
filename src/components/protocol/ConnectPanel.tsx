@@ -160,6 +160,7 @@ function Mark({ id }: { id: ConnectorId }) {
     metamask: Fox,
     phantom: Ghost,
     rabby: Rabbit,
+    trust: Shield,
   };
   const Glyph = marks[id];
   return <Glyph />;
@@ -211,6 +212,24 @@ function Rabbit() {
         fill="#fff"
       />
       <circle cx="19.6" cy="17.7" r="1.15" fill="#7084ff" />
+    </svg>
+  );
+}
+
+/** Trust Wallet. The shield, in its blue. */
+function Shield() {
+  return (
+    <svg viewBox="0 0 32 32" role="img">
+      <rect width="32" height="32" rx="8" fill="#0500ff" />
+      <path
+        d="M16 6.4l7.3 3.1c0 4.9-.3 8.3-1.6 10.9-1.3 2.6-3.4 4.3-5.7 5.5V6.4z"
+        fill="#fff"
+        opacity="0.72"
+      />
+      <path
+        d="M16 6.4L8.7 9.5c0 4.9.3 8.3 1.6 10.9 1.3 2.6 3.4 4.3 5.7 5.5V6.4z"
+        fill="#fff"
+      />
     </svg>
   );
 }

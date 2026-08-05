@@ -37,7 +37,7 @@ export type Eip1193Provider = {
   removeListener?: (event: string, handler: (...args: never[]) => void) => void;
 };
 
-export type ConnectorId = "metamask" | "phantom" | "rabby";
+export type ConnectorId = "metamask" | "phantom" | "rabby" | "trust";
 
 export type Connector = {
   id: ConnectorId;
@@ -69,7 +69,19 @@ type Flags = Record<string, unknown>;
 type LegacyWindow = Window & {
   ethereum?: Eip1193Provider & Flags & { providers?: (Eip1193Provider & Flags)[] };
   phantom?: { ethereum?: Eip1193Provider & Flags };
+  // Trust exposes itself either as the provider directly or wrapped, depending on
+  // build, so both shapes are checked where it is read.
+  trustwallet?: (Eip1193Provider & Flags) | { ethereum?: Eip1193Provider & Flags };
 };
+
+/** Accepts either `x` or `x.ethereum`, for wallets that have shipped both. */
+function unwrap(value: unknown): (Eip1193Provider & Flags) | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const direct = value as Eip1193Provider & Flags;
+  if (typeof direct.request === "function") return direct;
+  const nested = (value as { ethereum?: Eip1193Provider & Flags }).ethereum;
+  return nested && typeof nested.request === "function" ? nested : undefined;
+}
 
 /** Every provider sitting on `window.ethereum`, whether one or a list. */
 function injectedCandidates(): (Eip1193Provider & Flags)[] {
@@ -136,10 +148,31 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
     deepLink: null,
     legacy: () => pick((p) => p.isRabby === true),
   },
+
+  trust: {
+    id: "trust",
+    name: "Trust Wallet",
+    // Confirmed against Trust's own extension docs, which match on exactly this
+    // string — unlike Rabby's above, this one is not a convention we assumed.
+    rdns: "com.trustwallet.app",
+    installUrl: "https://trustwallet.com/download",
+    // Recovered from this repo's own history rather than invented: the deleted
+    // `MobileWalletLinks.tsx` shipped this exact link, so it is a format that
+    // demonstrably worked here. coin_id 60 is Ethereum in SLIP-44, which is what
+    // selects the EVM side of a wallet that is not EVM-only.
+    deepLink: () =>
+      `https://link.trustwallet.com/open_url?coin_id=60&url=${encodeURIComponent(window.location.href)}`,
+    // Trust is mobile-first, and the case that matters most is its own in-app
+    // browser, where it takes the shared slot and sets `isTrust`. The named
+    // namespace is preferred where the extension provides one.
+    legacy: () =>
+      unwrap(typeof window !== "undefined" ? (window as LegacyWindow).trustwallet : undefined) ??
+      pick((p) => p.isTrust === true || p.isTrustWallet === true),
+  },
 };
 
 /** Display order in the panel. MetaMask first, as asked. */
-export const CONNECTOR_ORDER: ConnectorId[] = ["metamask", "phantom", "rabby"];
+export const CONNECTOR_ORDER: ConnectorId[] = ["metamask", "phantom", "rabby", "trust"];
 
 /* ----------------------------------------------------------- 6963 discovery */
 
