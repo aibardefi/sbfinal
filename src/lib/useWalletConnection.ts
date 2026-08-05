@@ -11,11 +11,13 @@ import {
   findProvider,
   getProviderSnapshot,
   getServerSnapshot,
+  isAvailable,
   isMobileBrowser,
   isUserRejection,
   subscribeToProviders,
   type ConnectorId,
 } from "./connectors";
+import { initWalletConnect, resetWalletConnect } from "./walletconnect";
 import type { Wallet } from "./wallet";
 
 /** Which wallet was last connected, so a reload restores the same one. */
@@ -89,7 +91,7 @@ export function useWalletConnection(): Wallet {
      a dependency below, and a fresh object every render would rebuild the whole
      `Wallet` every render and re-render every consumer of the context.
      `useSyncExternalStore` above is what re-runs this when discovery publishes. */
-  const presence = CONNECTOR_ORDER.map((id) => (findProvider(CONNECTORS[id]) ? "1" : "0")).join("");
+  const presence = CONNECTOR_ORDER.map((id) => (isAvailable(CONNECTORS[id]) ? "1" : "0")).join("");
 
   const activeProvider = activeId ? findProvider(CONNECTORS[activeId]) : undefined;
 
@@ -177,6 +179,34 @@ export function useWalletConnection(): Wallet {
 
   const connectWith = useCallback(async (id: ConnectorId) => {
     const connector = CONNECTORS[id];
+
+    /* WalletConnect is its own flow: nothing is installed to prompt, so the
+       library is fetched now, and `enable()` draws the picker — or returns
+       straight away when a stored session is still good, which is why a second
+       visit usually never sees a QR code. */
+    if (connector.kind === "walletconnect") {
+      setPending(id);
+      setError(undefined);
+      try {
+        const wc = await initWalletConnect();
+        const accounts = await wc.enable();
+        const next = asAddress(accounts?.[0]);
+        if (!next) return;
+        const hexChain = await wc.request({ method: "eth_chainId" });
+        setAccount(next);
+        setActiveId(id);
+        setChainId(typeof hexChain === "string" ? Number.parseInt(hexChain, 16) : undefined);
+        writeStored(id);
+        setPanelOpen(false);
+      } catch (e) {
+        // Closing the picker is a decision, not a failure.
+        if (!isUserRejection(e)) setError("Could not connect over WalletConnect.");
+      } finally {
+        setPending(undefined);
+      }
+      return;
+    }
+
     const p = findProvider(connector);
 
     // Not here: hand off rather than fail. On a phone that means reopening this
@@ -258,11 +288,23 @@ export function useWalletConnection(): Wallet {
    * give a true disconnect.
    */
   const disconnect = useCallback(() => {
-    const p = activeId ? findProvider(CONNECTORS[activeId]) : undefined;
+    const connector = activeId ? CONNECTORS[activeId] : undefined;
+    const p = connector ? findProvider(connector) : undefined;
     setAccount(undefined);
     setActiveId(undefined);
     setError(undefined);
     writeStored(undefined);
+
+    // WalletConnect has a real disconnect — the session is a thing on a relay,
+    // and leaving it open means the wallet still lists this site as connected
+    // long after the visitor thinks they left.
+    if (connector?.kind === "walletconnect") {
+      void resetWalletConnect();
+      return;
+    }
+
+    // An injected wallet cannot be made to forget us; permission lives in the
+    // extension. This asks, for the wallets that honour it.
     void p
       ?.request({ method: "wallet_revokePermissions", params: [{ eth_accounts: {} }] })
       .catch(() => {});

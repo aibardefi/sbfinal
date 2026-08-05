@@ -29,6 +29,7 @@
  */
 
 import type { Address } from "viem";
+import { getWalletConnect } from "./walletconnect";
 
 /** The slice of EIP-1193 this file needs. */
 export type Eip1193Provider = {
@@ -45,12 +46,23 @@ export type ConnectorId =
   | "okx"
   | "uniswap"
   | "coinbase"
-  | "rainbow";
+  | "rainbow"
+  | "walletconnect";
 
 export type Connector = {
   id: ConnectorId;
   name: string;
-  /** EIP-6963 identifier. The only trustworthy way to name a specific wallet. */
+  /**
+   * `injected` is code already running in the page — an extension, or a wallet's
+   * in-app browser — found synchronously by rdns or window slot.
+   *
+   * `walletconnect` is a relay protocol: fetched on demand, initialised over the
+   * network, and always offerable because there is nothing to detect. It is the
+   * only one that reaches wallets this site has never named.
+   */
+  kind: "injected" | "walletconnect";
+  /** EIP-6963 identifier. The only trustworthy way to name a specific wallet.
+      Empty for a connector that is not an injected provider. */
   rdns: string;
   installUrl: string;
   /**
@@ -117,6 +129,7 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
   metamask: {
     id: "metamask",
     name: "MetaMask",
+    kind: "injected",
     rdns: "io.metamask",
     installUrl: "https://metamask.io/download/",
     // A real https universal link, so no fallback is needed: with the app absent
@@ -136,6 +149,7 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
   phantom: {
     id: "phantom",
     name: "Phantom",
+    kind: "injected",
     rdns: "app.phantom",
     installUrl: "https://phantom.app/download",
     handoff: () => {
@@ -153,6 +167,7 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
   rabby: {
     id: "rabby",
     name: "Rabby",
+    kind: "injected",
     // NOT confirmed against Rabby's source — it could not be verified from here,
     // and the value below is the conventional one. That is why `legacy` also
     // matches the `isRabby` flag, which is long-established and reliable: if this
@@ -171,6 +186,7 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
   trust: {
     id: "trust",
     name: "Trust Wallet",
+    kind: "injected",
     // Confirmed against Trust's own extension docs, which match on exactly this
     // string — unlike Rabby's above, this one is not a convention we assumed.
     rdns: "com.trustwallet.app",
@@ -193,6 +209,7 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
   okx: {
     id: "okx",
     name: "OKX Wallet",
+    kind: "injected",
     // Conventional, and NOT confirmed — OKX's own docs pages are JS-rendered and
     // would not give it up from here. As with Rabby, `legacy` is what actually
     // carries detection: `window.okxwallet` is OKX's long-standing namespace and
@@ -232,6 +249,7 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
   uniswap: {
     id: "uniswap",
     name: "Uniswap Wallet",
+    kind: "injected",
     // Conventional, not confirmed — the searches echoed it back as an example
     // rather than as Uniswap's registered value. `legacy` is the backstop.
     rdns: "org.uniswap.app",
@@ -260,6 +278,7 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
   coinbase: {
     id: "coinbase",
     name: "Coinbase Wallet",
+    kind: "injected",
     // Conventional, and the searches reasoned it from the naming rule rather than
     // reading it off Coinbase — so unconfirmed, like most of these. The backstop
     // is unusually solid here though: `isCoinbaseWallet` is already trusted a few
@@ -282,6 +301,7 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
   rainbow: {
     id: "rainbow",
     name: "Rainbow",
+    kind: "injected",
     // The one rdns here that is genuinely confirmed rather than conventional: it
     // was read straight out of RainbowKit's own bundle while that dependency was
     // still installed, alongside `io.metamask`. Recorded because the source is
@@ -306,7 +326,40 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
     handoff: null,
     legacy: () => pick((p) => p.isRainbow === true),
   },
+
+  walletconnect: {
+    id: "walletconnect",
+    name: "WalletConnect",
+    kind: "walletconnect",
+    // Nothing to discover: it is a protocol, not an extension.
+    rdns: "",
+    installUrl: "https://walletconnect.network/",
+    /*
+     * No handoff, and for the opposite reason to the others. The three nulls
+     * above are wallets this site cannot reach on a phone. This one reaches all
+     * of them: its own picker deep-links into whichever wallet the visitor
+     * chooses, from a registry of hundreds, so there is no single link for this
+     * site to hold. Rabby, OKX and Uniswap are unreachable by hand-written link
+     * and reachable through here.
+     */
+    handoff: null,
+    // Undefined until somebody picks this row and the library has loaded. That is
+    // why `isAvailable` treats this kind specially rather than asking here.
+    legacy: () => getWalletConnect(),
+  },
 };
+
+/**
+ * Whether a connector is worth offering at all.
+ *
+ * For an injected wallet this is "is it on this device". For WalletConnect it is
+ * always true: there is nothing installed to find, the library arrives when it is
+ * picked, and a visitor with no extension and no listed app is exactly who it
+ * exists for.
+ */
+export function isAvailable(connector: Connector): boolean {
+  return connector.kind === "walletconnect" || findProvider(connector) !== undefined;
+}
 
 /** Display order in the panel. MetaMask first, as asked. */
 export const CONNECTOR_ORDER: ConnectorId[] = [
@@ -318,6 +371,9 @@ export const CONNECTOR_ORDER: ConnectorId[] = [
   "uniswap",
   "coinbase",
   "rainbow",
+  // Last, deliberately. It is the catch-all: somebody who uses one of the eight
+  // above should find it by name first, and this is the answer for everyone else.
+  "walletconnect",
 ];
 
 /* ----------------------------------------------------------- 6963 discovery */

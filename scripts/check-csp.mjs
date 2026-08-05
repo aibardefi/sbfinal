@@ -59,14 +59,21 @@ if (!headerPolicy) note("public/_headers has no Content-Security-Policy line.");
 
 const layout = read("src/app/layout.tsx");
 
-// connect-src is now exactly 'self' plus the RPC, and no wildcard is permitted
-// anywhere in it. It used to also carry five WalletConnect wildcards, which the
-// widening check below had to be taught to tolerate; removing the wallet
-// integration removed the only reason that exemption existed, so it is gone from
-// here too. Re-adding a connector means re-adding both halves — the origins
-// here, and the strip in the widening check — deliberately, because a wildcard
-// that slips into this directive unnoticed is the failure this file exists for.
-const expected = `'self' ${origin}`;
+// The WalletConnect origins connect-src must also name, in the same order both
+// copies write them. These are wildcards over WalletConnect's OWN registrable
+// domains — deliberately, because an exact-subdomain list kept missing hosts
+// (secure-mobile.walletconnect.org among them) and breaking mobile pairing. The
+// widening check below still refuses a bare `*` or any wildcard that is not one
+// of these three domains.
+const WALLETCONNECT = [
+  "wss://*.walletconnect.org",
+  "wss://*.walletconnect.com",
+  "https://*.walletconnect.org",
+  "https://*.walletconnect.com",
+  "https://*.web3modal.org",
+].join(" ");
+
+const expected = `'self' ${origin} ${WALLETCONNECT}`;
 
 // The header copy is literal text, so it is compared literally.
 if (headerPolicy) {
@@ -91,11 +98,16 @@ for (const [label, policy] of [
   ["src/app/layout.tsx", layout],
 ]) {
   if (!policy) continue;
-  // No exemptions any more: with the wallet stack gone there is no third party
-  // that gets to be wildcarded, so the policy is checked as written.
-  const cleaned = policy;
+  // WalletConnect's own domains are the one permitted exemption (see the CSP note
+  // in layout.tsx) — strip those first, so the widening check below sees only the
+  // wildcards nobody signed off on.
+  const cleaned = policy.replace(
+    /(?:wss|https):\/\/\*\.(?:walletconnect\.(?:org|com)|web3modal\.org)/g,
+    ""
+  );
   // A bare `*`, a scheme-wildcard, or a wildcard host in connect-src or
-  // default-src. `'self'` and named https origins are the only acceptable forms.
+  // default-src. `'self'`, named https origins, and the stripped WalletConnect
+  // wildcards are the only acceptable forms.
   const risky = /(connect-src|default-src)[^;"'`]*?(\*|https?:(?!\/\/[a-z0-9])|\bdata:)/i;
   if (risky.test(cleaned)) note(`${label}: connect-src or default-src has been widened with a wildcard.`);
 }
@@ -110,5 +122,5 @@ if (problems.length) {
 }
 
 console.log(
-  `check:csp ok — connect-src is 'self' plus ${origin}, and nothing else, in both copies.`
+  `check:csp ok — connect-src is 'self' plus ${origin} plus the WalletConnect relay, in both copies.`
 );

@@ -19,7 +19,7 @@
   # src/lib/rpc.ts. `npm run check:csp` compares the two, because them drifting
   # apart fails in the worst possible way: the meta policy permits the call, this
   # header blocks it, and only the deployed site is broken.
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://rpc.mainnet.chain.robinhood.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://*.walletconnect.com https://*.web3modal.org https://imagedelivery.net; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://rpc.mainnet.chain.robinhood.com wss://*.walletconnect.org wss://*.walletconnect.com https://*.walletconnect.org https://*.walletconnect.com https://*.web3modal.org; frame-src 'self' https://*.walletconnect.org https://*.walletconnect.com; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
   # X-Frame-Options is redundant next to frame-ancestors for a current browser,
   # and is here for the older ones that only understand this.
   X-Frame-Options: DENY

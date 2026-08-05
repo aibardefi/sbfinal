@@ -80,8 +80,10 @@ export function ConnectPanel({
           ))}
         </ul>
       ) : (
-        /* Desktop with nothing installed. The list is genuinely empty, so it says
-           so rather than showing rows that cannot connect. */
+        /* A guard, not a state anyone reaches today: WalletConnect is always
+           available, so the list always has at least one row. It stays because an
+           empty panel with no explanation is the worst possible answer, and the
+           thing preventing it is one entry in `CONNECTOR_ORDER`. */
         <div className={s.empty}>
           <div className={s.mark} aria-hidden="true">
             <Fox />
@@ -141,11 +143,18 @@ function WalletRow({
       <span className={s.text}>
         <span className={s.name}>{connector.name}</span>
         <span className={s.sub}>
+          {/* Three states, and WalletConnect is none of the other two: it is not
+              installed and it is not an app to open, so "Browser extension" and
+              "Open in the … app" are both lies about it. */}
           {connector.connecting
-            ? `Check ${connector.name}…`
-            : connector.present
-              ? "Browser extension"
-              : `Open in the ${connector.name} app`}
+            ? CONNECTORS[connector.id].kind === "walletconnect"
+              ? "Opening…"
+              : `Check ${connector.name}…`
+            : CONNECTORS[connector.id].kind === "walletconnect"
+              ? "Any other wallet — scan or pick"
+              : connector.present
+                ? "Browser extension"
+                : `Open in the ${connector.name} app`}
         </span>
       </span>
       {connector.connecting ? <span className={s.spinner} aria-hidden="true" /> : null}
@@ -168,6 +177,7 @@ function Mark({ id }: { id: ConnectorId }) {
     uniswap: Unicorn,
     coinbase: Coin,
     rainbow: Arcs,
+    walletconnect: Bridge,
   };
   const Glyph = marks[id];
   return <Glyph />;
@@ -310,6 +320,22 @@ function Arcs() {
           <path d="M10.5 27A5.5 5.5 0 0 0 5 21.5" stroke="#0e76fd" />
         </g>
       </g>
+    </svg>
+  );
+}
+
+/** WalletConnect. The two arcs, in its blue. */
+function Bridge() {
+  return (
+    <svg viewBox="0 0 32 32" role="img">
+      <rect width="32" height="32" rx="8" fill="#3b99fc" />
+      <path
+        d="M6.6 17.4a7 7 0 0 1 9.4 0 7 7 0 0 0 9.4 0"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }

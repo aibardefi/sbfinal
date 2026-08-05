@@ -13,6 +13,7 @@
     "serve": "node scripts/serve-static.mjs"
   },
   "dependencies": {
+    "@walletconnect/ethereum-provider": "^2.23.10",
     "@x402/core": "^2.20.0",
     "@x402/evm": "^2.20.0",
     "@x402/svm": "^2.20.0",

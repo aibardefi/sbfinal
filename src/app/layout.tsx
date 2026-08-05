@@ -105,34 +105,51 @@ export const metadata: Metadata = {
  * is the one thing GitHub Pages cannot send; put it in front (Cloudflare) if
  * clickjacking protection is wanted.
  */
-// Removing the wallet integration removed everything this policy had been
-// widened for. WalletConnect's relay, registry and Verify-iframe wildcards are
-// gone from connect-src and frame-src; Google Fonts is gone from style-src and
-// font-src, because it was there for the Reown picker's Inter and nothing on
-// this site loads a remote font; the walletconnect, web3modal and imagedelivery
-// image hosts are gone from img-src, because they served wallet logos into that
-// same picker. All of it was verified to be CSP-only before deletion — no
-// stylesheet, font or image in this repo points at any of those hosts.
+// WalletConnect is back, and with it everything this policy has to be widened
+// for. It was all removed when the wallet stack went, and is restored here from
+// that same commit rather than re-derived — the exact-subdomain list is how this
+// broke the first time, when a missing mobile host (secure-mobile.walletconnect
+// .org) left "tap MetaMask" doing nothing because the pairing could not finish.
+// So these are wildcards over WalletConnect's OWN registrable domains, scoped to
+// them and nothing else. `check:csp` still refuses a bare `*`.
 //
-// What is left is one third-party origin, the RPC.
+// None of this is dialled until somebody picks the WalletConnect row: the eight
+// injected wallets never touch these origins, because an extension's signing
+// traffic is the extension's and not the page's.
+const WALLETCONNECT_CONNECT_SRC =
+  "wss://*.walletconnect.org wss://*.walletconnect.com " +
+  "https://*.walletconnect.org https://*.walletconnect.com https://*.web3modal.org";
+
+// The Verify API runs in a hidden iframe (verify.walletconnect.org, which itself
+// frames secure.walletconnect.org) to attest this origin during pairing. Under
+// `default-src 'self'` that iframe is blocked, and on mobile that alone is enough
+// to leave the tap dead.
+const WALLETCONNECT_FRAME_SRC = "https://*.walletconnect.org https://*.walletconnect.com";
+
 const CSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data:",
-  "font-src 'self'",
+  // Reown's picker styles itself with Inter from Google Fonts — its stylesheet
+  // host here, its font files in font-src. Without them it renders as blank grey
+  // tiles. Nothing else on this site loads a remote font.
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  // Wallet logos in that picker come from the web3modal and walletconnect image
+  // hosts. Blank tiles that do not respond to a tap are these being blocked.
+  "img-src 'self' data: https://*.walletconnect.com https://*.web3modal.org https://imagedelivery.net",
+  "font-src 'self' https://fonts.gstatic.com",
   // The borrow screen reads the lending contract over JSON-RPC, so this is no
   // longer 'self' alone. It is named origins, never a wildcard and never a
   // widened default-src, which would look like a one-word change and remove the
   // protection entirely.
   //
-  // This survives the wallet removal because reads did not depend on a wallet:
-  // the collateral roster, inventory and prices come off chain through
-  // `publicClient` whether or not anybody can sign.
-  `connect-src 'self' ${RPC_ORIGIN}`,
-  // Nothing frames anything now that the Verify iframe is gone. 'none' rather
-  // than 'self', because a same-origin frame would also be a surprise here.
-  "frame-src 'none'",
+  // Reads do not depend on a wallet: the collateral roster, inventory and prices
+  // come off chain through `publicClient` whether or not anybody can sign. The
+  // WalletConnect origins are the relay and its registry, dialled only once that
+  // row is picked.
+  `connect-src 'self' ${RPC_ORIGIN} ${WALLETCONNECT_CONNECT_SRC}`,
+  // Only WalletConnect's Verify iframe may frame; nothing else, and no wildcard
+  // beyond their own domains.
+  `frame-src 'self' ${WALLETCONNECT_FRAME_SRC}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'none'",
