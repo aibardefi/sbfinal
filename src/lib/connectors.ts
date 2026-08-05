@@ -37,7 +37,7 @@ export type Eip1193Provider = {
   removeListener?: (event: string, handler: (...args: never[]) => void) => void;
 };
 
-export type ConnectorId = "metamask" | "phantom" | "rabby" | "trust";
+export type ConnectorId = "metamask" | "phantom" | "rabby" | "trust" | "okx";
 
 export type Connector = {
   id: ConnectorId;
@@ -72,6 +72,7 @@ type LegacyWindow = Window & {
   // Trust exposes itself either as the provider directly or wrapped, depending on
   // build, so both shapes are checked where it is read.
   trustwallet?: (Eip1193Provider & Flags) | { ethereum?: Eip1193Provider & Flags };
+  okxwallet?: (Eip1193Provider & Flags) | { ethereum?: Eip1193Provider & Flags };
 };
 
 /** Accepts either `x` or `x.ethereum`, for wallets that have shipped both. */
@@ -169,10 +170,44 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
       unwrap(typeof window !== "undefined" ? (window as LegacyWindow).trustwallet : undefined) ??
       pick((p) => p.isTrust === true || p.isTrustWallet === true),
   },
+
+  okx: {
+    id: "okx",
+    name: "OKX Wallet",
+    // Conventional, and NOT confirmed — OKX's own docs pages are JS-rendered and
+    // would not give it up from here. As with Rabby, `legacy` is what actually
+    // carries detection: `window.okxwallet` is OKX's long-standing namespace and
+    // cannot be another wallet, so a wrong string here costs only the
+    // disambiguation between two extensions installed at once.
+    rdns: "com.okex.wallet",
+    installUrl: "https://www.okx.com/web3",
+    /*
+     * Two layers, and the outer one is the point.
+     *
+     * OKX documents a custom scheme — `okx://wallet/dapp/url?dappUrl=…` — and it
+     * works, but only if the app is installed. A custom scheme that resolves to
+     * nothing does not fail quietly on iOS: Safari puts up "cannot open the page
+     * because the address is invalid". This row is shown on phones precisely
+     * where a provider CANNOT be detected, so the visitor who taps it without OKX
+     * installed is the expected case, not an edge one.
+     *
+     * Wrapping it in OKX's https download URL makes that case land on their
+     * download page instead of an error dialog. The inner scheme is documented;
+     * the wrapper is not verified from here — but its failure mode is the reason
+     * it is used, and the worst it can do is send somebody to a download page.
+     */
+    deepLink: () => {
+      const inner = `okx://wallet/dapp/url?dappUrl=${encodeURIComponent(window.location.href)}`;
+      return `https://www.okx.com/download?deeplink=${encodeURIComponent(inner)}`;
+    },
+    legacy: () =>
+      unwrap(typeof window !== "undefined" ? (window as LegacyWindow).okxwallet : undefined) ??
+      pick((p) => p.isOkxWallet === true || p.isOKExWallet === true),
+  },
 };
 
 /** Display order in the panel. MetaMask first, as asked. */
-export const CONNECTOR_ORDER: ConnectorId[] = ["metamask", "phantom", "rabby", "trust"];
+export const CONNECTOR_ORDER: ConnectorId[] = ["metamask", "phantom", "rabby", "trust", "okx"];
 
 /* ----------------------------------------------------------- 6963 discovery */
 

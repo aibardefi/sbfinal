@@ -161,6 +161,7 @@ function Mark({ id }: { id: ConnectorId }) {
     phantom: Ghost,
     rabby: Rabbit,
     trust: Shield,
+    okx: Blocks,
   };
   const Glyph = marks[id];
   return <Glyph />;
@@ -230,6 +231,22 @@ function Shield() {
         d="M16 6.4L8.7 9.5c0 4.9.3 8.3 1.6 10.9 1.3 2.6 3.4 4.3 5.7 5.5V6.4z"
         fill="#fff"
       />
+    </svg>
+  );
+}
+
+/** OKX. The square grid, black on white — their mark is geometric, not a figure. */
+function Blocks() {
+  return (
+    <svg viewBox="0 0 32 32" role="img">
+      <rect width="32" height="32" rx="8" fill="#000" />
+      <g fill="#fff">
+        <rect x="7" y="7" width="5.4" height="5.4" />
+        <rect x="19.6" y="7" width="5.4" height="5.4" />
+        <rect x="13.3" y="13.3" width="5.4" height="5.4" />
+        <rect x="7" y="19.6" width="5.4" height="5.4" />
+        <rect x="19.6" y="19.6" width="5.4" height="5.4" />
+      </g>
     </svg>
   );
 }
