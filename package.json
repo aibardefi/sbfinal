@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "audit": "node scripts/device-audit.mjs",
-    "check:csp": "node scripts/check-csp.mjs"
+    "check:csp": "node scripts/check-csp.mjs",
+    "preview": "next build && node scripts/serve-static.mjs",
+    "serve": "node scripts/serve-static.mjs"
   },
   "dependencies": {
     "@x402/core": "^2.20.0",
@@ -29,5 +31,12 @@
     "playwright-core": "^1.62.1",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
+  },
+  "browserslist": [
+    "safari >= 14",
+    "ios_saf >= 14",
+    "chrome >= 90",
+    "firefox >= 90",
+    "edge >= 90"
+  ]
 }

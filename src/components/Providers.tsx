@@ -1,39 +1,24 @@
 "use client";
 
-import { WalletContext, type Wallet } from "@/lib/wallet";
+import { WalletContext } from "@/lib/wallet";
+import { useMetaMaskWallet } from "@/lib/useMetaMaskWallet";
 
 /**
- * Supplies the wallet context, which now holds one permanent answer: nobody is
- * connected, and nothing here can connect them.
+ * Publishes the wallet to the whole page.
  *
- * There used to be a lazily-loaded `WalletRuntime` behind this — wagmi,
- * RainbowKit, WalletConnect and a set of phone deep-links, ~700 KB of it. All of
- * that is gone. What is deliberately NOT gone is the context itself: every
- * screen reads the wallet through `useWallet`, and keeping the provider means
- * none of them had to be edited to remove a feature they only ever consumed.
+ * The connection lives here rather than on the borrow screen so that it survives
+ * anything that screen does, and so a second Connect button elsewhere would read
+ * the same session. What it holds is real again — an account, a chain and a viem
+ * signer, from `useMetaMaskWallet`.
  *
- * `DISCONNECTED` is a module constant rather than state because it can no longer
- * change. `ready: true` so no screen waits for a restore that will never happen;
- * `hasProvider: false` so the places that offer a Connect button hide it instead
- * of rendering one that does nothing.
- *
- * Reads are untouched by any of this. The borrow screen's figures come off chain
- * through `publicClient` in `chain.ts`, over our own RPC, and never needed a
- * wallet — which is why that screen still shows a real collateral roster, real
- * inventory and real prices with this in place.
+ * There is still no provider tree under this, which is the point. The wagmi /
+ * RainbowKit / TanStack stack that used to sit here was ~700 KB and had to be
+ * lazily chunked to keep it off the critical path; `useMetaMaskWallet` is one
+ * hook over EIP-1193 and viem, both of which the page already loads to read the
+ * chain. So there is nothing left to defer, and no window where the Connect
+ * button exists but the code behind it has not arrived.
  */
-const DISCONNECTED: Wallet = {
-  ready: true,
-  hasProvider: false,
-  wrongNetwork: false,
-  connecting: false,
-  connect: () => {},
-  disconnect: () => {},
-  switchNetwork: () => {},
-};
-
 export function Providers({ children }: { children: React.ReactNode }) {
-  return (
-    <WalletContext.Provider value={DISCONNECTED}>{children}</WalletContext.Provider>
-  );
+  const wallet = useMetaMaskWallet();
+  return <WalletContext.Provider value={wallet}>{children}</WalletContext.Provider>;
 }

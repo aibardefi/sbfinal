@@ -1,0 +1,164 @@
+/* The wallet list inside the connect panel.
+
+   One layout at every width. `Modal.module.css` already clamps the panel to
+   `min(30rem, 100%)` and `100dvh - 2rem` with its body scrolling, so there is no
+   breakpoint here and there should not need to be one — the row is a flex line
+   that shrinks, not a grid with fixed columns.
+
+   The row is 56px tall including padding, comfortably over the 44px tap target
+   the rest of the screen holds itself to under `@media (pointer: coarse)`. */
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.wallet {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: var(--p1-sunk);
+  color: var(--p1-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 130ms ease, border-color 130ms ease;
+}
+.wallet:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--p1-sunk) 80%, var(--p1-ink));
+}
+.wallet:focus-visible {
+  outline: 3px solid var(--p1-accent);
+  outline-offset: 2px;
+}
+.wallet:disabled {
+  cursor: progress;
+  opacity: 0.75;
+}
+
+.icon {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--p1-paper);
+}
+.icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.text {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+.name {
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+.sub {
+  font-size: 0.76rem;
+  color: var(--p1-dim);
+  /* A long sublabel must not widen the panel — the row shrinks instead. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Pushed to the far end by the growing .text above it. */
+.spinner {
+  flex: none;
+  margin-left: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--p1-dim) 35%, transparent);
+  border-top-color: var(--p1-dim);
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+/* Desktop with no extension. Padding is modest on purpose: an empty state that
+   reserves the height of the list it stands in for makes a short panel tall for
+   nothing, and on a 568px phone this screen has no height to spare. It is not
+   reachable on a phone today, but the panel is one component and the constraint
+   travels with it. */
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  padding: 0.9rem 0.5rem 0.3rem;
+  text-align: center;
+}
+
+.mark {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--p1-sunk);
+  margin-bottom: 0.1rem;
+}
+.mark svg {
+  width: 26px;
+  height: 26px;
+  /* The fox is the site's only clue about which wallet is meant, and it is
+     standing in for an absent one — so it is dimmed rather than full colour. */
+  opacity: 0.55;
+}
+
+.lead {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--p1-ink);
+}
+
+.link {
+  color: var(--p1-ink);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.link:focus-visible {
+  outline: 2px solid var(--p1-accent);
+  outline-offset: 2px;
+}
+
+.error {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--p1-danger);
+}
+
+.note {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--p1-dim);
+}

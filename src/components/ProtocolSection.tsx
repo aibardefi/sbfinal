@@ -39,6 +39,7 @@ import { BUY_URL, TOKEN_ADDRESS, externalLinkProps, isLive } from "@/lib/links";
 import { approvalStep, useTx, type Step } from "@/lib/tx";
 import { useWallet } from "@/lib/wallet";
 import { useEntrance } from "@/lib/useEntrance";
+import { ConnectPanel } from "./protocol/ConnectPanel";
 import s from "./ProtocolSection.module.css";
 import t from "./protocol/theme.module.css";
 
@@ -123,6 +124,11 @@ export function ProtocolSection() {
   const [soon, setSoon] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  /* The wallet is whole again — `Providers` owns the account, the chain and the
+     panel's open state, so this screen no longer patches `connect` on the way
+     past. `wallet.connect()` opens the panel from anywhere; only the panel itself
+     connects. The theme still has to be handed down, because `Modal` portals to
+     `<body>` where the `--p1-*` tokens are not declared. */
   const wallet = useWallet();
   const market = useMarket();
   const positions = usePositions(LIVE ? wallet.account : undefined);
@@ -342,10 +348,10 @@ export function ProtocolSection() {
                 session being restored, and offering Connect to somebody who is
                 about to appear as connected reads as having been logged out.
 
-                `hasProvider` is what removes this header button now that there
-                is no connector — same gate as the one in Positions, so the two
-                Connect buttons on this screen disappear together rather than one
-                being missed. */}
+                This is the one control that opens the connect panel on every
+                surface. It is not hidden at any width — `.connect` is a top-level
+                rule with no media query — which matters now that the phone has no
+                deep-link buttons of its own to fall back on. */}
             {wallet.ready && wallet.hasProvider && !wallet.account ? (
               <button
                 type="button"
@@ -663,6 +669,11 @@ export function ProtocolSection() {
       </div>
 
       {/* ---------------- popups ---------------- */}
+
+      {/* Same panel on a desktop and a phone. The split that used to be here —
+          modal on one, deep-link buttons on the other — is what let the two
+          drift apart, so there is deliberately no surface check in front of it. */}
+      <ConnectPanel theme={theme} open={wallet.panelOpen} onClose={wallet.closeConnect} />
 
       <Modal theme={theme} open={picking} onClose={() => setPicking(false)} title="Choose collateral">
         {/* Every row here is a token `collateralTokens()` returned. The roster in
