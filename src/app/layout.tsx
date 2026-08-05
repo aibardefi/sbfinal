@@ -105,52 +105,34 @@ export const metadata: Metadata = {
  * is the one thing GitHub Pages cannot send; put it in front (Cloudflare) if
  * clickjacking protection is wanted.
  */
-// WalletConnect reaches a spread of its OWN subdomains to complete a
-// connection, and the set differs by device: the relay websocket, the wallet
-// registry, the config and analytics APIs, the Verify attestation host, and — on
-// a phone — secure-mobile.walletconnect.org. Naming them one by one is how this
-// broke: a strict list that missed the mobile host left "tap MetaMask" doing
-// nothing, because the pairing could not finish. So connect-src trusts
-// WalletConnect's and WalletConnect's web3modal registrable domains by wildcard,
-// the way production dapps do. This is scoped to their domains only — not a
-// blanket `*`, which check:csp still refuses.
-const WALLETCONNECT_CONNECT_SRC =
-  "wss://*.walletconnect.org wss://*.walletconnect.com " +
-  "https://*.walletconnect.org https://*.walletconnect.com https://*.web3modal.org";
-
-// WalletConnect's Verify API runs in a hidden iframe (verify.walletconnect.org,
-// which itself frames secure.walletconnect.org) to attest the dapp's origin
-// during pairing. With only `default-src 'self'` that iframe is blocked, and on
-// mobile that alone is enough to leave the tap dead. Same scoped wildcard.
-const WALLETCONNECT_FRAME_SRC =
-  "https://*.walletconnect.org https://*.walletconnect.com";
-
+// Removing the wallet integration removed everything this policy had been
+// widened for. WalletConnect's relay, registry and Verify-iframe wildcards are
+// gone from connect-src and frame-src; Google Fonts is gone from style-src and
+// font-src, because it was there for the Reown picker's Inter and nothing on
+// this site loads a remote font; the walletconnect, web3modal and imagedelivery
+// image hosts are gone from img-src, because they served wallet logos into that
+// same picker. All of it was verified to be CSP-only before deletion — no
+// stylesheet, font or image in this repo points at any of those hosts.
+//
+// What is left is one third-party origin, the RPC.
 const CSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
-  // WalletConnect's wallet picker (Reown AppKit) styles itself with Inter loaded
-  // from Google Fonts, so its stylesheet host is named here and its font files in
-  // font-src. Without them the picker renders as blank grey tiles.
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  // The wallet logos in that picker come from api.web3modal.org (and the
-  // walletconnect image hosts); the rest of the page's images are still 'self'
-  // and data:. Blank tiles that do not respond to a tap are these being blocked.
-  "img-src 'self' data: https://*.walletconnect.com https://*.web3modal.org https://imagedelivery.net",
-  "font-src 'self' https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  "font-src 'self'",
   // The borrow screen reads the lending contract over JSON-RPC, so this is no
   // longer 'self' alone. It is named origins, never a wildcard and never a
   // widened default-src, which would look like a one-word change and remove the
   // protection entirely.
   //
-  // An injected wallet needs nothing here — its signing traffic is the
-  // extension's, not the page's. WalletConnect is the exception: pairing runs
-  // over its relay websocket, so the relay and the wallet-registry origins are
-  // named. They are only dialled once a WalletConnect session opens; an injected
-  // connection never touches them.
-  `connect-src 'self' ${RPC_ORIGIN} ${WALLETCONNECT_CONNECT_SRC}`,
-  // Only WalletConnect's Verify iframe is allowed to frame; nothing else, and no
-  // wildcard. Without this the default-src 'self' below would block it.
-  `frame-src 'self' ${WALLETCONNECT_FRAME_SRC}`,
+  // This survives the wallet removal because reads did not depend on a wallet:
+  // the collateral roster, inventory and prices come off chain through
+  // `publicClient` whether or not anybody can sign.
+  `connect-src 'self' ${RPC_ORIGIN}`,
+  // Nothing frames anything now that the Verify iframe is gone. 'none' rather
+  // than 'self', because a same-origin frame would also be a surprise here.
+  "frame-src 'none'",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'none'",
@@ -178,10 +160,11 @@ export default function RootLayout({
       {/* Ground and colour come from globals.css, which owns the shared
           palette; the old Tailwind colour classes no longer resolve. */}
       <body>
-        {/* wagmi + RainbowKit, around everything rather than around the borrow
-            screen: the connection lives in context and the wallet dialog portals
-            to the body, so a provider nested inside one of nine scroll-snap
-            sections would put that dialog inside a snap target. */}
+        {/* The wallet context, which now carries a single disconnected value —
+            no connector, no dialog, no JavaScript to speak of. It stays at the
+            root because every screen reads it through `useWallet`, and leaving
+            it here is what let the wallet stack be removed without editing any
+            of them. */}
         <Providers>{children}</Providers>
       </body>
     </html>

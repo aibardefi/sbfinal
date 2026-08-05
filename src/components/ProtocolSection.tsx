@@ -39,7 +39,6 @@ import { BUY_URL, TOKEN_ADDRESS, externalLinkProps, isLive } from "@/lib/links";
 import { approvalStep, useTx, type Step } from "@/lib/tx";
 import { useWallet } from "@/lib/wallet";
 import { useEntrance } from "@/lib/useEntrance";
-import { MobileWalletLinks, useMobileNoInjected } from "./MobileWalletLinks";
 import s from "./ProtocolSection.module.css";
 import t from "./protocol/theme.module.css";
 
@@ -55,8 +54,16 @@ import t from "./protocol/theme.module.css";
  * Reads are deliberately outside it. The collateral roster, the inventory and
  * the prices come off chain either way, because a page that invents a coin list
  * is wrong whether or not it can sign.
+ *
+ * It is false because the wallet integration was removed — wagmi, RainbowKit,
+ * WalletConnect and the phone deep-links are all gone, so there is no way to
+ * obtain the signer every write below needs. This flag is what makes that a
+ * coherent screen rather than a broken one: the form still reads the chain and
+ * shows real figures, and the button says so instead of offering an action it
+ * cannot perform. The write paths underneath are dormant, not deleted; putting
+ * a connector back and flipping this to true is what turns the product on.
  */
-const LIVE = true;
+const LIVE = false;
 
 /**
  * Where the ruler starts.
@@ -117,10 +124,6 @@ export function ProtocolSection() {
   const [copied, setCopied] = useState(false);
 
   const wallet = useWallet();
-  // On a phone with no extension the RainbowKit modal cannot connect (its tiles
-  // route through WalletConnect, whose handshake does not complete here), so the
-  // deep-link buttons stand in for the Connect button entirely on that surface.
-  const phoneConnect = useMobileNoInjected();
   const market = useMarket();
   const positions = usePositions(LIVE ? wallet.account : undefined);
   const tx = useTx();
@@ -243,10 +246,11 @@ export function ProtocolSection() {
     }
   };
 
-  /* No "no wallet found" branch any more. RainbowKit answers that case with its
-     own "Get a wallet" flow, which is a better reply than a dead button — so
-     somebody without an extension gets the same Connect button and is taken
-     somewhere useful rather than told no. */
+  /* The first branch is the only one reachable today: with no connector, `LIVE`
+     is false and this reads "Not live yet", disabled. The rest are kept in place
+     and in order because they are the arming sequence — connect, switch network,
+     borrow — and the screen is meant to come back by restoring a connector and
+     flipping the flag, not by rebuilding this ladder from memory. */
   const cta = !LIVE
     ? { label: "Not live yet", onClick: undefined, disabled: true }
     : !wallet.ready || market.loading
@@ -334,10 +338,15 @@ export function ProtocolSection() {
                 address and the disconnect take its place — the two are the same
                 slot in two states, not two controls.
 
-                Nothing renders while `ready` is false: that is wagmi restoring a
-                stored session, and offering Connect to somebody who is about to
-                appear as connected reads as having been logged out. */}
-            {wallet.ready && !wallet.account && !phoneConnect ? (
+                Nothing renders while `ready` is false: that would be a stored
+                session being restored, and offering Connect to somebody who is
+                about to appear as connected reads as having been logged out.
+
+                `hasProvider` is what removes this header button now that there
+                is no connector — same gate as the one in Positions, so the two
+                Connect buttons on this screen disappear together rather than one
+                being missed. */}
+            {wallet.ready && wallet.hasProvider && !wallet.account ? (
               <button
                 type="button"
                 className={s.connect}
@@ -355,7 +364,7 @@ export function ProtocolSection() {
                 visitor is not in.
 
                 The wording is careful: this ends the session between the site and
-                the wallet, and wagmi forgets the connection so a reload does not
+                the wallet, and the connection is forgotten so a reload does not
                 silently reattach — but the wallet may still list this site among
                 the ones it has permitted, and that is the wallet's to revoke, not
                 ours. Saying "log out" without that caveat is a claim the next
@@ -588,22 +597,18 @@ export function ProtocolSection() {
                 {market.error ? <p className={s.problem}>{market.error}</p> : null}
                 {blocker ? <p className={s.problem}>{blocker}</p> : null}
 
-                {/* On a phone with no extension, the deep-link wallet buttons
-                    replace the Connect button — the RainbowKit modal there only
-                    offers WalletConnect, whose tiles do not respond. Everywhere
-                    else, the normal CTA. */}
-                {phoneConnect && !wallet.account && LIVE ? (
-                  <MobileWalletLinks />
-                ) : (
-                  <button
-                    type="button"
-                    className={`${s.btn} ${s.primary}`}
-                    onClick={cta.onClick}
-                    disabled={cta.disabled}
-                  >
-                    {cta.label}
-                  </button>
-                )}
+                {/* One CTA on every surface now. The phone used to get deep-link
+                    wallet buttons here instead, because the modal could not
+                    connect there; with no wallet integration at all there is no
+                    longer a surface that needs its own answer. */}
+                <button
+                  type="button"
+                  className={`${s.btn} ${s.primary}`}
+                  onClick={cta.onClick}
+                  disabled={cta.disabled}
+                >
+                  {cta.label}
+                </button>
 
                 <TxStatus state={tx.state} onDismiss={tx.reset} />
               </div>
