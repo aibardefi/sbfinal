@@ -65,7 +65,7 @@ export function ConnectPanel({
      row could do there, so it stays hidden instead of opening an app and
      stranding the visitor in it. */
   const shown = wallet.connectors.filter(
-    (c) => c.present || (mobile && CONNECTORS[c.id].deepLink !== null)
+    (c) => c.present || (mobile && CONNECTORS[c.id].handoff !== null)
   );
 
   return (

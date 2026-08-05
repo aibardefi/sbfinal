@@ -23,7 +23,7 @@
  * itself at `window.phantom.ethereum`, which is unambiguous in a way that the
  * shared slot is not, so it is preferred where it exists.
  *
- * A note on `deepLink`. On a phone there is no extension and no relay here; the
+ * A note on `handoff`. On a phone there is no extension and no relay here; the
  * button opens this same page inside the wallet's own browser, where a provider
  * exists on a fresh load and the desktop path runs unchanged.
  */
@@ -47,17 +47,23 @@ export type Connector = {
   installUrl: string;
   /**
    * Reopens this page inside the wallet's own browser, or `null` for a wallet
-   * that has no such link.
+   * that cannot be reached that way.
+   *
+   * It performs the navigation rather than returning a URL string. Every wallet
+   * that currently has one does the same single assignment, so that shape buys
+   * nothing today — it is kept because the string form is what made OKX look
+   * supportable when it is not, by forcing every wallet into the shape of the
+   * easy ones. A wallet needing anything more than one assignment can have it
+   * here instead of being bent to fit.
    *
    * Null is not an omission to be filled in later — it is the difference between
-   * a wallet this site can reach on a phone and one it cannot. The handoff works
-   * because the wallet hosts the page and injects a provider. A wallet whose
-   * mobile app connects by scanning a QR code instead is asking for
-   * WalletConnect, which this site does not carry, so there is nothing for a
-   * phone row to do and the panel hides it rather than offering a button that
-   * opens an app and abandons you there.
+   * a wallet this site can reach on a phone and one it cannot. Two cannot, for
+   * different reasons: Rabby's mobile app expects a scanned QR (WalletConnect,
+   * which this site does not carry), and OKX has no universal link and a scheme
+   * that errors when the app is absent. Both are hidden on phones rather than
+   * offered as a button that opens an app store, an error, or nothing.
    */
-  deepLink: (() => string) | null;
+  handoff: (() => void) | null;
   /** Where this wallet puts itself when it is not announcing over 6963. */
   legacy: () => Eip1193Provider | undefined;
 };
@@ -103,11 +109,13 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
     name: "MetaMask",
     rdns: "io.metamask",
     installUrl: "https://metamask.io/download/",
-    // Takes the target with the scheme stripped. Passing a full `https://…`
-    // gives a link that opens the app but not the page.
-    deepLink: () => {
+    // A real https universal link, so no fallback is needed: with the app absent
+    // it resolves to MetaMask's own web page rather than an error. Takes the
+    // target with the scheme stripped — passing a full `https://…` gives a link
+    // that opens the app but not the page.
+    handoff: () => {
       const { host, pathname, search } = window.location;
-      return `https://metamask.app.link/dapp/${host}${pathname}${search}`;
+      window.location.href = `https://metamask.app.link/dapp/${host}${pathname}${search}`;
     },
     // Phantom and Coinbase both set `isMetaMask` in some builds to pass as it,
     // so they are excluded rather than trusted.
@@ -120,9 +128,9 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
     name: "Phantom",
     rdns: "app.phantom",
     installUrl: "https://phantom.app/download",
-    deepLink: () => {
+    handoff: () => {
       const { href, origin } = window.location;
-      return `https://phantom.app/ul/browse/${encodeURIComponent(href)}?ref=${encodeURIComponent(origin)}`;
+      window.location.href = `https://phantom.app/ul/browse/${encodeURIComponent(href)}?ref=${encodeURIComponent(origin)}`;
     },
     // `window.phantom.ethereum` is Phantom's own namespace and cannot be another
     // wallet; the shared slot is only consulted if that is absent.
@@ -146,7 +154,7 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
     // than by hosting the page in its own browser. There is no universal link to
     // hand off to, so on a phone this wallet is not offered at all. Inventing one
     // would open the app store and lose the visitor.
-    deepLink: null,
+    handoff: null,
     legacy: () => pick((p) => p.isRabby === true),
   },
 
@@ -161,8 +169,9 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
     // `MobileWalletLinks.tsx` shipped this exact link, so it is a format that
     // demonstrably worked here. coin_id 60 is Ethereum in SLIP-44, which is what
     // selects the EVM side of a wallet that is not EVM-only.
-    deepLink: () =>
-      `https://link.trustwallet.com/open_url?coin_id=60&url=${encodeURIComponent(window.location.href)}`,
+    handoff: () => {
+      window.location.href = `https://link.trustwallet.com/open_url?coin_id=60&url=${encodeURIComponent(window.location.href)}`;
+    },
     // Trust is mobile-first, and the case that matters most is its own in-app
     // browser, where it takes the shared slot and sets `isTrust`. The named
     // namespace is preferred where the extension provides one.
@@ -182,24 +191,29 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
     rdns: "com.okex.wallet",
     installUrl: "https://www.okx.com/web3",
     /*
-     * Two layers, and the outer one is the point.
+     * Null, after trying both ways of doing it. This is the record of why, so the
+     * next person does not spend the same two rounds on it.
      *
-     * OKX documents a custom scheme — `okx://wallet/dapp/url?dappUrl=…` — and it
-     * works, but only if the app is installed. A custom scheme that resolves to
-     * nothing does not fail quietly on iOS: Safari puts up "cannot open the page
-     * because the address is invalid". This row is shown on phones precisely
-     * where a provider CANNOT be detected, so the visitor who taps it without OKX
-     * installed is the expected case, not an edge one.
+     * **The https wrapper does not open the app.** `https://www.okx.com/download
+     * ?deeplink=…` assumes OKX registered that path as an app-link. They have
+     * not, so iOS treats it as an ordinary web page: it loaded okx.com and the
+     * app never opened. Encoding a scheme into a query string cannot change what
+     * the OS does with the outer URL.
      *
-     * Wrapping it in OKX's https download URL makes that case land on their
-     * download page instead of an error dialog. The inner scheme is documented;
-     * the wrapper is not verified from here — but its failure mode is the reason
-     * it is used, and the worst it can do is send somebody to a download page.
+     * **The custom scheme errors for anyone without the app.**
+     * `okx://wallet/dapp/url?dappUrl=…` opens OKX when it is installed, and when
+     * it is not, Safari raises "cannot open the page because the address is
+     * invalid" — immediately and modally, so a visibility-based fallback behind
+     * it never gets to run. That dialog is worse than no row at all, and this row
+     * would appear on phones precisely where the app CANNOT be detected, so the
+     * visitor without it is the expected case rather than an edge one.
+     *
+     * Note the scheme is registered per-scheme at install time, not per-path — so
+     * that error proves no `okx://` handler exists on the device, and says nothing
+     * about whether the path was right. If OKX ever ships a real universal link,
+     * this becomes one assignment like MetaMask's.
      */
-    deepLink: () => {
-      const inner = `okx://wallet/dapp/url?dappUrl=${encodeURIComponent(window.location.href)}`;
-      return `https://www.okx.com/download?deeplink=${encodeURIComponent(inner)}`;
-    },
+    handoff: null,
     legacy: () =>
       unwrap(typeof window !== "undefined" ? (window as LegacyWindow).okxwallet : undefined) ??
       pick((p) => p.isOkxWallet === true || p.isOKExWallet === true),

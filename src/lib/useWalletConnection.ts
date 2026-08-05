@@ -181,11 +181,12 @@ export function useWalletConnection(): Wallet {
 
     // Not here: hand off rather than fail. On a phone that means reopening this
     // page inside the wallet's browser, where a provider exists — for the wallets
-    // that have such a link. One without falls back to its install page, though
-    // the panel does not show those rows on a phone in the first place.
+    // that can be reached that way. The connector performs its own navigation,
+    // because they do not agree on how (see `handoff`). Anything else goes to the
+    // install page, though the panel does not show those rows on a phone anyway.
     if (!p) {
-      const link = isMobileBrowser() && connector.deepLink ? connector.deepLink() : connector.installUrl;
-      window.location.href = link;
+      if (isMobileBrowser() && connector.handoff) connector.handoff();
+      else window.location.href = connector.installUrl;
       return;
     }
 
