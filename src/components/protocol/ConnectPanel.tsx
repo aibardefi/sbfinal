@@ -1,6 +1,6 @@
 "use client";
 
-import { CONNECTORS, isMobileBrowser } from "@/lib/connectors";
+import { CONNECTORS, isMobileBrowser, type ConnectorId } from "@/lib/connectors";
 import { useWallet, type ConnectorView } from "@/lib/wallet";
 import { Modal } from "./Modal";
 import s from "./ConnectPanel.module.css";
@@ -50,7 +50,23 @@ export function ConnectPanel({
   /* Read at render, not at module load: this only runs in the browser, because
      `Modal` returns null until `open`, and `open` is set by a click. */
   const mobile = isMobileBrowser();
-  const shown = wallet.connectors.filter((c) => c.present || mobile);
+
+  /* A wallet is listed if it is actually here, or — on a phone only — if it can
+     be handed off to. Both halves are load-bearing:
+
+     `c.present` first and unconditionally, because inside a wallet's own in-app
+     browser its provider IS injected, phone or not. Filtering that case on the
+     deep link would hide a wallet sitting right there waiting to be used.
+
+     The second half is why a phone shows wallets it cannot detect: there is never
+     an injected provider in Safari or Chrome, so `present` is false for everyone
+     and the list would be empty. A wallet with no universal link — Rabby, whose
+     mobile app expects a scanned QR rather than hosting the page — has nothing a
+     row could do there, so it stays hidden instead of opening an app and
+     stranding the visitor in it. */
+  const shown = wallet.connectors.filter(
+    (c) => c.present || (mobile && CONNECTORS[c.id].deepLink !== null)
+  );
 
   return (
     <Modal open={open} onClose={onClose} theme={theme} title="Connect a wallet">
@@ -117,7 +133,7 @@ function WalletRow({
   return (
     <button type="button" className={s.wallet} onClick={onSelect} disabled={busy}>
       <span className={s.icon} aria-hidden="true">
-        {connector.id === "metamask" ? <Fox /> : <Ghost />}
+        <Mark id={connector.id} />
       </span>
       <span className={s.text}>
         <span className={s.name}>{connector.name}</span>
@@ -132,6 +148,21 @@ function WalletRow({
       {connector.connecting ? <span className={s.spinner} aria-hidden="true" /> : null}
     </button>
   );
+}
+
+/**
+ * The one place that maps a connector to a drawing. Exhaustive over `ConnectorId`,
+ * so adding a wallet to `CONNECTORS` without a mark here is a type error rather
+ * than a blank square nobody notices until it ships.
+ */
+function Mark({ id }: { id: ConnectorId }) {
+  const marks: Record<ConnectorId, () => React.ReactElement> = {
+    metamask: Fox,
+    phantom: Ghost,
+    rabby: Rabbit,
+  };
+  const Glyph = marks[id];
+  return <Glyph />;
 }
 
 /** MetaMask. A flat, two-tone fox — recognisable at 26px, which is all it needs. */
@@ -166,6 +197,20 @@ function Ghost() {
       />
       <ellipse cx="13.3" cy="14.4" rx="1.5" ry="2.3" fill="#ab9ff2" />
       <ellipse cx="18.6" cy="14.4" rx="1.5" ry="2.3" fill="#ab9ff2" />
+    </svg>
+  );
+}
+
+/** Rabby. The rabbit, in its blue. */
+function Rabbit() {
+  return (
+    <svg viewBox="0 0 32 32" role="img">
+      <rect width="32" height="32" rx="8" fill="#7084ff" />
+      <path
+        d="M11.4 9.6c-.7-2.1-1.7-3.3-2.5-3.1-.9.2-1.1 1.8-.6 3.9.3 1.3.8 2.5 1.4 3.4a7 7 0 0 0-1.1 3.7c0 3.9 3.6 6.9 8.1 6.9 1.6 0 3.1-.4 4.3-1.1l2.6 1.4c.5.3 1.1-.2.9-.8l-.9-2.5c.8-1 1.3-2.2 1.3-3.6 0-.6-.1-1.2-.3-1.8l1.6-.5c.6-.2.6-1 0-1.2l-4.2-1.6a9.6 9.6 0 0 0-4.6-1.1c-1.6 0-3.1.4-4.4 1a12 12 0 0 1-1.6-2.9z"
+        fill="#fff"
+      />
+      <circle cx="19.6" cy="17.7" r="1.15" fill="#7084ff" />
     </svg>
   );
 }

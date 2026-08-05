@@ -37,7 +37,7 @@ export type Eip1193Provider = {
   removeListener?: (event: string, handler: (...args: never[]) => void) => void;
 };
 
-export type ConnectorId = "metamask" | "phantom";
+export type ConnectorId = "metamask" | "phantom" | "rabby";
 
 export type Connector = {
   id: ConnectorId;
@@ -45,8 +45,19 @@ export type Connector = {
   /** EIP-6963 identifier. The only trustworthy way to name a specific wallet. */
   rdns: string;
   installUrl: string;
-  /** Reopens this page inside the wallet's own browser. */
-  deepLink: () => string;
+  /**
+   * Reopens this page inside the wallet's own browser, or `null` for a wallet
+   * that has no such link.
+   *
+   * Null is not an omission to be filled in later — it is the difference between
+   * a wallet this site can reach on a phone and one it cannot. The handoff works
+   * because the wallet hosts the page and injects a provider. A wallet whose
+   * mobile app connects by scanning a QR code instead is asking for
+   * WalletConnect, which this site does not carry, so there is nothing for a
+   * phone row to do and the panel hides it rather than offering a button that
+   * opens an app and abandons you there.
+   */
+  deepLink: (() => string) | null;
   /** Where this wallet puts itself when it is not announcing over 6963. */
   legacy: () => Eip1193Provider | undefined;
 };
@@ -107,10 +118,28 @@ export const CONNECTORS: Record<ConnectorId, Connector> = {
         ? (window as LegacyWindow).phantom?.ethereum
         : undefined) ?? pick((p) => p.isPhantom === true),
   },
+
+  rabby: {
+    id: "rabby",
+    name: "Rabby",
+    // NOT confirmed against Rabby's source — it could not be verified from here,
+    // and the value below is the conventional one. That is why `legacy` also
+    // matches the `isRabby` flag, which is long-established and reliable: if this
+    // string is wrong, detection still works, and only the disambiguation between
+    // two simultaneously-installed extensions would fall back to the flag.
+    rdns: "io.rabby",
+    installUrl: "https://rabby.io/",
+    // Rabby's mobile app connects by scanning a QR code — WalletConnect — rather
+    // than by hosting the page in its own browser. There is no universal link to
+    // hand off to, so on a phone this wallet is not offered at all. Inventing one
+    // would open the app store and lose the visitor.
+    deepLink: null,
+    legacy: () => pick((p) => p.isRabby === true),
+  },
 };
 
 /** Display order in the panel. MetaMask first, as asked. */
-export const CONNECTOR_ORDER: ConnectorId[] = ["metamask", "phantom"];
+export const CONNECTOR_ORDER: ConnectorId[] = ["metamask", "phantom", "rabby"];
 
 /* ----------------------------------------------------------- 6963 discovery */
 

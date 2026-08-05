@@ -24,7 +24,9 @@ const STORAGE_KEY = "cb:wallet";
 const readStored = (): ConnectorId | undefined => {
   try {
     const v = window.localStorage.getItem(STORAGE_KEY);
-    return v === "metamask" || v === "phantom" ? v : undefined;
+    // Checked against the registry rather than a hand-written union, so adding a
+    // wallet cannot leave a stored session for it silently unrestorable.
+    return v && v in CONNECTORS ? (v as ConnectorId) : undefined;
   } catch {
     // Safari in private mode throws on localStorage. A session that cannot be
     // remembered is not a session that should crash the page.
@@ -178,9 +180,12 @@ export function useWalletConnection(): Wallet {
     const p = findProvider(connector);
 
     // Not here: hand off rather than fail. On a phone that means reopening this
-    // page inside the wallet's browser, where a provider exists.
+    // page inside the wallet's browser, where a provider exists — for the wallets
+    // that have such a link. One without falls back to its install page, though
+    // the panel does not show those rows on a phone in the first place.
     if (!p) {
-      window.location.href = isMobileBrowser() ? connector.deepLink() : connector.installUrl;
+      const link = isMobileBrowser() && connector.deepLink ? connector.deepLink() : connector.installUrl;
+      window.location.href = link;
       return;
     }
 
