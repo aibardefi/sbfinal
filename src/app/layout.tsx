@@ -133,9 +133,19 @@ const CSP = [
   // host here, its font files in font-src. Without them it renders as blank grey
   // tiles. Nothing else on this site loads a remote font.
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  // Wallet logos in that picker come from the web3modal and walletconnect image
-  // hosts. Blank tiles that do not respond to a tap are these being blocked.
-  "img-src 'self' data: https://*.walletconnect.com https://*.web3modal.org https://imagedelivery.net",
+  // Wallet logos in that picker, and the reason `blob:` is here.
+  //
+  // AppKit does not put the image URL in an <img src>. It *fetches* the bytes
+  // (`api.getBlob`) and hands the element `URL.createObjectURL(blob)`, so what
+  // the img-src directive actually sees is a blob: URL and not the host at all.
+  // Allowing only the hosts gives a picker that lists every wallet by name with
+  // no logo beside any of them — the request succeeded under connect-src and the
+  // render was blocked here. The hosts stay because `getWalletImage` returns a
+  // direct `image_url` when the API supplies one.
+  //
+  // blob: is narrow: it can only render bytes this page's own script already
+  // fetched through connect-src, which is the check that matters.
+  "img-src 'self' data: blob: https://*.walletconnect.com https://*.web3modal.org https://imagedelivery.net",
   "font-src 'self' https://fonts.gstatic.com",
   // The borrow screen reads the lending contract over JSON-RPC, so this is no
   // longer 'self' alone. It is named origins, never a wildcard and never a
