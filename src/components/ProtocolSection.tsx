@@ -35,7 +35,13 @@ import {
   useTokenBalance,
   valueInWeth,
 } from "@/lib/protocol";
-import { BUY_URL, TOKEN_ADDRESS, externalLinkProps, isLive } from "@/lib/links";
+import {
+  BUY_URL,
+  TOKEN_ADDRESS,
+  collateralBuyUrl,
+  externalLinkProps,
+  isLive,
+} from "@/lib/links";
 import { approvalStep, useTx, type Step } from "@/lib/tx";
 import { useWallet } from "@/lib/wallet";
 import { useEntrance } from "@/lib/useEntrance";
@@ -463,6 +469,36 @@ export function ProtocolSection() {
                       {balance !== undefined && balance > 0n ? <em> · held</em> : null}
                     </label>
                     <span className={s.sp} />
+                    {/* Buy the coin this field is asking for, in one click.
+                        Beside the picker rather than in the row below, because
+                        what it buys is whatever the picker currently says — and
+                        the row below belongs to the balance, which is exactly
+                        what somebody following this link does not have. Only the
+                        arrow marks it as leaving; the word is "Buy" and not "Buy
+                        CASHCAT" so a long ticker cannot push the picker off a
+                        narrow card, and the accessible name carries the symbol
+                        for anyone who cannot see the two sit together. */}
+                    {coin ? (
+                      <a
+                        className={s.buyToken}
+                        href={collateralBuyUrl(coin.address)}
+                        aria-label={`Buy ${coin.symbol}`}
+                        title={`Buy ${coin.symbol} on Uniswap`}
+                        {...externalLinkProps(collateralBuyUrl(coin.address))}
+                      >
+                        Buy
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            d="M8.5 15.5 15.5 8.5M9.8 8.5h5.7v5.7"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </a>
+                    ) : null}
                     <button
                       type="button"
                       className={s.tokenBtn}

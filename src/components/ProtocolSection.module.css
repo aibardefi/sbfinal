@@ -352,6 +352,43 @@
   width: 14px;
   height: 14px;
 }
+/* "Buy" beside the collateral picker: a way out to the swap for somebody who
+   has arrived without the coin the form is asking them to lock.
+
+   Quiet on purpose. It sits two inches from the primary action and must not
+   read as an alternative to it — so it takes the `.pct` treatment (no fill
+   until hovered, paper against the field's sunk ground) rather than the top
+   bar's `.buy` pill, and only the arrow says it leaves the site. It is also
+   built to add no height: everything here is smaller than the token button it
+   shares the row with, so the row's height is still the button's and no screen
+   grows by a pixel. */
+.buyToken {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  border-radius: 0.4rem;
+  padding: 0.18rem 0.38rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--p1-accent2);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.buyToken:hover {
+  background: var(--p1-paper);
+}
+.buyToken:active {
+  transform: translateY(1px);
+}
+.buyToken:focus-visible {
+  outline: 2px solid var(--p1-accent);
+  outline-offset: 1px;
+}
+.buyToken svg {
+  width: 11px;
+  height: 11px;
+}
+
 /* The borrowed side never changes, so it is a label rather than a control. */
 .tokenStatic {
   font-weight: 700;

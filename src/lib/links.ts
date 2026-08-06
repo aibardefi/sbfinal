@@ -32,19 +32,41 @@ export const TOKEN_ADDRESS: string | null = "0xab46accEb52C3aBc3E891C17734CD0d09
 const WETH_ADDRESS = "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73";
 
 /**
- * Where "Buy $CB" points. Both screens that carry the button share it, so the
- * address can never land on one and not the other.
+ * A swap on this chain, from WETH into one named token.
  *
  * Chain, input and output are all pinned rather than left to a search box —
- * typing "CB" into one is the single most reliable way to buy the wrong $CB.
+ * typing a ticker into one is the single most reliable way to buy the wrong
+ * coin, and on a chain of memecoins every ticker has a namesake.
+ */
+const swapUrl = (token: string) =>
+  `https://app.uniswap.org/swap?chain=robinhood&inputCurrency=${WETH_ADDRESS}&outputCurrency=${token}`;
+
+/**
+ * Where "Buy $CB" points. Both screens that carry the button share it, so the
+ * address can never land on one and not the other.
  *
  * While `TOKEN_ADDRESS` is null this is `"#"`, the site's convention for "not
  * wired up yet". `HeroSection`'s `handleCta` and the borrow screen's buy button
  * both catch `"#"` and say "soon" instead of opening a swap for nothing.
  */
-export const BUY_URL = TOKEN_ADDRESS
-  ? `https://app.uniswap.org/swap?chain=robinhood&inputCurrency=${WETH_ADDRESS}&outputCurrency=${TOKEN_ADDRESS}`
-  : "#";
+export const BUY_URL = TOKEN_ADDRESS ? swapUrl(TOKEN_ADDRESS) : "#";
+
+/**
+ * Where "Buy" beside the collateral picker points.
+ *
+ * The address is not a constant here and must not become one: it is whichever
+ * token `collateralTokens()` returned and the visitor then chose, so a coin the
+ * admin whitelists tomorrow gets a working buy link without this file changing —
+ * and a coin taken off the list takes its link with it. That is the same rule
+ * the picker itself follows, and the reason there is no roster of addresses in
+ * `protocol/tokens.ts` to drift out of date.
+ *
+ * WETH is the input for the same reason the CB link uses it: the lending
+ * contract prices every collateral through `quoteCollateralInWeth`, so the pool
+ * a visitor buys in is the pool the borrow screen quotes against, not a second
+ * market that usually agrees.
+ */
+export const collateralBuyUrl = (token: string) => swapUrl(token);
 
 // There is no separate borrow app: the borrow screen is the first screen of
 // this site. The hero's "Borrow $CB" scrolls to it rather than linking off to
