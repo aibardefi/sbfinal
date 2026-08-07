@@ -10,7 +10,7 @@ import { TxStatus } from "./protocol/TxStatus";
    colours — but in `loadMarket`, where it is applied to what the contract
    returned, rather than here where it used to generate rows of its own. */
 import { BORROWED } from "./protocol/tokens";
-import { lendingAbi } from "@/lib/abi";
+import { erc20Abi, lendingAbi } from "@/lib/abi";
 import { DEPLOYMENT, publicClient } from "@/lib/chain";
 import {
   LIQ_LTV,
@@ -24,6 +24,7 @@ import {
 import {
   borrowForLtv,
   collateralForLtv,
+  describeError,
   exactAmount,
   formatAmount,
   formatWeth,
@@ -98,6 +99,8 @@ const DEFAULT_LTV = 60;
 
 type Tab = "borrow" | "positions";
 type Theme = "light" | "dark";
+/** The "add to wallet" chip, which has a failure worth showing — see below. */
+type WatchState = "idle" | "adding" | "added" | "failed";
 /** Which amount the visitor pinned. The ruler moves the other one. */
 type Pin = "lock" | "borrow";
 
@@ -138,6 +141,7 @@ export function ProtocolSection() {
   const [explaining, setExplaining] = useState(false);
   const [soon, setSoon] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [watch, setWatch] = useState<WatchState>("idle");
 
   /* The wallet is whole again — `Providers` owns the account, the chain and the
      panel's open state, so this screen no longer patches `connect` on the way
@@ -291,6 +295,58 @@ export function ProtocolSection() {
     } catch {
       // A refused clipboard is not worth an error box.
     }
+  };
+
+  /**
+   * Puts $CB in the wallet's own token list — EIP-747 `wallet_watchAsset`, the
+   * only way that happens without the visitor pasting an address in by hand.
+   *
+   * The symbol and decimals are read off `TOKEN_ADDRESS` itself rather than
+   * taken from `market`. `market` describes `DEPLOYMENT.cb`, the token the
+   * lending contract lends, and `links.ts` keeps those two addresses
+   * deliberately apart so that a disagreement between them is visible. Labelling
+   * one token with the other's symbol is precisely the drift that separation
+   * exists to catch — the wallet would then show the right address under the
+   * wrong name, which is the one place a wrong name is never questioned again.
+   *
+   * There is no `image`. The site's only square artwork is `src/app/icon.png`,
+   * which Next serves under a build-hashed path that a literal URL here cannot
+   * follow; some wallets reject the whole request when the image 404s, and a
+   * missing logo costs nothing.
+   *
+   * The chain matters. A wallet on Ethereum asked to watch this address adds a
+   * token that does not exist there, so a wrong network sends the visitor
+   * through the switch first — the same order the borrow button uses.
+   *
+   * Unlike the clipboard above, a failure here is shown. Not every wallet
+   * implements the method (WalletConnect sessions frequently do not), and
+   * somebody who taps a button that does nothing simply taps it again.
+   */
+  const addToWallet = async () => {
+    if (!TOKEN_ADDRESS) return;
+    const token = TOKEN_ADDRESS as Address;
+
+    if (!wallet.account) return wallet.connect();
+    if (wallet.wrongNetwork) return wallet.switchNetwork();
+    if (!wallet.walletClient || watch === "adding") return;
+
+    setWatch("adding");
+    try {
+      const [symbol, decimals] = await Promise.all([
+        publicClient.readContract({ address: token, abi: erc20Abi, functionName: "symbol" }),
+        publicClient.readContract({ address: token, abi: erc20Abi, functionName: "decimals" }),
+      ]);
+      await wallet.walletClient.watchAsset({
+        type: "ERC20",
+        options: { address: token, symbol, decimals: Number(decimals) },
+      });
+      setWatch("added");
+    } catch (e) {
+      // `describeError` returns nothing for a refusal, here as everywhere: the
+      // visitor closing the prompt is a decision, not a fault to report back.
+      setWatch(describeError(e) ? "failed" : "idle");
+    }
+    window.setTimeout(() => setWatch("idle"), 2400);
   };
 
   const openCount = positions.data?.length ?? 0;
@@ -693,14 +749,38 @@ export function ProtocolSection() {
               copied, with no other change. */}
           <span className={s.addrRow}>
             {TOKEN_ADDRESS ? (
-              <button
-                type="button"
-                className={s.footLink}
-                onClick={copyContract}
-                aria-label="Copy the contract address"
-              >
-                {copied ? "Copied ✓" : `${short(TOKEN_ADDRESS)} · copy`}
-              </button>
+              <>
+                <button
+                  type="button"
+                  className={s.footLink}
+                  onClick={copyContract}
+                  aria-label="Copy the contract address"
+                >
+                  {copied ? "Copied ✓" : `${short(TOKEN_ADDRESS)} · copy`}
+                </button>
+                <span className={s.addrDot} aria-hidden="true">
+                  ·
+                </span>
+                {/* Sits beside the address on purpose: copying it and handing it
+                    to the wallet are the same errand, and the second is the one
+                    that ends with $CB visible in the wallet rather than on the
+                    clipboard. Both are behind the same TOKEN_ADDRESS check, so
+                    setting that back to null still takes the whole row off. */}
+                <button
+                  type="button"
+                  className={s.footLink}
+                  onClick={() => void addToWallet()}
+                  aria-label="Add the $CB token to your wallet"
+                >
+                  {watch === "adding"
+                    ? "adding…"
+                    : watch === "added"
+                      ? "added ✓"
+                      : watch === "failed"
+                        ? "wallet can't add it"
+                        : "add to wallet"}
+                </button>
+              </>
             ) : (
               <span className={s.addrSoon}>Contract · coming soon</span>
             )}

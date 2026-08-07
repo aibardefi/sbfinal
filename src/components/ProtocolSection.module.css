@@ -605,6 +605,11 @@
   gap: 0.35rem;
   font-variant-numeric: tabular-nums;
 }
+/* Separates the two things you can do with the address. Muted, because it is
+   punctuation between links and not a third one. */
+.addrDot {
+  opacity: 0.5;
+}
 /* The not-yet state: same footer type, muted and plainly not interactive, so it
    reads as "nothing to copy here" rather than a dead link. */
 .addrSoon {
